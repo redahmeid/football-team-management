@@ -1,0 +1,461 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ServerlessDeploymentBucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "ServerlessDeploymentBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      },
+                      "/*"
+                    ]
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":s3:::",
+                      {
+                        "Ref": "ServerlessDeploymentBucket"
+                      }
+                    ]
+                  ]
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": false
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "ApiLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/football-team-management-dev-api"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "football-team-management",
+                  "dev",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:CreateLogGroup",
+                    "logs:TagResource"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/football-team-management-dev*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/football-team-management-dev*:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:Query",
+                    "dynamodb:Scan",
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DeleteItem"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "UsersTable",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "football-team-management",
+              "dev",
+              {
+                "Ref": "AWS::Region"
+              },
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "EnterpriseLogAccessIamRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:iam::802587217904:root"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": "ServerlessEnterprise-d89014f8-1e4c-4c62-bdda-3282d3b63863"
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "LogFilterAccess",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:FilterLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "ApiLogGroup",
+                        "Arn"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "ApiLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/football-team-management/dev/1695568423992-2023-09-24T15:13:43.992Z/football-team-management.zip"
+        },
+        "Handler": "wsgi_handler.handler",
+        "Runtime": "python3.11",
+        "FunctionName": "football-team-management-dev-api",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "USERS_TABLE": "users-table-dev"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ApiLogGroup"
+      ]
+    },
+    "ApiLambdaVersion8dp7ceYUZhoo5bHQdpmBsdcnY7q0g38WXPlRmujaw": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ApiLambdaFunction"
+        },
+        "CodeSha256": "VGTh2BF8fwqS3aIvQBb4CeHP1IKsiRUAH/8DG+nrEbU="
+      }
+    },
+    "HttpApi": {
+      "Type": "AWS::ApiGatewayV2::Api",
+      "Properties": {
+        "Name": "dev-football-team-management",
+        "ProtocolType": "HTTP"
+      }
+    },
+    "HttpApiLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/http-api/football-team-management-dev"
+      }
+    },
+    "HttpApiStage": {
+      "Type": "AWS::ApiGatewayV2::Stage",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "StageName": "$default",
+        "AutoDeploy": true,
+        "DefaultRouteSettings": {
+          "DetailedMetricsEnabled": false
+        },
+        "AccessLogSettings": {
+          "DestinationArn": {
+            "Fn::GetAtt": [
+              "HttpApiLogGroup",
+              "Arn"
+            ]
+          },
+          "Format": "{\"requestTime\":\"$context.requestTime\",\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.routeKey\",\"path\":\"$context.path\",\"httpMethod\":\"$context.httpMethod\",\"stage\":\"$context.stage\",\"status\":\"$context.status\",\"integrationStatus\":\"$context.integrationStatus\",\"integrationLatency\":\"$context.integrationLatency\",\"responseLatency\":\"$context.responseLatency\",\"responseLength\":\"$context.responseLength\",\"errorMessage\":\"$context.error.message\",\"format\":\"SLS_HTTP_API_LOG\",\"version\":\"1.0.0\"}"
+        }
+      },
+      "DependsOn": "HttpApiLogGroup"
+    },
+    "ApiLambdaPermissionHttpApi": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ApiLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "HttpApi"
+              },
+              "/*"
+            ]
+          ]
+        }
+      }
+    },
+    "HttpApiIntegrationApi": {
+      "Type": "AWS::ApiGatewayV2::Integration",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "IntegrationType": "AWS_PROXY",
+        "IntegrationUri": {
+          "Fn::GetAtt": [
+            "ApiLambdaFunction",
+            "Arn"
+          ]
+        },
+        "PayloadFormatVersion": "2.0",
+        "TimeoutInMillis": 30000
+      }
+    },
+    "HttpApiRouteDefault": {
+      "Type": "AWS::ApiGatewayV2::Route",
+      "Properties": {
+        "ApiId": {
+          "Ref": "HttpApi"
+        },
+        "RouteKey": "$default",
+        "Target": {
+          "Fn::Join": [
+            "/",
+            [
+              "integrations",
+              {
+                "Ref": "HttpApiIntegrationApi"
+              }
+            ]
+          ]
+        }
+      },
+      "DependsOn": "HttpApiIntegrationApi"
+    },
+    "UsersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "userId",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "userId",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "TableName": "users-table-dev"
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-dev-ServerlessDeploymentBucketName"
+      }
+    },
+    "EnterpriseLogAccessIamRole": {
+      "Value": {
+        "Fn::GetAtt": [
+          "EnterpriseLogAccessIamRole",
+          "Arn"
+        ]
+      },
+      "Export": {
+        "Name": "sls-football-team-management-dev-EnterpriseLogAccessIamRole"
+      }
+    },
+    "ApiLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ApiLambdaVersion8dp7ceYUZhoo5bHQdpmBsdcnY7q0g38WXPlRmujaw"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-dev-ApiLambdaFunctionQualifiedArn"
+      }
+    },
+    "HttpApiId": {
+      "Description": "Id of the HTTP API",
+      "Value": {
+        "Ref": "HttpApi"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-dev-HttpApiId"
+      }
+    },
+    "HttpApiUrl": {
+      "Description": "URL of the HTTP API",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "HttpApi"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix"
+            }
+          ]
+        ]
+      },
+      "Export": {
+        "Name": "sls-football-team-management-dev-HttpApiUrl"
+      }
+    }
+  }
+}
