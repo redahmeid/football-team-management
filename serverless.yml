@@ -9,8 +9,8 @@ provider:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: handler.create_club
     events:
       - httpApi:
           path: /
-          method: get
+          method: post
