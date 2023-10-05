@@ -4,11 +4,11 @@ load_dotenv()
 
 class AppConfig:
     def __init__(self):
-        self.host = os.environ["db.host"]
-        self.user = os.environ["db.user"]
-        self.password = os.environ["db.password"]
-        self.database = os.environ["db.database"]  
-        self.admin_db = os.environ["db.admin_db"]
+        self.host = os.environ["dbhost"]
+        self.user = os.environ["dbuser"]
+        self.password = os.environ["dbpassword"]
+        self.database = os.environ["dbdatabase"]  
+        self.admin_db = os.environ["dbadmin_db"]
 
 app_config = AppConfig()
 
