@@ -14,17 +14,18 @@ functions:
       - httpApi:
           path: /club
           method: post
-  retrieve_club:
-    handler: handler.create_club
-    events:
-      - httpApi:
-          path: /club
-          method: get
-          request:
-            parameters:
-              paths:
-                id: true
+          
 
 plugins:
   - serverless-dotenv-plugin
   - serverless-python-requirements
+
+custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+    
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!venv/**'
