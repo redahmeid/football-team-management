@@ -83,12 +83,12 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          print(response)
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"missing")
+         self.assertEqual(response["body"]["errors"][0]["type"],"value_error")
          self.assertEqual(response["body"]["errors"][0]["field"],"email")
 
     def test_create_missing_phone_club(self):
          event = create_event(
-                event_type="aws:api-gateway-event",body={"body":json.dumps({"name":"Maidenhead United Juniors","short_name":"MUFCJrs","email":"07973931840"})}
+                event_type="aws:api-gateway-event",body={"body":json.dumps({"name":"Maidenhead United Juniors","short_name":"MUFCJrs","email":"r.hmeid@gmail.com"})}
                     )
          
          response = handler.create_club(event,None)

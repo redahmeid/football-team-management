@@ -5,24 +5,12 @@ import mysql.connector
 from config import app_config
 import response_errors
 import id_generator
+import db
 
-# Replace these with your database credentials
-host = app_config.host
-user = app_config.user
-password = app_config.password
-database = app_config.database
-
-# Connect to the Aurora MySQL database
-connection = mysql.connector.connect(
-    host=host,
-    user=user,
-    password=password,
-    database=database
-)
 
 
 def save_club(club:Club):
-    
+    connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 

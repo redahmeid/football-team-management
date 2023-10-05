@@ -35,7 +35,7 @@ class Club(BaseModel):
     teams:Optional[List[Team]] = None
 
     @validator('email')
-    def validate_string_format(cls, value):
+    def validate_email_format(cls, value):
         print("In validator email")
         pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
         if validate_email(value):
@@ -43,7 +43,7 @@ class Club(BaseModel):
         raise ValueError("Invalid email")
 
     @validator('short_name')
-    def validate_string_format(cls, value):
+    def validate_short_name_format(cls, value):
        
       if validate_short_name(value):
         return value

@@ -2,35 +2,18 @@ from config import app_config
 import json
 from pydantic import TypeAdapter, ValidationError
 from classes import Club
-import mysql.connector
-
-
-
-host = app_config.host
-user = app_config.user
-password = app_config.password
-database = app_config.database
-footy_db = app_config.admin_db
-
+import db
 
 
 
 def create_database():
-    # Replace these with your database credentials
-    
-    
-    # Connect to the Aurora MySQL database
-    connection = mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=footy_db
-    )
+    connection = db.connection()
+    print("CREATE DATABASE IN %s" %(connection.db))
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "CREATE database %s" %(database)
+    insert_query = "CREATE database %s" %(app_config.database)
     
 
     # Execute the SQL query to insert data
@@ -48,13 +31,8 @@ def create_database():
 
 
 def create_clubs_table():
-  
-    connection = mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database
-    )
+    connection = db.connection(app_config.database)
+    print("CREATE TABLE IN %s" %(connection.db))
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
@@ -80,13 +58,7 @@ def create_clubs_table():
     connection.close()
 
 def create_teams_table():
-  
-    connection = mysql.connector.connect(
-        host=host,
-        user=user,
-        password=password,
-        database=database
-    )
+    connection = db.connection()
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 

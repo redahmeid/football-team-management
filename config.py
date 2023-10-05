@@ -1,12 +1,14 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 class AppConfig:
     def __init__(self):
-        self.host = 'localhost'
-        self.user = 'sammy'
-        self.password = 'password'
-        self.database = 'footy'  
-        self.admin_db = "mysql"
-        # self.var_name = os.environ.get('VAR_NAME', 'default_value')
+        self.host = os.environ["db.host"]
+        self.user = os.environ["db.user"]
+        self.password = os.environ["db.password"]
+        self.database = os.environ["db.database"]  
+        self.admin_db = os.environ["db.admin_db"]
 
 app_config = AppConfig()
 
