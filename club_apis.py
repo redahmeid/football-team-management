@@ -26,5 +26,5 @@ def create_club(event, context):
     except ValueError as e:
         response = {"statusCode": 400, "body": {"errors":e}}
    
-    
+    print(response)
     return response
