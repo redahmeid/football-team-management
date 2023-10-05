@@ -33,6 +33,7 @@ def save_club(club:Club):
     return (row_count,id)
 
 def retrieve_club(id:str):
+    connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
