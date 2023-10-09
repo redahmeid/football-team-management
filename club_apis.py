@@ -22,10 +22,11 @@ def create_club(event, context):
         else:
             result = {"club_id":save_response[1]}
             actions = list()
-            actions.append({"name":"create_admin","link":"/admins/%s" %(save_response[1]),"method":"POST"})
+            actions.append({"name":"create_admin","link":"/clubs/%s/admins" %(save_response[1]),"method":"POST"})
+            actions.append({"name":"create_teams","link":"/clubs/%s/teams" %(save_response[1]),"method":"POST"})
             response = api_helper.make_api_response(200,result,actions)
     except ValidationError as e:
-        errors = response_errors.listCreateClubErrors(e)
+        errors = response_errors.validationErrorsList(e)
         response = api_helper.make_api_response(400,None,None,errors)
     except ValueError as e:
         response = api_helper.make_api_response(400,None,None,None)

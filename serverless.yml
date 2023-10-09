@@ -14,10 +14,44 @@ functions:
     handler: handler.create_club
     events:
       - http:
-          path: /club
+          path: /clubs
+          method: post
+  create_club_admin:
+    handler: handler.create_club_admin
+    events:
+      - http:
+          path: /clubs/{club_id}/admins
+          method: post
+  create_team_admin:
+    handler: handler.create_team_admin
+    events:
+      - http:
+          path: /teams/{team_id}/admins
+          method: post
+  create_team_players:
+    handler: handler.create_team_players
+    events:
+      - http:
+          path: /teams/{team_id}/players
+          method: post
+  create_team:
+    handler: handler.create_team
+    events:
+      - http:
+          path: /clubs/{club_id}/teams
           method: post
   create_db:
-    handler: handler.create_db       
+    handler: handler.create_db
+  create_teams_db:
+    handler: handler.create_teams_table
+  create_admins_db:
+    handler: handler.create_admins_table
+  create_clubs_db:
+    handler: handler.create_clubs_table
+  create_players_db:
+    handler: handler.create_players_table
+  drop_db:
+    handler: handler.drop_db         
 
 plugins:
   - serverless-dotenv-plugin
