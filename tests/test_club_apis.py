@@ -35,9 +35,8 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          
          self.assertEqual(response["statusCode"],200)
-         self.assertEqual(response["body"]["row"],1)
-         print(response["body"]["id"])
-         self.assertIsNotNone(response["body"]["id"])
+        
+         self.assertIsNotNone(json.loads(response["body"])["result"]["club_id"])
 
     def test_create_missing_short_name_club(self):
          event = create_event(
@@ -47,8 +46,8 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"missing")
-         self.assertEqual(response["body"]["errors"][0]["field"],"short_name")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["type"],"missing")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["field"],"short_name")
 
     def test_create_invalid_short_name_club(self):
          print("test_create_invalid_short_name_club")
@@ -59,8 +58,8 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          print(response)
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"value_error")
-         self.assertEqual(response["body"]["errors"][0]["field"],"short_name")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["type"],"value_error")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["field"],"short_name")
 
     def test_create_missing_email_club(self):
          print("test_create_missing_email_club")
@@ -71,8 +70,8 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          print(response)
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"missing")
-         self.assertEqual(response["body"]["errors"][0]["field"],"email")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["type"],"missing")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["field"],"email")
 
     def test_create_invalid_email_club(self):
          print("test_create_invalid_email_club")
@@ -83,8 +82,8 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          print(response)
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"value_error")
-         self.assertEqual(response["body"]["errors"][0]["field"],"email")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["type"],"value_error")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["field"],"email")
 
     def test_create_missing_phone_club(self):
          event = create_event(
@@ -94,5 +93,5 @@ class TestClubAPIs(unittest.TestCase):
          response = handler.create_club(event,None)
          print(response)
          self.assertEqual(response["statusCode"],400)
-         self.assertEqual(response["body"]["errors"][0]["type"],"missing")
-         self.assertEqual(response["body"]["errors"][0]["field"],"phone")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["type"],"missing")
+         self.assertEqual(json.loads(response["body"])["errors"][0]["field"],"phone")

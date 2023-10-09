@@ -5,16 +5,19 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.8
+  stage: dev
+  region: eu-west-2
 
 functions:
   create_club:
     handler: handler.create_club
     events:
-      - httpApi:
+      - http:
           path: /club
           method: post
-          
+  create_db:
+    handler: handler.create_db       
 
 plugins:
   - serverless-dotenv-plugin

@@ -2,7 +2,7 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from validators import validate_email,validate_short_name
-import re
+
 
 class Player(BaseModel):
     name:str
@@ -48,6 +48,9 @@ class Club(BaseModel):
       if validate_short_name(value):
         return value
       raise ValueError("Short Name must have no spaces")
+
+
+    
     
     
     

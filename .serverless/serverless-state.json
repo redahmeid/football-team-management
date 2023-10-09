@@ -6,14 +6,14 @@
     },
     "provider": {
       "name": "aws",
-      "runtime": "python3.9",
+      "runtime": "python3.8",
       "stage": "dev",
-      "region": "us-east-1",
+      "region": "eu-west-2",
       "versionFunctions": true,
       "environment": {
         "dbhost": "mysql-13e43451-club-management.aivencloud.com",
         "dbuser": "avnadmin",
-        "dbpassword": "AVNS_9lC8iPUtMuubSVaFRMt",
+        "dbpassword": "AVNS_eRJgFKCnvfeqcrJC3Gy",
         "dbdatabase": "footy",
         "dbadmin_db": "defaultdb"
       },
@@ -94,6 +94,12 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/football-team-management-dev-create_club"
+            }
+          },
+          "CreateUnderscoredbLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/football-team-management-dev-create_db"
             }
           },
           "IamRoleLambdaExecution": {
@@ -211,6 +217,12 @@
                               "CreateUnderscoreclubLogGroup",
                               "Arn"
                             ]
+                          },
+                          {
+                            "Fn::GetAtt": [
+                              "CreateUnderscoredbLogGroup",
+                              "Arn"
+                            ]
                           }
                         ]
                       }
@@ -227,10 +239,10 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1696526333544-2023-10-05T17:18:53.544Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1696802102253-2023-10-08T21:55:02.253Z/football-team-management.zip"
               },
               "Handler": "s_create_club.handler",
-              "Runtime": "python3.9",
+              "Runtime": "python3.8",
               "FunctionName": "football-team-management-dev-create_club",
               "MemorySize": 1024,
               "Timeout": 6,
@@ -238,7 +250,7 @@
                 "Variables": {
                   "dbhost": "mysql-13e43451-club-management.aivencloud.com",
                   "dbuser": "avnadmin",
-                  "dbpassword": "AVNS_9lC8iPUtMuubSVaFRMt",
+                  "dbpassword": "AVNS_eRJgFKCnvfeqcrJC3Gy",
                   "dbdatabase": "footy",
                   "dbadmin_db": "defaultdb"
                 }
@@ -254,53 +266,146 @@
               "CreateUnderscoreclubLogGroup"
             ]
           },
-          "CreateUnderscoreclubLambdaVersionMh6jrvbuvmi2eD2QHWExY9QtS52vCstZ0x5okImu0MY": {
+          "CreateUnderscoredbLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/football-team-management/dev/1696802102253-2023-10-08T21:55:02.253Z/football-team-management.zip"
+              },
+              "Handler": "s_create_db.handler",
+              "Runtime": "python3.8",
+              "FunctionName": "football-team-management-dev-create_db",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "dbhost": "mysql-13e43451-club-management.aivencloud.com",
+                  "dbuser": "avnadmin",
+                  "dbpassword": "AVNS_eRJgFKCnvfeqcrJC3Gy",
+                  "dbdatabase": "footy",
+                  "dbadmin_db": "defaultdb"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CreateUnderscoredbLogGroup"
+            ]
+          },
+          "CreateUnderscoreclubLambdaVersionIanemIzuTXiWbubPct7yq8ygOq6OaObVaCcfeIkII": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscoreclubLambdaFunction"
               },
-              "CodeSha256": "nQ6/daC33oylhh7Dz7QflOdiu5QfEncljtomy7sLBR4="
+              "CodeSha256": "6rnlMfT4zUx8qoKGRQWeMORuQr1d7xwsh6se4fuKGeY="
             }
           },
-          "HttpApi": {
-            "Type": "AWS::ApiGatewayV2::Api",
+          "CreateUnderscoredbLambdaVersion4Zp4sRwHg1Lhq1HL0Qj1ryzCUy28aWj2ZijY50oCfI": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateUnderscoredbLambdaFunction"
+              },
+              "CodeSha256": "6rnlMfT4zUx8qoKGRQWeMORuQr1d7xwsh6se4fuKGeY="
+            }
+          },
+          "ApiGatewayRestApi": {
+            "Type": "AWS::ApiGateway::RestApi",
             "Properties": {
               "Name": "dev-football-team-management",
-              "ProtocolType": "HTTP"
+              "EndpointConfiguration": {
+                "Types": [
+                  "EDGE"
+                ]
+              },
+              "Policy": ""
             }
           },
-          "HttpApiLogGroup": {
-            "Type": "AWS::Logs::LogGroup",
+          "ApiGatewayResourceClub": {
+            "Type": "AWS::ApiGateway::Resource",
             "Properties": {
-              "LogGroupName": "/aws/http-api/football-team-management-dev"
-            }
-          },
-          "HttpApiStage": {
-            "Type": "AWS::ApiGatewayV2::Stage",
-            "Properties": {
-              "ApiId": {
-                "Ref": "HttpApi"
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
               },
-              "StageName": "$default",
-              "AutoDeploy": true,
-              "DefaultRouteSettings": {
-                "DetailedMetricsEnabled": false
-              },
-              "AccessLogSettings": {
-                "DestinationArn": {
-                  "Fn::GetAtt": [
-                    "HttpApiLogGroup",
-                    "Arn"
-                  ]
-                },
-                "Format": "{\"requestTime\":\"$context.requestTime\",\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.routeKey\",\"path\":\"$context.path\",\"httpMethod\":\"$context.httpMethod\",\"stage\":\"$context.stage\",\"status\":\"$context.status\",\"integrationStatus\":\"$context.integrationStatus\",\"integrationLatency\":\"$context.integrationLatency\",\"responseLatency\":\"$context.responseLatency\",\"responseLength\":\"$context.responseLength\",\"errorMessage\":\"$context.error.message\",\"format\":\"SLS_HTTP_API_LOG\",\"version\":\"1.0.0\"}"
+              "PathPart": "club",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
               }
-            },
-            "DependsOn": "HttpApiLogGroup"
+            }
           },
-          "CreateUnderscoreclubLambdaPermissionHttpApi": {
+          "ApiGatewayMethodClubPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceClub"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateUnderscoreclubLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "CreateUnderscoreclubLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1696802085193": {
+            "Type": "AWS::ApiGateway::Deployment",
+            "Properties": {
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "StageName": "dev"
+            },
+            "DependsOn": [
+              "ApiGatewayMethodClubPost"
+            ]
+          },
+          "CreateUnderscoreclubLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
               "FunctionName": {
@@ -329,48 +434,140 @@
                     },
                     ":",
                     {
-                      "Ref": "HttpApi"
+                      "Ref": "ApiGatewayRestApi"
                     },
-                    "/*"
+                    "/*/*"
                   ]
                 ]
               }
             }
           },
-          "HttpApiIntegrationCreateUnderscoreclub": {
-            "Type": "AWS::ApiGatewayV2::Integration",
+          "ApiGatewayLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
             "Properties": {
-              "ApiId": {
-                "Ref": "HttpApi"
-              },
-              "IntegrationType": "AWS_PROXY",
-              "IntegrationUri": {
-                "$ref": "$[\"service\"][\"provider\"][\"compiledCloudFormationTemplate\"][\"Resources\"][\"CreateUnderscoreclubLambdaPermissionHttpApi\"][\"Properties\"][\"FunctionName\"]"
-              },
-              "PayloadFormatVersion": "2.0",
-              "TimeoutInMillis": 30000
+              "LogGroupName": "/aws/api-gateway/football-team-management-dev"
             }
           },
-          "HttpApiRoutePostClub": {
-            "Type": "AWS::ApiGatewayV2::Route",
+          "CustomApiGatewayAccountCloudWatchRole": {
+            "Type": "Custom::ApiGatewayAccountRole",
+            "Version": 1,
             "Properties": {
-              "ApiId": {
-                "Ref": "HttpApi"
+              "ServiceToken": {
+                "Fn::GetAtt": [
+                  "CustomDashresourceDashapigwDashcwDashroleLambdaFunction",
+                  "Arn"
+                ]
+              }
+            }
+          },
+          "IamRoleCustomResourcesLambdaExecution": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+              "AssumeRolePolicyDocument": {
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": [
+                        "lambda.amazonaws.com"
+                      ]
+                    },
+                    "Action": [
+                      "sts:AssumeRole"
+                    ]
+                  }
+                ]
               },
-              "RouteKey": "POST /club",
-              "Target": {
-                "Fn::Join": [
-                  "/",
-                  [
-                    "integrations",
-                    {
-                      "Ref": "HttpApiIntegrationCreateUnderscoreclub"
-                    }
-                  ]
+              "Policies": [
+                {
+                  "PolicyName": {
+                    "Fn::Join": [
+                      "-",
+                      [
+                        "dev",
+                        "football-team-management",
+                        "custom-resources-lambda"
+                      ]
+                    ]
+                  },
+                  "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "iam:",
+                              {
+                                "Ref": "AWS::AccountId"
+                              },
+                              "role/*"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "iam:AttachRolePolicy",
+                          "iam:CreateRole",
+                          "iam:ListAttachedRolePolicies",
+                          "iam:PassRole"
+                        ]
+                      },
+                      {
+                        "Effect": "Allow",
+                        "Resource": {
+                          "Fn::Join": [
+                            ":",
+                            [
+                              "arn",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              "apigateway:*::/account"
+                            ]
+                          ]
+                        },
+                        "Action": [
+                          "apigateway:GET",
+                          "apigateway:PATCH"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "CustomDashresourceDashapigwDashcwDashroleLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/football-team-management/dev/1696802102253-2023-10-08T21:55:02.253Z/custom-resources.zip"
+              },
+              "FunctionName": "football-team-management-dev-custom-resource-apigw-cw-role",
+              "Handler": "api-gateway-cloud-watch-role/handler.handler",
+              "MemorySize": 1024,
+              "Runtime": "nodejs16.x",
+              "Timeout": 180,
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleCustomResourcesLambdaExecution",
+                  "Arn"
                 ]
               }
             },
-            "DependsOn": "HttpApiIntegrationCreateUnderscoreclub"
+            "DependsOn": [
+              "IamRoleCustomResourcesLambdaExecution"
+            ]
           }
         },
         "Outputs": {
@@ -396,30 +593,30 @@
           "CreateUnderscoreclubLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreclubLambdaVersionMh6jrvbuvmi2eD2QHWExY9QtS52vCstZ0x5okImu0MY"
+              "Ref": "CreateUnderscoreclubLambdaVersionIanemIzuTXiWbubPct7yq8ygOq6OaObVaCcfeIkII"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreclubLambdaFunctionQualifiedArn"
             }
           },
-          "HttpApiId": {
-            "Description": "Id of the HTTP API",
+          "CreateUnderscoredbLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "HttpApi"
+              "Ref": "CreateUnderscoredbLambdaVersion4Zp4sRwHg1Lhq1HL0Qj1ryzCUy28aWj2ZijY50oCfI"
             },
             "Export": {
-              "Name": "sls-football-team-management-dev-HttpApiId"
+              "Name": "sls-football-team-management-dev-CreateUnderscoredbLambdaFunctionQualifiedArn"
             }
           },
-          "HttpApiUrl": {
-            "Description": "URL of the HTTP API",
+          "ServiceEndpoint": {
+            "Description": "URL of the service endpoint",
             "Value": {
               "Fn::Join": [
                 "",
                 [
                   "https://",
                   {
-                    "Ref": "HttpApi"
+                    "Ref": "ApiGatewayRestApi"
                   },
                   ".execute-api.",
                   {
@@ -428,12 +625,13 @@
                   ".",
                   {
                     "Ref": "AWS::URLSuffix"
-                  }
+                  },
+                  "/dev"
                 ]
               ]
             },
             "Export": {
-              "Name": "sls-football-team-management-dev-HttpApiUrl"
+              "Name": "sls-football-team-management-dev-ServiceEndpoint"
             }
           }
         }
@@ -521,8 +719,8 @@
         }
       },
       "logs": {
-        "httpApi": {
-          "format": "{\"requestTime\":\"$context.requestTime\",\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourcePath\":\"$context.routeKey\",\"path\":\"$context.path\",\"httpMethod\":\"$context.httpMethod\",\"stage\":\"$context.stage\",\"status\":\"$context.status\",\"integrationStatus\":\"$context.integrationStatus\",\"integrationLatency\":\"$context.integrationLatency\",\"responseLatency\":\"$context.responseLatency\",\"responseLength\":\"$context.responseLength\",\"errorMessage\":\"$context.error.message\",\"format\":\"SLS_HTTP_API_LOG\",\"version\":\"1.0.0\"}"
+        "restApi": {
+          "format": "{\"requestTime\":\"$context.requestTime\",\"requestId\":\"$context.requestId\",\"apiId\":\"$context.apiId\",\"resourceId\":\"$context.resourceId\",\"resourcePath\":\"$context.resourcePath\",\"path\":\"$context.path\",\"httpMethod\":\"$context.httpMethod\",\"status\":\"$context.status\",\"authLatency\":\"$context.authorizer.integrationLatency\",\"integrationLatency\":\"$context.integrationLatency\",\"integrationStatus\":\"$context.integrationStatus\",\"responseLatency\":\"$context.responseLatency\",\"responseLength\":\"$context.responseLength\",\"errorMessage\":\"$context.error.message\",\"format\":\"SLS_ACCESS_LOG\",\"version\":\"1.0.0\"}"
         }
       },
       "vpc": {}
@@ -542,21 +740,31 @@
         "handler": "s_create_club.handler",
         "events": [
           {
-            "httpApi": {
-              "path": "/club",
-              "method": "post"
-            },
-            "resolvedMethod": "POST",
-            "resolvedPath": "/club"
+            "http": {
+              "path": "club",
+              "method": "post",
+              "integration": "AWS_PROXY"
+            }
           }
         ],
         "name": "football-team-management-dev-create_club",
         "package": {},
         "memory": 1024,
         "timeout": 6,
-        "runtime": "python3.9",
+        "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscoreclubLambdaVersionMh6jrvbuvmi2eD2QHWExY9QtS52vCstZ0x5okImu0MY"
+        "versionLogicalId": "CreateUnderscoreclubLambdaVersionIanemIzuTXiWbubPct7yq8ygOq6OaObVaCcfeIkII"
+      },
+      "create_db": {
+        "handler": "s_create_db.handler",
+        "events": [],
+        "name": "football-team-management-dev-create_db",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "CreateUnderscoredbLambdaVersion4Zp4sRwHg1Lhq1HL0Qj1ryzCUy28aWj2ZijY50oCfI"
       }
     },
     "configValidationMode": "warn",
@@ -587,7 +795,7 @@
         ],
         "artifactsS3KeyDirname": "serverless/football-team-management/dev/code-artifacts",
         "artifact": "/Users/redahmeid/Documents/personal-projects/football-team-management/.serverless/football-team-management.zip",
-        "artifactDirectoryName": "serverless/football-team-management/dev/1696526333544-2023-10-05T17:18:53.544Z"
+        "artifactDirectoryName": "serverless/football-team-management/dev/1696802102253-2023-10-08T21:55:02.253Z"
       }
     },
     "app": "football-team-management",
@@ -600,7 +808,7 @@
     "artifact": "/Users/redahmeid/Documents/personal-projects/football-team-management/.serverless/football-team-management.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/football-team-management/dev/1696526333544-2023-10-05T17:18:53.544Z",
+    "artifactDirectoryName": "serverless/football-team-management/dev/1696802102253-2023-10-08T21:55:02.253Z",
     "artifact": "football-team-management.zip"
   }
 }

@@ -1,6 +1,3 @@
-import json
-from pydantic import TypeAdapter, ValidationError
-from classes import Club
 from config import app_config
 import db
 
