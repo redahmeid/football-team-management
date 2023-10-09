@@ -151,3 +151,31 @@ def create_players_table():
     # Close the cursor and connection
     cursor.close()
     connection.close()
+
+def create_matches_table():
+     # Define the SQL query to insert data into a table
+    insert_query = "CREATE TABLE Matches" \
+        "(ID varchar(255),"\
+        "Opposition varchar(255) NOT NULL,"\
+        "Team_ID varchar(255) NOT NULL,"\
+        "HomeOrAway varchar(255),"\
+        "Date datetime,"\
+        "PRIMARY KEY (ID),"\
+        "FOREIGN KEY(Team_ID) references Teams(ID))"
+
+
+    print(insert_query)
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+   
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query)
+
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()

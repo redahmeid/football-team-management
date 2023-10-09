@@ -1,40 +1,38 @@
 import json
 from pydantic import TypeAdapter, ValidationError
 
-from classes import Team
+from classes import Team, Match
 from config import app_config
 import api_helper
 import response_errors
-from team_data import save_team
+from matches_data import save_team_fixture
 
 
-def create_team(event, context):
+def create_fixtures(event, context):
     body =json.loads(event["body"])
+    print(body)
+    team_id = event["pathParameters"]["team_id"]
     
-    club_id = event["pathParameters"]["club_id"]
-    team = Team(club_id=club_id,name=body["name"],email=body["email"],age_group=body["age_group"])
-    TeamValidator = TypeAdapter(Team)
+    matches = body["matches"]
+    created_matches = []
+    for match in matches:
+        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],team_id=team_id)
+        MatchValidator = TypeAdapter(Match)
 
-    try:
-        new_team = TeamValidator.validate_python(team)
-        save_response = save_team(new_team)
-        if(save_response[0]==0):
-            result = {"row":save_response[0]}
-            response = api_helper.make_api_response(200,result,None)
-        else:
-            result = {"team_id":save_response[1]}
+        try:
+            new_match = MatchValidator.validate_python(request_player)
+            save_response = save_team_fixture(new_match)
+            save_response["link"] = "/matches/%s"%(save_response["id"])
+            created_matches.append(save_response)
             actions = list()
-            actions.append({"name":"club_details","link":"/clubs/%s" %(new_team.club_id),"method":"GET"})
-            actions.append({"name":"team_details","link":"/teams/%s" %(save_response[1]),"method":"GET"})
-            actions.append({"name":"add_team_admin","link":"/teams/%s/admins" %(save_response[1]),"method":"POST"})
-            actions.append({"name":"add_players","link":"/teams/%s/players" %(save_response[1]),"method":"POST"})
-            actions.append({"name":"add_fixture","link":"/teams/%s/fixtures" %(save_response[1]),"method":"POST"})
-            response = api_helper.make_api_response(200,result,actions)
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None,None,errors)
-    except ValueError as e:
-        response = api_helper.make_api_response(400,None,None,None)
+                
+            
+        except ValidationError as e:
+            errors = response_errors.validationErrorsList(e)
+            response = api_helper.make_api_response(400,None,None,errors)
+        except ValueError as e:
+            response = api_helper.make_api_response(400,None,None,None)
 
-    print(response)
+    
+    response = api_helper.make_api_response(200,created_matches,actions)
     return response

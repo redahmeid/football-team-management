@@ -2,7 +2,13 @@
 from pydantic import BaseModel, validator
 from typing import Optional, List
 from validators import validate_email,validate_short_name
+import datetime
 
+class Match(BaseModel):
+    team_id:str
+    opposition:str
+    homeOrAway:str
+    date:datetime.date
 
 class Player(BaseModel):
     name:str
