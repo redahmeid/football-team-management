@@ -46,6 +46,18 @@ functions:
       - http:
           path: /teams/{team_id}/fixtures
           method: post
+  plan_match_day_squad:
+    handler: handler.plan_day_match_day_squad
+    events:
+      - http:
+          path: /matches/{match_id}/planned_squad
+          method: post
+  retrieve_match_day_squad:
+    handler: handler.retrieve_planned_match_squad
+    events:
+      - http:
+          path: /matches/{match_id}/planned_squad
+          method: get
   create_db:
     handler: handler.create_db
   create_teams_db:
@@ -58,6 +70,8 @@ functions:
     handler: handler.create_players_table
   create_matches_db:
     handler: handler.create_matches_table
+  create_match_planned_squad_db:
+    handler: handler.create_match_planned_squad_table
   drop_db:
     handler: handler.drop_db         
 

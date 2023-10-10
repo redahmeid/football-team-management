@@ -20,7 +20,7 @@ def save_team(team:Team):
     insert_query = "INSERT INTO Teams (ID,Name,AgeGroup, Email,Club_ID) VALUES (%s,%s,%s,%s,%s)"
 
     # Data to be inserted
-    id = "CLUB-%s-%s-%s" %(team.club_id,team.age_group,id_generator.generate_random_number(5))
+    id = id_generator.generate_random_number(5)
     data_to_insert = (id,team.name,team.age_group,team.email,team.club_id)
 
     # Execute the SQL query to insert data

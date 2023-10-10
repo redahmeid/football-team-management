@@ -31,6 +31,14 @@ def create_team_fixtures(event, context):
     response = matches_apis.create_fixtures(event,context)
     return response
 
+def plan_day_match_day_squad(event, context):
+    response = matches_apis.plan_match_squad(event,context)
+    return response
+
+def retrieve_planned_match_squad(event, context):
+    response = matches_apis.show_planned_match_day_squad(event,context)
+    return response
+
 def create_db(event,context):
     # drop_database.drop_database()
     create_database.create_database()
@@ -54,6 +62,10 @@ def create_players_table(event,context):
 def create_matches_table(event,context):
     # drop_database.drop_database()
     create_database.create_matches_table()
+
+def create_match_planned_squad_table(event,context):
+    # drop_database.drop_database()
+    create_database.create_planned_match_day_squad_table()
 
 def drop_db(event,context):
     # drop_database.drop_database()

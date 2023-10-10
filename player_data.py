@@ -20,7 +20,7 @@ def save_player(player:Player):
     insert_query = "INSERT INTO Players (ID,Name,Team_ID) VALUES (%s,%s,%s)"
 
     # Data to be inserted
-    id = "TEAM-%s-%s" %(player.team_id,id_generator.generate_random_number(5))
+    id = id_generator.generate_random_number(5)
     data_to_insert = (id,player.name,player.team_id)
 
     # Execute the SQL query to insert data

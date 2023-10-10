@@ -14,7 +14,7 @@ def save_club(club:Club):
     insert_query = "INSERT INTO Clubs (ID,name,short_name, email,phone) VALUES (%s,%s,%s,%s,%s)"
 
     # Data to be inserted
-    id = "%s%s" %(club.short_name,id_generator.generate_random_number(5))
+    id = id_generator.generate_random_number(5)
     data_to_insert = (id,club.name,club.short_name,club.email,club.phone)
 
     # Execute the SQL query to insert data

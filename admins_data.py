@@ -45,7 +45,7 @@ def save_team_admin(admin:TeamAdministrator):
     insert_query = "INSERT INTO Admins (ID,Name,Email, Team_ID,,Role) VALUES (%s,%s,%s,%s,%s)"
 
     # Data to be inserted
-    id = "TEAM-%s%s" %(admin.team_id,id_generator.generate_random_number(5))
+    id = id_generator.generate_random_number(5)
     data_to_insert = (id,admin.name,admin.email,admin.team_id,admin.role)
 
     # Execute the SQL query to insert data

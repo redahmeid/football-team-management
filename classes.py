@@ -4,11 +4,20 @@ from typing import Optional, List
 from validators import validate_email,validate_short_name
 import datetime
 
+
+class PlayerMatch(BaseModel):
+    match_id:str
+    player_id:str
+    start_time_minutes:int
+    end_time_minutes:int
+    position:str
+
 class Match(BaseModel):
     team_id:str
     opposition:str
     homeOrAway:str
     date:datetime.date
+    team_size:int
 
 class Player(BaseModel):
     name:str
@@ -40,6 +49,7 @@ class Team(BaseModel):
     email:Optional[str]=None
     club_id:str
     players:Optional[List[Player]]=None
+    team_size:int
 
 class Club(BaseModel):
     id:Optional[str]=None
