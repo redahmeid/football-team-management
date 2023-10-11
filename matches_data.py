@@ -34,6 +34,37 @@ def save_team_fixture(match:Match):
     connection.close()
     return {"id":id,"opposition":match.opposition,"homeOrAway":match.homeOrAway,"date":match.date.isoformat()}
 
+# "CREATE TABLE Teams" \
+#         "(ID varchar(255),"\
+#         "Name varchar(255) NOT NULL,"\
+#         "AgeGroup varchar(255) NOT NULL,"\
+#         "Email varchar(255) NOT NULL,"\
+#         "PRIMARY KEY (ID),"\
+#         "FOREIGN KEY(Club_ID) references Clubs(ID))"
+
+def retrieve_fixture_team_size(match_id):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select Team_Size, ID from Matches where ID=%s"
+
+    # Data to be inserted
+    id = id_generator.generate_random_number(5)
+    data_to_insert = (match_id)
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query, data_to_insert)
+    result = cursor.fetchone()
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    return result["Team_Size"]
+
 # "CREATE TABLE Matches_Planned_Squad" \
 #         "(ID varchar(255),"\
 #         "Match_ID varchar(255) NOT NULL,"\

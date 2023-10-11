@@ -5,7 +5,7 @@ from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
-from matches_data import save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad
+from matches_data import save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size
 
 
 def create_fixtures(event, context):
@@ -48,11 +48,11 @@ def create_fixtures(event, context):
 # }
 def plan_match_squad(event,context):
     class PlayerMatch:
-        def __init__(self, match_id, player_id,player_name,start_time_minutes,end_time_minutes,position):
+        def __init__(self, match_id, player_id,start_time_minutes,end_time_minutes,position):
             self.player_id = player_id
-            self.player_name = player_name
             self.start_time_minutes = start_time_minutes
             self.end_time_minutes = end_time_minutes
+            self.match_id=match_id
             self.position = position
     
 
@@ -61,6 +61,8 @@ def plan_match_squad(event,context):
     
     match_id = event["pathParameters"]["match_id"]
     
+    team_size = retrieve_fixture_team_size(match_id)
+
     players = body["players"]
     start_times = []
     for player in players:
@@ -69,7 +71,23 @@ def plan_match_squad(event,context):
         start_times.append(start_time_minutes)
         end_time_minutes = player["end_time_minutes"]
         position = player["position"]
-
+    
+    unique_start_times = list(set(start_times))
+    on_pitch = list()
+    for start_time in unique_start_times:
+        def on_pitch_check(playerMatch):
+            return playerMatch["start_time_minutes"] <= start_time and playerMatch["end_time_minutes"] > start_time
+        on_pitch_filtered = list(filter(on_pitch_check,players))
+        print("TEAM SIZE "+str(len(on_pitch_filtered)))
+        print("TEAM SIZE "+str(team_size))
+        if(len(on_pitch_filtered)!=team_size):
+            return api_helper.make_api_response(400,None,None,[{"messages":"Team size is too small"}])
+    
+    for player in players:
+        player_id = player["player_id"]
+        start_time_minutes = player["start_time_minutes"]
+        end_time_minutes = player["end_time_minutes"]
+        position = player["position"]
         new_player = PlayerMatch(player_id=player_id,match_id=match_id,start_time_minutes=start_time_minutes,end_time_minutes=end_time_minutes,position=position)
         id = save_planned_match_squad(new_player)
 
@@ -131,10 +149,7 @@ def show_planned_match_day_squad(event,context):
         on_pitch.append({"time":start_time,"on_pitch_team":on_pitch_filtered})
     
     on_pitch.sort(key=lambda x:x["time"])
-        
-
-
-                             
+                
     match_squad = {"match_id":match_id,"on_pitch":on_pitch,"subs":subs,"team_times":players}
     print(players)
     response = api_helper.make_api_response(200,match_squad,None)

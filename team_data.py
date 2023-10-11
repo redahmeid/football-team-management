@@ -17,11 +17,11 @@ def save_team(team:Team):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Teams (ID,Name,AgeGroup, Email,Club_ID) VALUES (%s,%s,%s,%s,%s)"
+    insert_query = "INSERT INTO Teams (ID,Name,AgeGroup, Email,Club_ID,Team_Size) VALUES (%s,%s,%s,%s,%s,%s)"
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
-    data_to_insert = (id,team.name,team.age_group,team.email,team.club_id)
+    data_to_insert = (id,team.name,team.age_group,team.email,team.club_id,team.team_size)
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query, data_to_insert)

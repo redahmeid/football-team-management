@@ -12,7 +12,7 @@ def create_team(event, context):
     body =json.loads(event["body"])
     
     club_id = event["pathParameters"]["club_id"]
-    team = Team(club_id=club_id,name=body["name"],email=body["email"],age_group=body["age_group"])
+    team = Team(club_id=club_id,name=body["name"],email=body["email"],age_group=body["age_group"],team_size=body["team_size"])
     TeamValidator = TypeAdapter(Team)
 
     try:
