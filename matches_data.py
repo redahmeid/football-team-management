@@ -117,3 +117,47 @@ def retrieve_planned_match_squad(matchId):
     cursor.close()
     connection.close()
     return response
+
+def retrieve_matches_by_team(team_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select * from Matches as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.TEAM_ID = %s order by p.Date asc" 
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,team_id)
+    rows = cursor.fetchall()
+
+     # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(rows)
+    return rows
+
+def retrieve_next_match_by_team(team_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select * from Matches as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.TEAM_ID = %s order by p.Date asc" 
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,team_id)
+    rows = cursor.fetchone()
+
+     # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(rows)
+    return rows

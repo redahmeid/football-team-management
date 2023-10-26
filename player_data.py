@@ -17,7 +17,7 @@ def save_player(player:Player):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Players (ID,Name,Team_ID) VALUES (%s,%s,%s)"
+    insert_query = "INSERT INTO Players (ID,Name,Team_ID,live) VALUES (%s,%s,%s,'true')"
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
@@ -32,18 +32,61 @@ def save_player(player:Player):
     # Close the cursor and connection
     cursor.close()
     connection.close()
-    return {"id":id,"name":player.name}
+    return id
 
-def retrieve_club(id:str):
+def retrieve_players_by_team(team_id:str):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Clubs where ID = %s" %(id)
+    insert_query = "select * from Players as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.TEAM_ID = %s and p.live <> 'false' or p.live IS NULL" 
+    print(insert_query)
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,team_id)
+    row = cursor.fetchall()
+    # Commit the transaction
+    connection.commit()
 
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(row)
+    return row
+
+def delete_player(player_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "update Players set live='false' where ID='%s'" %(player_id)
+
+    print(insert_query)
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
+    row = cursor.rowcount
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(row)
+    return row
+
+def retrieve_player(id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select * from Players as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.ID = %s and p.live <> 'false'" 
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,id)
     row = cursor.fetchone()
     # Commit the transaction
     connection.commit()
@@ -54,3 +97,7 @@ def retrieve_club(id:str):
     # club = Club(id=id,name=row)
     print(row)
     return row
+
+if __name__ == "__main__":
+    retrieve_players_by_team("18071")
+    # retrieve_player("29308")

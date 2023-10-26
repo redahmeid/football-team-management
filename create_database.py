@@ -108,7 +108,7 @@ def create_teams_table():
         "AgeGroup varchar(255) NOT NULL,"\
         "Email varchar(255) NOT NULL,"\
         "Club_ID varchar(255) NOT NULL,"\
-        "Team_Size int NOT NULL,"\
+        "live VARCHAR(255),"\
         "PRIMARY KEY (ID),"\
         "FOREIGN KEY(Club_ID) references Clubs(ID))"
 
@@ -136,6 +136,7 @@ def create_players_table():
         "Name varchar(255) NOT NULL,"\
         "Team_ID varchar(255) NOT NULL,"\
         "Email varchar(255),"\
+        "live varchar(255),"\
         "PRIMARY KEY (ID),"\
         "FOREIGN KEY(Team_ID) references Teams(ID))"
 
@@ -149,6 +150,38 @@ def create_players_table():
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
 
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+
+def alter_players_table(field_name,data_type):
+     # Define the SQL query to insert data into a table
+    insert_query = "alter TABLE Players ADD %s %s"%(field_name,data_type)
+
+    print(insert_query)
+
+    
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+   
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query)
+
+    describe_query = "describe Players"
+
+    print(describe_query)
+
+   
+    # Execute the SQL query to insert data
+    cursor.execute(describe_query)
+    row = cursor.fetchall()
+
+    print(row)
     # Commit the transaction
     connection.commit()
 
@@ -246,3 +279,4 @@ def create_actual_matches_players_table():
     # Close the cursor and connection
     cursor.close()
     connection.close()
+

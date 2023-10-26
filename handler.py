@@ -26,6 +26,9 @@ def create_team(event, context):
 def create_team_players(event, context):
     response = player_apis.create_players(event,context)
     return response
+def create_team_player(event, context):
+    response = player_apis.create_player(event,context)
+    return response
 
 def create_team_fixtures(event, context):
     response = matches_apis.create_fixtures(event,context)
@@ -37,6 +40,28 @@ def plan_day_match_day_squad(event, context):
 
 def retrieve_planned_match_squad(event, context):
     response = matches_apis.show_planned_match_day_squad(event,context)
+    return response
+def list_players_by_team(event, context):
+    response = player_apis.list_players_by_team(event,context)
+    return response
+def list_teams_by_club(event, context):
+    response = team_apis.list_teams_by_club(event,context)
+    return response
+
+def list_matches_by_team(event,context):
+    response = matches_apis.list_matches_by_team(event,context)
+    return response
+def retrieve_team_summary(event,context):
+    response = team_apis.retrieve_team_summary(event,context)
+    return response
+def delete_player(event,context):
+    response = player_apis.delete_player_from_team(event,context)
+    return response
+def retrieve_club_summary(event,context):
+    response = club_apis.retrieve_club_summary(event,context)
+    return response
+def retrieve_next_match_by_team(event,context):
+    response = matches_apis.next_match_by_team(event,context)
     return response
 
 def create_db(event,context):

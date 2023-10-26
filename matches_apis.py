@@ -5,8 +5,8 @@ from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
-from matches_data import save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size
-
+from matches_data import save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size, retrieve_matches_by_team,retrieve_next_match_by_team
+import response_classes
 
 def create_fixtures(event, context):
     body =json.loads(event["body"])
@@ -37,7 +37,7 @@ def create_fixtures(event, context):
             response = api_helper.make_api_response(400,None,None,None)
 
     
-    response = api_helper.make_api_response(200,created_matches,actions)
+    response = api_helper.make_api_response(200,created_matches)
     return response
 
 # {
@@ -155,3 +155,75 @@ def show_planned_match_day_squad(event,context):
     response = api_helper.make_api_response(200,match_squad,None)
 
     return response
+
+def list_matches_by_team(event, context):
+    team_id = event["pathParameters"]["team_id"]
+    
+    matches = []
+    for match in retrieve_matches_by_team(team_id):
+        try:
+            
+            save_response =convertMatchDatatoMatchResponse(match)
+            matches.append(save_response)
+            
+                
+            
+        except ValidationError as e:
+            errors = response_errors.validationErrorsList(e)
+            print(errors)
+            response = api_helper.make_api_response(400,None,errors)
+            return response
+        except ValueError as e:
+            print(e)
+            response = api_helper.make_api_response(400,None)
+            return response
+            
+    
+    response = api_helper.make_api_response(200,matches)
+    return response
+
+def next_match_by_team(event, context):
+    team_id = event["pathParameters"]["team_id"]
+    
+    matches = []
+    for match in retrieve_next_match_by_team(team_id):
+        try:
+            
+            save_response =convertMatchDatatoMatchResponse(match)
+            matches.append(save_response)
+            
+                
+            
+        except ValidationError as e:
+            errors = response_errors.validationErrorsList(e)
+            print(errors)
+            response = api_helper.make_api_response(400,None,errors)
+            return response
+        except ValueError as e:
+            print(e)
+            response = api_helper.make_api_response(400,None)
+            return response
+            
+    
+    response = api_helper.make_api_response(200,matches)
+    return response
+
+# (ID varchar(255),"\
+#         "Opposition varchar(255) NOT NULL,"\
+#         "Team_ID varchar(255) NOT NULL,"\
+#         "HomeOrAway varchar(255),"\
+#         "Date datetime,"\
+#         "Team_Size int NOT NULL,"\
+def convertMatchDatatoMatchResponse(match) -> response_classes.MatchResponse:
+    
+    id = match["ID"]
+    baseTeamUrl = "/matches/%s"%(id)
+    opposition = match["Opposition"]
+    homeOrAway = match["HomeOrAway"]
+    date=match["Date"]
+    self = response_classes.Link(link=baseTeamUrl,method="get")
+    
+
+    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self)
+    print("Convert team %s"%(response))
+    return response.model_dump()
