@@ -5,7 +5,7 @@ from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
-from matches_data import save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size, retrieve_matches_by_team,retrieve_next_match_by_team
+from matches_data import retrieve_match_by_id,save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size, retrieve_matches_by_team,retrieve_next_match_by_team
 import response_classes
 
 def create_fixtures(event, context):
@@ -16,25 +16,22 @@ def create_fixtures(event, context):
     matches = body["matches"]
     created_matches = []
     for match in matches:
-        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],team_size=match["team_size"],team_id=team_id)
+        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],team_id=team_id)
         MatchValidator = TypeAdapter(Match)
 
         try:
             new_match = MatchValidator.validate_python(request_player)
-            save_response = save_team_fixture(new_match)
-            actions = list()
-            actions.append({"name":"match_details","link":"/matches/%s"%(save_response["id"]),"method":"GET"})
-            actions.append({"name":"plan_match_day_squad","link":"/matches/%s/planned_squad"%(save_response["id"]),"method":"POST"})
-            save_response["actions"] = actions
-            created_matches.append(save_response)
-            actions = list()
+            result = convertMatchDatatoMatchResponse(retrieve_match_by_id(save_team_fixture(new_match)))
+            
+            created_matches.append(result)
+            
                 
             
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
-            response = api_helper.make_api_response(400,None,None,errors)
+            response = api_helper.make_api_response(400,None)
         except ValueError as e:
-            response = api_helper.make_api_response(400,None,None,None)
+            response = api_helper.make_api_response(400,None)
 
     
     response = api_helper.make_api_response(200,created_matches)
@@ -186,23 +183,23 @@ def next_match_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     
     matches = []
-    for match in retrieve_next_match_by_team(team_id):
-        try:
+    
+    try:
+        
+        save_response =convertMatchDatatoMatchResponse(retrieve_next_match_by_team(team_id))
+        matches.append(save_response)
+        
             
-            save_response =convertMatchDatatoMatchResponse(match)
-            matches.append(save_response)
-            
-                
-            
-        except ValidationError as e:
-            errors = response_errors.validationErrorsList(e)
-            print(errors)
-            response = api_helper.make_api_response(400,None,errors)
-            return response
-        except ValueError as e:
-            print(e)
-            response = api_helper.make_api_response(400,None)
-            return response
+        
+    except ValidationError as e:
+        errors = response_errors.validationErrorsList(e)
+        print(errors)
+        response = api_helper.make_api_response(400,None,errors)
+        return response
+    except ValueError as e:
+        print(e)
+        response = api_helper.make_api_response(400,None)
+        return response
             
     
     response = api_helper.make_api_response(200,matches)
@@ -220,10 +217,11 @@ def convertMatchDatatoMatchResponse(match) -> response_classes.MatchResponse:
     baseTeamUrl = "/matches/%s"%(id)
     opposition = match["Opposition"]
     homeOrAway = match["HomeOrAway"]
+    length = match["Length"]
     date=match["Date"]
     self = response_classes.Link(link=baseTeamUrl,method="get")
     
 
-    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self)
+    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self,length=length)
     print("Convert team %s"%(response))
     return response.model_dump()

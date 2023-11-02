@@ -44,13 +44,19 @@ functions:
     handler: handler.create_team
     events:
       - http:
-          path: /clubs/{club_id}/teams
+          path: /teams
           method: post
   create_team_fixtures:
     handler: handler.create_team_fixtures
     events:
       - http:
-          path: /teams/{team_id}/fixtures
+          path: /teams/{team_id}/matches
+          method: post
+  create_user:
+    handler: handler.create_user
+    events:
+      - http:
+          path: /users
           method: post
   plan_match_day_squad:
     handler: handler.plan_day_match_day_squad
@@ -112,27 +118,48 @@ functions:
           path: /teams/{team_id}/next_match
           method: get
           cors: true
-  create_db:
-    handler: handler.create_db
-  create_teams_db:
-    handler: handler.create_teams_table
-  create_admins_db:
-    handler: handler.create_admins_table
-  create_clubs_db:
-    handler: handler.create_clubs_table
-  create_players_db:
-    handler: handler.create_players_table
-  create_matches_db:
-    handler: handler.create_matches_table
-  create_match_planned_squad_db:
-    handler: handler.create_match_planned_squad_table
-  drop_db:
-    handler: handler.drop_db         
+  
+  create_team_screen_bff:
+    handler: bffs.create_team_screen.submit_team
+    events:
+      - http:
+          path: /bff/create_team_screen
+          method: post
+          cors: true
+  view_team_screen_bff:
+    handler: bffs.create_team_screen.enter_screen
+    events:
+      - http:
+          path: /bff/view_team_screen
+          method: get
+          cors: true
+  user_homepage_bff:
+    handler: bffs.user_homepage.enter_screen
+    events:
+      - http:
+          path: /bff/user_homepage
+          method: get
+          cors: true
+  create_match_day_bff:
+    handler: bffs.match_detail_screen.enter_screen
+    events:
+      - http:
+          path: /bff/match_details
+          method: get
+          cors: true
+  add_to_starting_lineup_bff:
+    handler: bffs.match_detail_screen.select_remove_from_starting_lineup
+    events:
+      - http:
+          path: /bff/match_details/starting_lineup
+          method: patch
+          cors: true
+  
 
 plugins:
   - serverless-dotenv-plugin
   - serverless-python-requirements
-
+  - serverless-prune-plugin
 custom:
   pythonRequirements:
     dockerizePip: non-linux

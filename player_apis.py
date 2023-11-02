@@ -132,14 +132,11 @@ def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse
     id = player["ID"]
     baseTeamUrl = "/players/%s"%(id)
     name = player["Name"]
-    teamId = player["Team_ID"]
-    email = player["Email"]
     live = player["live"]
-    print("Convert player live %s"%(live))
     if(live == None):
         live = True
     self = response_classes.Link(link=baseTeamUrl,method="get")
     deletePlayer = response_classes.Link(link=baseTeamUrl,method="delete")
-    response =  response_classes.PlayerResponse(id=id,email=email,name=name,live=live,self=self,deletePlayer=deletePlayer)
+    response =  response_classes.PlayerResponse(id=id,name=name,live=live,self=self,deletePlayer=deletePlayer)
     print("Convert player %s"%(response))
     return response.model_dump()

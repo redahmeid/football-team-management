@@ -11,10 +11,9 @@ def make_api_response(statusCode: int, result: str,  errors = None):
         # Handle success response
         body = {"result": result}
 
-    response = {"statusCode": statusCode, "body": json.dumps(body), "headers": {"Content-Type": "application/json"}}
+    response = {"statusCode": statusCode, "body": json.dumps(body,default=str), "headers": {"Content-Type": "application/json"}}
     return response
 
 def serialize_datetime(obj): 
-    if isinstance(obj, datetime.datetime):  
+    if isinstance(obj, datetime.date):  
         return obj.isoformat() 
-    raise TypeError("Type not serializable") 

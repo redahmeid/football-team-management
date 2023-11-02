@@ -1,6 +1,6 @@
 import json
 from pydantic import TypeAdapter, ValidationError
-
+from exceptions import AuthError
 from classes import Team
 import response_classes
 from config import app_config
@@ -8,16 +8,19 @@ import api_helper
 import response_errors
 from team_data import save_team,retrieve_teams_by_club,retrieve_team_by_id
 from matches_data import retrieve_next_match_by_team
-
+from secrets_util import getEmailFromToken, lambda_handler
 
 def create_team(event, context):
+    lambda_handler(event,context)
+    
+
     body =json.loads(event["body"])
     
-    club_id = event["pathParameters"]["club_id"]
-    team = Team(club_id=club_id,name=body["name"],email=body["email"],age_group=body["age_group"],team_size=body["team_size"])
     TeamValidator = TypeAdapter(Team)
     teams = []
     try:
+        
+        team = Team(name=body["name"],age_group=body["age_group"])
         new_team = TeamValidator.validate_python(team)
         save_response = save_team(new_team)
         print("CREATE TEAM: %s"%(save_response))
@@ -25,9 +28,11 @@ def create_team(event, context):
         response = api_helper.make_api_response(200,teams)
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None,None,errors)
+        response = api_helper.make_api_response(400,None)
     except ValueError as e:
-        response = api_helper.make_api_response(400,None,None,None)
+        response = api_helper.make_api_response(400,None)
+    except AuthError as e:
+        response = api_helper.make_api_response(401,None,e)
 
     print(response)
     return response
@@ -98,8 +103,6 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     baseTeamUrl = "/teams/%s"%(id)
     name = team["Name"]
     ageGroup = team["AgeGroup"]
-    email = team["Email"]
-    clubId = team["Club_ID"]
     live = team["live"]
     print("Convert team live %s"%(live))
     if(live == None):
@@ -111,6 +114,6 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     addFixtures = response_classes.Link(link="%s/matches"%(baseTeamUrl),method="post")
     nextMatch = response_classes.Link(link="%s/next_match"%(baseTeamUrl),method="get")
 
-    response =  response_classes.TeamResponse(id=id,email=email,name=name,ageGroup=ageGroup,clubId=clubId,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
+    response =  response_classes.TeamResponse(id=id,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     print("Convert team %s"%(response))
     return response.model_dump()

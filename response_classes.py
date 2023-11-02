@@ -7,19 +7,31 @@ class Link(BaseModel):
     link:str
     method:str
 
+
 class MatchResponse(BaseModel):
     id:str
     opposition:str
     homeOrAway:str
+    length:int
     date:datetime.date
     self:Link
 
 class PlayerResponse(BaseModel):
     id:str
     name:str
+    isSelected:bool=False
     live:bool
     self:Link
     deletePlayer:Link
+
+class SelectedPlayerResponse(BaseModel):
+    id:str
+    selectionId:Optional[str]=None
+    name:str
+    isSelected:bool=False
+    position:Optional[str]=None
+    self:Link
+    addRemoveToStartingLineup:Link
 
 # (ID varchar(255),"\
 #         "Name varchar(255) NOT NULL,"\
@@ -40,8 +52,6 @@ class TeamResponse(BaseModel):
     id:str
     name:str
     ageGroup:str
-    clubId:str
-    email:str
     live:bool
     self:Link
     nextMatch:Link        #save_response["next_match"] = {"ID":match["ID"],"opposition":match["Opposition"],"date":match["Date"].isoformat(),"homeOrAway":match["HomeOrAway"], "club_name":match["c.Name"], "team_name":match["Name"], "age_group":match["AgeGroup"]}
@@ -49,4 +59,7 @@ class TeamResponse(BaseModel):
     teamFixtures:Link        #save_response["fixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"get"}
     addPlayers:Link        #save_response["addPlayers"] = {"link":"/teams/%s/players"%(save_response["ID"]),"method":"post"}
     addFixtures:Link        #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
-   
+
+class MatchDayResponse(BaseModel):
+    match:MatchResponse
+    availablePlayers:List[SelectedPlayerResponse]

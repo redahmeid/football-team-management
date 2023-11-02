@@ -2,21 +2,14 @@
 import create_database
 import drop_database
 import club_apis
-import admins_apis
 import team_apis
 import player_apis
 import matches_apis
+import users_apis
 
 
 def create_club(event, context):
     response = club_apis.create_club(event,context)
-    return response
-
-def create_club_admin(event, context):
-    response = admins_apis.create_club_admin(event,context)
-    return response
-def create_team_admin(event, context):
-    response = admins_apis.create_team_admin(event,context)
     return response
 
 def create_team(event, context):
@@ -62,6 +55,9 @@ def retrieve_club_summary(event,context):
     return response
 def retrieve_next_match_by_team(event,context):
     response = matches_apis.next_match_by_team(event,context)
+    return response
+def create_user(event,context):
+    response = users_apis.new_user(event,context)
     return response
 
 def create_db(event,context):

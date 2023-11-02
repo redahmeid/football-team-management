@@ -3,6 +3,7 @@ from pydantic import BaseModel, validator
 from typing import Optional, List
 from validators import validate_email,validate_short_name
 import datetime
+import roles
 
 
 class PlayerMatch(BaseModel):
@@ -16,8 +17,8 @@ class Match(BaseModel):
     team_id:str
     opposition:str
     homeOrAway:str
+    length:int
     date:datetime.date
-    team_size:int
 
 class Player(BaseModel):
     name:str
@@ -36,20 +37,14 @@ class ClubAdministrator(BaseModel):
     club_id:str
     role:str
 
-class TeamAdministrator(BaseModel):
-    name:str
-    email:str
+class TeamUser(BaseModel):
+    user_id:str
     team_id:str
-    role:str
+    role:roles.Role
 
 class Team(BaseModel):
-    id:Optional[str]=None
     name:str
     age_group:str
-    email:Optional[str]=None
-    club_id:str
-    players:Optional[List[Player]]=None
-    team_size:int
 
 class Club(BaseModel):
     id:Optional[str]=None
@@ -75,7 +70,8 @@ class Club(BaseModel):
         return value
       raise ValueError("Short Name must have no spaces")
 
-
+class User(BaseModel):
+    email:str
     
     
     

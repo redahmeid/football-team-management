@@ -12,16 +12,17 @@ import db
 #         "FOREIGN KEY(Club_ID) references Clubs(ID))"
 
 def save_team(team:Team):
+    print("IN SAVE TEAM ")
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Teams (ID,Name,AgeGroup, Email,Club_ID,live) VALUES (%s,%s,%s,%s,%s,%s)"
+    insert_query = "INSERT INTO Teams (ID,Name,AgeGroup, live) VALUES (%s,%s,%s,%s)"
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
-    data_to_insert = (id,team.name,team.age_group,team.email,team.club_id,True)
+    data_to_insert = (id,team.name,team.age_group,True)
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query, data_to_insert)
@@ -32,6 +33,7 @@ def save_team(team:Team):
     # Close the cursor and connection
     cursor.close()
     connection.close()
+    print("IN SAVE TEAM %s"%id)
     return id
 
 def retrieve_teams_by_club(club_id:str):
@@ -44,6 +46,27 @@ def retrieve_teams_by_club(club_id:str):
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
+    row = cursor.fetchall()
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(row)
+    return row
+
+def retrieve_teams_by_user_id(user_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select * from Roles as r inner join Teams as t on r.Team_ID = t.ID and r.User_ID = %s" 
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,user_id)
     row = cursor.fetchall()
     # Commit the transaction
     connection.commit()

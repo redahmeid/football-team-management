@@ -1,7 +1,10 @@
 PyMySQL==1.1.0
 annotated-types==0.5.0
+boto3==1.28.73
+botocore==1.31.73
 cffi==1.16.0
 cryptography==41.0.4
+firebase-admin==6.2.0
 mergedeep==1.3.0
 protobuf==4.21.12
 py-event-mocks==0.0.4
@@ -10,3 +13,4 @@ pydantic==2.4.2
 pydantic_core==2.10.1
 python-dotenv==1.0.0
 typing_extensions==4.8.0
+urllib3==1.26.18

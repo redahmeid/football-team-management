@@ -34,13 +34,15 @@ def save_player(player:Player):
     connection.close()
     return id
 
+
+
 def retrieve_players_by_team(team_id:str):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Players as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.TEAM_ID = %s and p.live <> 'false' or p.live IS NULL" 
+    insert_query = "select * from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
     print(insert_query)
     # Execute the SQL query to insert data
     cursor.execute(insert_query,team_id)
@@ -83,7 +85,7 @@ def retrieve_player(id:str):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Players as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.ID = %s and p.live <> 'false'" 
+    insert_query = "select * from Players as p where p.ID = %s and p.live <> 'false'" 
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query,id)
