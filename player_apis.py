@@ -1,13 +1,16 @@
 import json
 from pydantic import TypeAdapter, ValidationError
-
+from secrets_util import lambda_handler, getEmailFromToken
 from classes import Player
 from config import app_config
 import api_helper
 import response_errors
 import response_classes
-from player_data import save_player,retrieve_players_by_team,delete_player,retrieve_player
-
+from player_data import save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
+from roles_data import retrieve_role_by_user_id_and_team_id
+from users_data import retrieve_user_id_by_email
+from roles import Role
+from auth import check_permissions
 
 def create_players(event, context):
     body =json.loads(event["body"])
@@ -15,11 +18,9 @@ def create_players(event, context):
     team_id = event["pathParameters"]["team_id"]
     
     players = body["players"]
-    print("CREATE PLAYERS; %s"%(players))
     created_players = []
     i = 0
     for player in players:
-        print("CREATE PLAYERS INDEX; %s"%(i))
         request_player = Player(name=player["name"],team_id=team_id)
         PlayerValidator = TypeAdapter(Player)
 
@@ -40,61 +41,34 @@ def create_players(event, context):
     
     response = api_helper.make_api_response(200,created_players)
     return response
-def create_player(event,context):
-    body =json.loads(event["body"])
-    
-    team_id = event["pathParameters"]["team_id"]
-    
-    player = body["players"]
-    
-    request_player = Player(name=player["name"],team_id=team_id)
-    PlayerValidator = TypeAdapter(Player)
-
-    try:
-        new_player = PlayerValidator.validate_python(request_player)
-        save_response = save_player(new_player)
-        save_response["link"] = "/players/%s"%(save_response["id"])
-        
-        actions = list()
-            
-        
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None,None,errors)
-    except ValueError as e:
-        response = api_helper.make_api_response(400,None,None,None)
-
-    
-    response = api_helper.make_api_response(200,save_response,actions)
-    return response
 
 
 
 def list_players_by_team(event, context):
-   
-    
+    lambda_handler(event,context)
+    acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
     team_id = event["pathParameters"]["team_id"]
     
     players = []
     for player in retrieve_players_by_team(team_id):
        
-        new_player = {"ID":player["ID"],"name":player["Name"]}
         try:
-            
-            result = convertPlayerDataToPlayerResponse(player)
-            
-            players.append(result)
-                
+            if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+                result = convertPlayerDataToPlayerResponse(player)
+                players.append(result)
+            else:
+                response = api_helper.make_api_response(403,None,"You do not have permission to view the players")
+                return response
             
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
         except ValueError as e:
             response = api_helper.make_api_response(400,None,None)
-
-    
     response = api_helper.make_api_response(200,players)
+    
     return response
+
 
 def delete_player_from_team(event, context):
    
@@ -140,3 +114,4 @@ def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse
     response =  response_classes.PlayerResponse(id=id,name=name,live=live,self=self,deletePlayer=deletePlayer)
     print("Convert player %s"%(response))
     return response.model_dump()
+

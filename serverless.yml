@@ -10,35 +10,11 @@ provider:
   region: eu-west-2
 
 functions:
-  create_club:
-    handler: handler.create_club
-    events:
-      - http:
-          path: /clubs
-          method: post
-  create_club_admin:
-    handler: handler.create_club_admin
-    events:
-      - http:
-          path: /clubs/{club_id}/admins
-          method: post
-  create_team_admin:
-    handler: handler.create_team_admin
-    events:
-      - http:
-          path: /teams/{team_id}/admins
-          method: post
   create_team_players:
     handler: handler.create_team_players
     events:
       - http:
           path: /teams/{team_id}/players
-          method: post
-  create_team_player:
-    handler: handler.create_team_player
-    events:
-      - http:
-          path: /teams/{team_id}/player
           method: post
   create_team:
     handler: handler.create_team
@@ -58,31 +34,12 @@ functions:
       - http:
           path: /users
           method: post
-  plan_match_day_squad:
-    handler: handler.plan_day_match_day_squad
-    events:
-      - http:
-          path: /matches/{match_id}/planned_squad
-          method: post
-  retrieve_match_day_squad:
-    handler: handler.retrieve_planned_match_squad
-    events:
-      - http:
-          path: /matches/{match_id}/planned_squad
-          method: get
   retrieve_team_squad:
     handler: handler.list_players_by_team
     events:
       - http:
           path: /teams/{team_id}/players
           method: get
-  retrieve_teams_by_club:
-    handler: handler.list_teams_by_club
-    events:
-      - http:
-          path: /clubs/{club_id}/teams
-          method: get
-          cors: true
   retrieve_matches_by_team:
     handler: handler.list_matches_by_team
     events:
@@ -104,13 +61,6 @@ functions:
           path: /players/{player_id}
           method: delete
           cors: true
-  retrieve_club:
-    handler: handler.retrieve_club_summary
-    events:
-      - http:
-          path: /clubs/{club_id}
-          method: get
-          cors: true
   retrieve_next_match_by_team:
     handler: handler.retrieve_next_match_by_team
     events:
@@ -118,7 +68,6 @@ functions:
           path: /teams/{team_id}/next_match
           method: get
           cors: true
-  
   create_team_screen_bff:
     handler: bffs.create_team_screen.submit_team
     events:
@@ -151,9 +100,20 @@ functions:
     handler: bffs.match_detail_screen.select_remove_from_starting_lineup
     events:
       - http:
-          path: /bff/match_details/starting_lineup
+          path: /teams/{team_id}/matches/{match_id}/players/{player_id}
           method: patch
           cors: true
+  
+  create_jwt:
+    handler: auth.set_custom_claims
+    events:
+      - http:
+          path: /auth/token
+          method: post
+          cors: true
+  
+  
+ 
   
 
 plugins:

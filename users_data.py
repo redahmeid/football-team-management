@@ -9,7 +9,7 @@ import db
         # "Role varchar(255),"\
         # "live VARCHAR(255),"\
 
-def save_user(teamUser:User):
+def save_user(id,email):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
@@ -19,7 +19,7 @@ def save_user(teamUser:User):
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
-    data_to_insert = (id,teamUser.email,True)
+    data_to_insert = (id,email,True)
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query, data_to_insert)

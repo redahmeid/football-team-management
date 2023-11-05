@@ -18,7 +18,7 @@ def save_role(user:TeamUser):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Roles (ID,User_ID,Team_ID,Role,live) VALUES (%s,%s,%s,%s,%s)"
+    insert_query = "INSERT INTO Roles (ID,Email,Team_ID,Role,live) VALUES (%s,%s,%s,%s,%s)"
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
@@ -42,7 +42,7 @@ def retrieve_role_by_user_id_and_team_id(user_id,team_id):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Roles where User_ID=%s and Team_ID=%s"
+    insert_query = "select * from Roles where Email=%s and Team_ID=%s"
 
     data_to_insert = (user_id,team_id)
 

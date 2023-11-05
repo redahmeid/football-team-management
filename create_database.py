@@ -35,7 +35,6 @@ def create_database():
     create_users_table()
     create_team_users_table()
     create_match_day_lineup_table()
-   
     
 
 
@@ -94,12 +93,12 @@ def create_team_users_table():
      # Define the SQL query to insert data into a table
     insert_query = "CREATE TABLE Roles" \
         "(ID varchar(255),"\
-        "User_ID varchar(255),"\
+        "Email varchar(255),"\
         "Team_ID varchar(255),"\
         "Role varchar(255),"\
         "live VARCHAR(255),"\
         "PRIMARY KEY (ID),"\
-        "FOREIGN KEY(User_ID) references Users(ID),"\
+        "FOREIGN KEY(Email) references Users(Email),"\
         "FOREIGN KEY(Team_ID) references Teams(ID))"
 
 
@@ -187,6 +186,9 @@ def create_matches_table():
         "Team_ID varchar(255) NOT NULL,"\
         "HomeOrAway varchar(255),"\
         "Date datetime,"\
+        "Status varchar(255),"\
+        "Goals_For int,"\
+        "Goals_Against int,"\
         "Length int,"\
         "PRIMARY KEY (ID),"\
         "FOREIGN KEY(Team_ID) references Teams(ID))"
@@ -219,38 +221,6 @@ def create_match_day_lineup_table():
         "Position varchar(255),"\
         "PRIMARY KEY (ID),"\
         "FOREIGN KEY(Match_ID) references Matches(ID),"\
-        "FOREIGN KEY(Player_ID) references Players(ID))"
-
-
-    print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
-
-   
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
-
-    # Commit the transaction
-    connection.commit()
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-
-def create_actual_matches_players_table():
-     # Define the SQL query to insert data into a table
-    insert_query = "CREATE TABLE Matches" \
-        "(ID varchar(255),"\
-        "Match_ID varchar(255) NOT NULL,"\
-        "Player_ID varchar(255) NOT NULL,"\
-        "Start_Time time,"\
-        "End_Time time,"\
-        "Goals int,"\
-        "Assists int,"\
-        "Position varchar(255),"\
-        "PRIMARY KEY (ID),"\
-        "FOREIGN KEY(Match_ID) references Matches(ID))"\
         "FOREIGN KEY(Player_ID) references Players(ID))"
 
 

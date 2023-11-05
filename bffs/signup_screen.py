@@ -14,7 +14,6 @@ def signup_submit(event, context):
     lambda_handler(event,context)
     
     try:
-        getEmailFromToken(event,context)
         return new_user(event,context)
     except exceptions.AuthError as e:
         response = api_helper.make_api_response(401,None,e)

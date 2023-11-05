@@ -3,7 +3,6 @@ from pydantic import TypeAdapter, ValidationError
 
 from classes import User
 import response_classes
-from config import app_config
 import exceptions
 from team_data import retrieve_teams_by_user_id
 from matches_data import retrieve_next_match_by_team
@@ -16,8 +15,7 @@ def enter_screen(event, context):
     teams_list = []
     try:
         email =  getEmailFromToken(event,context)
-        user_id = retrieve_user_id_by_email(email)
-        teams = retrieve_teams_by_user_id(user_id)
+        teams = retrieve_teams_by_user_id(email)
         for team in teams:
             team_response = convertTeamDataToTeamResponse(team)
             teams_list.append(team_response)

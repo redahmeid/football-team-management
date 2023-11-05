@@ -6,18 +6,21 @@ import response_classes
 #         "Date datetime,"\
 #         "Team_Size int NOT NULL,"\
 def convertMatchDatatoMatchResponse(match) -> response_classes.MatchResponse:
+    print(match)
     
     id = match["ID"]
+    lineupStatus = match["Status"]
     length = match["Length"]
     baseTeamUrl = "/matches/%s"%(id)
     opposition = match["Opposition"]
     homeOrAway = match["HomeOrAway"]
     date=match["Date"]
     self = response_classes.Link(link=baseTeamUrl,method="get")
-    
+    submitUrl = "%s/starting_lineup/submit?team_id=%s&match_id=%s"%(baseTeamUrl,match["Team_ID"],id)
+    submitLineup = response_classes.Link(link=submitUrl,method="patch")
 
-    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self, length=length)
-    print("Convert team %s"%(response))
+    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self, length=length,lineupStatus=lineupStatus,submitLinueup=submitLineup)
+    print("Convert Match %s"%(response))
     return response.model_dump()
 
 def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse:
@@ -42,14 +45,14 @@ def convertPlayerDataToLineupPlayerResponse(player,isSelected,baseUrl,position,t
     name = player["Name"]
     position=position
     live = player["live"]
-    
+    url = "%s/players/%s"%(baseUrl,id)
     if(live == None):
         live = True
-    self = response_classes.Link(link=baseUrl,method="get")
+    self = response_classes.Link(link=url,method="get")
     
-    subOnOffUrl = "%s/starting_lineup?player_id=%s&team_id=%s&match_id=%s"%(baseUrl,id,team_id,match_id)
-    subOnOff = response_classes.Link(link=subOnOffUrl,method="patch")
-    response =  response_classes.SelectedPlayerResponse(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,addRemoveToStartingLineup=subOnOff,isSelected=isSelected)
+    
+    subOnOff = response_classes.Link(link=url,method="patch")
+    response =  response_classes.SelectedPlayerResponse(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,toggleStarting=subOnOff,isSelected=isSelected)
     print("Convert player %s"%(response))
     return response.model_dump()
 

@@ -18,11 +18,11 @@ def save_team_fixture(match:Match):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID) VALUES (%s,%s,%s,%s,%s,%s)"
+    insert_query = "INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status) VALUES (%s,%s,%s,%s,%s,%s,%s)"
 
     # Data to be inserted
     id = id_generator.generate_random_number(5)
-    data_to_insert = (id,match.opposition,match.homeOrAway,match.date,match.length,match.team_id)
+    data_to_insert = (id,match.opposition,match.homeOrAway,match.date,match.length,match.team_id,match.status)
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query, data_to_insert)
@@ -125,7 +125,7 @@ def retrieve_matches_by_team(team_id:str):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Matches as p inner join Teams as t on p.Team_ID = t.ID inner join Clubs as c on t.Club_ID = c.ID and p.TEAM_ID = %s order by p.Date asc" 
+    insert_query = "select * from Matches as p where p.Team_ID = %s order by p.Date asc"  
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query,team_id)
@@ -169,7 +169,7 @@ def retrieve_next_match_by_team(team_id:str):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Matches as p where p.Team_ID = %s order by p.Date asc" 
+    insert_query = "select * from Matches as p where p.Team_ID = %s and p.Date>= CURRENT_DATE() order by p.Date asc" 
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query,team_id)

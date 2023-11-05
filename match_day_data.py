@@ -127,3 +127,29 @@ def retrieve_starting_lineup(match_id):
     return result
 
 
+
+def update_match_status(match_id,status):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+    # Define the SQL query to insert data into a table
+    insert_query = "update Matches set Status=%s where Match_ID=%s"
+    
+    data_to_insert = (status,match_id)
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query, data_to_insert)
+    
+    result = cursor.rowcount
+    # Commit the transaction
+    connection.commit()
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    return result
+
+
+
+
+
+

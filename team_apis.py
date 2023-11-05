@@ -9,6 +9,7 @@ import response_errors
 from team_data import save_team,retrieve_teams_by_club,retrieve_team_by_id
 from matches_data import retrieve_next_match_by_team
 from secrets_util import getEmailFromToken, lambda_handler
+from auth import set_custom_claims
 
 def create_team(event, context):
     lambda_handler(event,context)
@@ -23,6 +24,7 @@ def create_team(event, context):
         team = Team(name=body["name"],age_group=body["age_group"])
         new_team = TeamValidator.validate_python(team)
         save_response = save_team(new_team)
+        set_custom_claims(getEmailFromToken(event,context))
         print("CREATE TEAM: %s"%(save_response))
         teams.append(convertTeamDataToTeamResponse(retrieve_team_by_id(save_response)))
         response = api_helper.make_api_response(200,teams)

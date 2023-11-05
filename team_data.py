@@ -63,11 +63,13 @@ def retrieve_teams_by_user_id(user_id:str):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = "select * from Roles as r inner join Teams as t on r.Team_ID = t.ID and r.User_ID = %s" 
+    insert_query = "select * from Roles as r inner join Teams as t on r.Team_ID = t.ID and r.Email = %s" 
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query,user_id)
+   
     row = cursor.fetchall()
+    print("###################ROWS %s################"%row)
     # Commit the transaction
     connection.commit()
 

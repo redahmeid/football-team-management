@@ -30,7 +30,9 @@ def validate_firebase_id_token(id_token):
     try:
         
         decoded_token = auth.verify_id_token(id_token)
-
+        
+        print("#####################DECODED TOKEN#####################")
+        print(decoded_token)
         # Token is valid; you can access the claims or UID like this:
         uid = decoded_token['uid']
         # Perform your server-side actions here

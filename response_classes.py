@@ -13,8 +13,10 @@ class MatchResponse(BaseModel):
     opposition:str
     homeOrAway:str
     length:int
+    lineupStatus:Optional[str]=None
     date:datetime.date
     self:Link
+    submitLinueup:Link
 
 class PlayerResponse(BaseModel):
     id:str
@@ -31,7 +33,7 @@ class SelectedPlayerResponse(BaseModel):
     isSelected:bool=False
     position:Optional[str]=None
     self:Link
-    addRemoveToStartingLineup:Link
+    toggleStarting:Link
 
 # (ID varchar(255),"\
 #         "Name varchar(255) NOT NULL,"\

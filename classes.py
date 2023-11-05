@@ -17,6 +17,7 @@ class Match(BaseModel):
     team_id:str
     opposition:str
     homeOrAway:str
+    status:str
     length:int
     date:datetime.date
 

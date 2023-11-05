@@ -57,6 +57,27 @@ def retrieve_players_by_team(team_id:str):
     print(row)
     return row
 
+def squad_size_by_team(team_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = "select count(*) as count from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
+    print(insert_query)
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query,team_id)
+    row = cursor.fetchone()
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    print(row)
+    return row
+
 def delete_player(player_id:str):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database

@@ -8,17 +8,17 @@ import api_helper
 import response_errors
 from users_data import save_user
 from matches_data import retrieve_next_match_by_team
+from auth import getToken
+from secrets_util import lambda_handler
 
 
 def new_user(event, context):
-    body =json.loads(event["body"])
-    
-    user = User(email=body["email"])
-    UserValidator = TypeAdapter(User)
-    
+    lambda_handler(event,context)
     try:
-        new_team = UserValidator.validate_python(user)
-        id = save_user(new_team)
+        
+        email = getToken(event)["email"]
+        id = getToken(event)["uid"]
+        save_user(id,email)
         
         response = api_helper.make_api_response(200,{"id":id})
     except ValidationError as e:

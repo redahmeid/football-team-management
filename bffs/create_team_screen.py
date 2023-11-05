@@ -11,6 +11,7 @@ from secrets_util import getEmailFromToken, lambda_handler
 import api_helper
 from roles_data import save_role
 import roles
+from auth import set_custom_claims
 
 def enter_screen(event, context):
     lambda_handler(event,context)
@@ -29,22 +30,18 @@ def submit_team(event, context):
     teams = []
     try:
         email = getEmailFromToken(event,context)
-        print("SUBMIT TEAM EMAIL %s"%email)
-        print("SUBMIT TEAM BODY %s"%body)
+        
         team = Team(age_group=body["age_group"],name=body["name"])
-        print("SUBMIT TEAM TEAM %s"%team)
+        
         team_id = save_team(team)
-        print("SUBMIT TEAM TEAM ID %s"%team_id)
-        user_id = retrieve_user_id_by_email(email)
-        print("SUBMIT TEAM USER ID %s"%user_id)
-        teamUser = TeamUser(user_id=user_id,team_id=str(team_id),role=roles.Role.admin)
+        teamUser = TeamUser(user_id=email,team_id=str(team_id),role=roles.Role.admin)
         role_id = save_role(teamUser)
-        print("SUBMIT TEAM ROLE ID %s"%role_id)
+        set_custom_claims(event=event,context=context)
         # get the user
         save_response =convertTeamDataToTeamResponse(retrieve_team_by_id(team_id))
         teams.append(save_response)
         response = api_helper.make_api_response(200,teams)
-        print("SUBMIT TEAM RESPONSE %s"%response)
+       
         
     except exceptions.AuthError as e:
         print(e)
