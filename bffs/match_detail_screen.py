@@ -17,7 +17,7 @@ from matches_apis import update_match_status
 from auth import check_permissions
 from roles import Role
 
-baseUrl = "teams/%s/matches/%s"
+baseUrl = "/teams/%s/matches/%s"
 acceptable_roles = [Role.admin.value,Role.coach.value]
 
 def enter_screen(event, context):
@@ -82,16 +82,16 @@ def selections(event,context):
         select_remove_from_starting_lineup(event,context)
     elif(action=="remove_starting"):
         select_remove_from_starting_lineup(event,context)
-        
+
 def select_remove_from_starting_lineup(event, context):
     lambda_handler(event,context)
     body =json.loads(event["body"])
     pathParameters = event["pathParameters"]
-    team_id = body["team_id"]
+    team_id = pathParameters["team_id"]
     match_id = pathParameters["match_id"]
     player_id = pathParameters["player_id"]
     position = body.get("position",None)
-    selection_id = body.get("selectionId",None)
+    selection_id = body.get("selection_id",None)
 
     
     team_players = retrieve_players_by_team(team_id)
@@ -108,7 +108,7 @@ def select_remove_from_starting_lineup(event, context):
                         response = api_helper.make_api_response(200,{"successfully removed from starting lineup"})
                     else:
                         selection_id = save_match_day_player(match_id=match_id,player_id=player_id,subbed_on=0,subbed_off=1,position=position)
-                        update_match_status(event=event)
+                        update_match_status(event,context)
                         response = api_helper.make_api_response(200,{"selectionId":selection_id})
                     # get the user
                     return response
@@ -125,7 +125,7 @@ def select_remove_from_starting_lineup(event, context):
         response = api_helper.make_api_response(400,None,e)
         return response
     except Exception as e:
-        response = api_helper.make_api_response(500,None,e)
+        response = api_helper.make_api_response(500,None,e.with_traceback(None))
         return response
 
 def submit_starting_lineup(event,match_id,status,team_id):

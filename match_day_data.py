@@ -83,13 +83,14 @@ def update_subbed_on_player(subbed_on_time, match_day_id):
     return result
 
 def delete_match_day_player(match_day_id):
+    print("IS A MATCH ID THERE %s"%match_day_id)
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
     insert_query = "delete from Match_Day_Lineup where ID=%s"
-
+    print("QUERY %s"%insert_query)
     data_to_insert = (match_day_id)
 
     # Execute the SQL query to insert data

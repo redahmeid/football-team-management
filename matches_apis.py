@@ -157,7 +157,7 @@ def update_match_status(event,context):
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     status = body["status"]
-    team_id = body["team_id"]
+    team_id = pathParameters["team_id"]
     acceptable_roles = [Role.admin.value,Role.coach.value]
     try:
        
