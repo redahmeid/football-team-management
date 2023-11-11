@@ -2,6 +2,8 @@ from classes import Club, Team,Player
 from config import app_config
 import id_generator
 import db
+import player_responses
+from typing import List
 
 # # "CREATE TABLE Players" \
 #         "(ID varchar(255),"\
@@ -10,7 +12,22 @@ import db
 #         "Email varchar(255),"\
 #         "PRIMARY KEY (ID),"\
 #         "FOREIGN KEY(Team_ID) references Teams(ID))"
+class TABLE:
+    TABLE_NAME = "Players"
+    ID = "ID"
+    NAME="Name"
+    TEAM_ID="Team_ID"
+    EMAIL="Email"
 
+    def createTable():
+        return f"CREATE TABLE {TABLE.TABLE_NAME}" \
+        f"({TABLE.ID} varchar(255),"\
+        f"{TABLE.NAME} varchar(255) NOT NULL,"\
+        f"{TABLE.TEAM_ID} varchar(255) NOT NULL,"\
+        f"{TABLE.EMAIL} int,"\
+        f"PRIMARY KEY ({TABLE.ID}),"\
+        f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams(ID))"\
+    
 def save_player(player:Player):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
@@ -36,7 +53,7 @@ def save_player(player:Player):
 
 
 
-def retrieve_players_by_team(team_id:str):
+def retrieve_players_by_team(team_id:str) -> List[player_responses.PlayerResponse]:
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
@@ -46,7 +63,7 @@ def retrieve_players_by_team(team_id:str):
     print(insert_query)
     # Execute the SQL query to insert data
     cursor.execute(insert_query,team_id)
-    row = cursor.fetchall()
+    results = cursor.fetchall()
     # Commit the transaction
     connection.commit()
 
@@ -54,8 +71,11 @@ def retrieve_players_by_team(team_id:str):
     cursor.close()
     connection.close()
     # club = Club(id=id,name=row)
-    print(row)
-    return row
+    print(results)
+    players = []
+    for result in results:
+        players.append(convertStartingLineup(result))
+    return players
 
 def squad_size_by_team(team_id:str):
     connection = db.connection(app_config.database)
@@ -100,7 +120,7 @@ def delete_player(player_id:str):
     print(row)
     return row
 
-def retrieve_player(id:str):
+def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
@@ -110,7 +130,7 @@ def retrieve_player(id:str):
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query,id)
-    row = cursor.fetchone()
+    results = cursor.fetchall()
     # Commit the transaction
     connection.commit()
 
@@ -118,9 +138,17 @@ def retrieve_player(id:str):
     cursor.close()
     connection.close()
     # club = Club(id=id,name=row)
-    print(row)
-    return row
+    print(results)
+    players = []
+    for result in results:
+        players.append(convertStartingLineup(result))
+    return players
 
 if __name__ == "__main__":
     retrieve_players_by_team("18071")
     # retrieve_player("29308")
+
+def convertStartingLineup(data):
+    player_info = player_responses.PlayerInfo(id=data[TABLE.ID],name=data[TABLE.NAME])
+    playerResponse = player_responses.PlayerResponse(info=player_info)
+    return playerResponse.model_dump()

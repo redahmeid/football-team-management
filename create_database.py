@@ -1,5 +1,7 @@
 from config import app_config
 import db
+import match_day_data
+import matches_data
 
 
 
@@ -30,13 +32,30 @@ def create_database():
         print(e)
     
     create_teams_table()
-    create_matches_table()
+    create_tables(matches_data.TABLE.createTable())
     create_players_table()
     create_users_table()
     create_team_users_table()
-    create_match_day_lineup_table()
+    create_tables(match_day_data.TABLE.createTable())
+    create_tables(match_day_data.MATCH_STATUS_TABLE.createTable())
     
 
+def create_tables(sql):
+    print(sql)
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+   
+    # Execute the SQL query to insert data
+    cursor.execute(sql)
+
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
 
 def create_teams_table():
      # Define the SQL query to insert data into a table

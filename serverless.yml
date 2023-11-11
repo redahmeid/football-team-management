@@ -93,7 +93,7 @@ functions:
     handler: bffs.match_detail_screen.enter_screen
     events:
       - http:
-          path: /bff/match_details
+          path: /teams/{team_id}/matches/{match_id}
           method: get
           cors: true
   add_to_starting_lineup_bff:
@@ -102,6 +102,20 @@ functions:
       - http:
           path: /teams/{team_id}/matches/{match_id}/players/{player_id}
           method: patch
+          cors: true
+  submit_lineup:
+    handler: bffs.match_detail_screen.submit_lineup_by_minute
+    events:
+      - http:
+          path: /teams/{team_id}/matches/{match_id}/lineup_confirmed
+          method: post
+          cors: true
+  update_match_status:
+    handler: matches_apis.update_match_status
+    events:
+      - http:
+          path: /teams/{team_id}/matches/{match_id}/{status}
+          method: post
           cors: true
   
   create_jwt:

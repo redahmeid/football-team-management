@@ -26,20 +26,18 @@ def create_players(event, context):
 
         try:
             new_player = PlayerValidator.validate_python(request_player)
-            result = convertPlayerDataToPlayerResponse(retrieve_player(save_player(new_player)))
-            
-            
-            created_players.append(result)
+            result = retrieve_player(save_player(new_player))
+            response = api_helper.make_api_response(200,result)
                 
             
         except ValidationError as e:
+            print(e)
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
         except ValueError as e:
+            print(e)
             response = api_helper.make_api_response(400,None,None)
 
-    
-    response = api_helper.make_api_response(200,created_players)
     return response
 
 
@@ -48,24 +46,22 @@ def list_players_by_team(event, context):
     lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
     team_id = event["pathParameters"]["team_id"]
-    
-    players = []
-    for player in retrieve_players_by_team(team_id):
-       
+    if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+        players = []
         try:
-            if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
-                result = convertPlayerDataToPlayerResponse(player)
-                players.append(result)
-            else:
-                response = api_helper.make_api_response(403,None,"You do not have permission to view the players")
-                return response
-            
+            players = retrieve_players_by_team(team_id)
+            response = api_helper.make_api_response(200,players)
+  
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
         except ValueError as e:
             response = api_helper.make_api_response(400,None,None)
-    response = api_helper.make_api_response(200,players)
+    else:
+        response = api_helper.make_api_response(403,None,"You do not have permission to view the players")
+        return response
+    
+    
     
     return response
 

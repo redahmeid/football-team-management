@@ -1,22 +1,14 @@
 from pydantic import BaseModel, validator
-from typing import Optional, List
+from typing import Optional, List, Dict
 from validators import validate_email,validate_short_name
 import datetime
+import match_responses
+import player_responses
 
 class Link(BaseModel):
     link:str
     method:str
 
-
-class MatchResponse(BaseModel):
-    id:str
-    opposition:str
-    homeOrAway:str
-    length:int
-    lineupStatus:Optional[str]=None
-    date:datetime.date
-    self:Link
-    submitLinueup:Link
 
 class PlayerResponse(BaseModel):
     id:str
@@ -62,6 +54,8 @@ class TeamResponse(BaseModel):
     addPlayers:Link        #save_response["addPlayers"] = {"link":"/teams/%s/players"%(save_response["ID"]),"method":"post"}
     addFixtures:Link        #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
 
-class MatchDayResponse(BaseModel):
-    match:MatchResponse
-    availablePlayers:List[SelectedPlayerResponse]
+class MatchResponse(BaseModel):
+    match:match_responses.MatchInfo
+    players:Optional[List[player_responses.PlayerResponse]]=None
+    links:Optional[Dict[str,Link]]=None
+

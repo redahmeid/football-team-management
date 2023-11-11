@@ -5,12 +5,14 @@ from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
-from matches_data import retrieve_match_by_id,save_team_fixture,save_planned_match_squad,retrieve_planned_match_squad, retrieve_fixture_team_size, retrieve_matches_by_team,retrieve_next_match_by_team
+from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_matches_by_team,retrieve_next_match_by_team
 import response_classes
-from data_utils import convertMatchDatatoMatchResponse
+from data_utils import convertMatchDatatoMatchResponse,convertPlayerDataToLineupPlayerResponse
 from roles import Role
 from auth import check_permissions
 import match_day_data
+import match_responses
+import matches_state_machine
 import exceptions
 from secrets_util import lambda_handler
 
@@ -27,75 +29,20 @@ def create_fixtures(event, context):
 
         try:
             new_match = MatchValidator.validate_python(request_player)
-            result = convertMatchDatatoMatchResponse(retrieve_match_by_id(save_team_fixture(new_match)))
-            
-            created_matches.append(result)
+            result = retrieve_match_by_id(save_team_fixture(new_match))
+            match_response = match_responses.MatchResponse(match=result[0]).model_dump()
+            created_matches.append(match_response)
             
                 
             
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
-            response = api_helper.make_api_response(400,None)
+            response = api_helper.make_api_response(400,None,errors)
         except ValueError as e:
             response = api_helper.make_api_response(400,None)
 
     
     response = api_helper.make_api_response(200,created_matches)
-    return response
-
-# {
-    # player_id:""
-    # start_time_minutes:0
-    # end_time_minutes:10
-    # position:"CM"
-# }
-def plan_match_squad(event,context):
-    class PlayerMatch:
-        def __init__(self, match_id, player_id,start_time_minutes,end_time_minutes,position):
-            self.player_id = player_id
-            self.start_time_minutes = start_time_minutes
-            self.end_time_minutes = end_time_minutes
-            self.match_id=match_id
-            self.position = position
-    
-
-
-    body =json.loads(event["body"])
-    
-    match_id = event["pathParameters"]["match_id"]
-    
-    team_size = retrieve_fixture_team_size(match_id)
-
-    players = body["players"]
-    start_times = []
-    for player in players:
-        player_id = player["player_id"]
-        start_time_minutes = player["start_time_minutes"]
-        start_times.append(start_time_minutes)
-        end_time_minutes = player["end_time_minutes"]
-        position = player["position"]
-    
-    unique_start_times = list(set(start_times))
-    on_pitch = list()
-    for start_time in unique_start_times:
-        def on_pitch_check(playerMatch):
-            return playerMatch["start_time_minutes"] <= start_time and playerMatch["end_time_minutes"] > start_time
-        on_pitch_filtered = list(filter(on_pitch_check,players))
-        print("TEAM SIZE "+str(len(on_pitch_filtered)))
-        print("TEAM SIZE "+str(team_size))
-        if(len(on_pitch_filtered)!=team_size):
-            return api_helper.make_api_response(400,None,None,[{"messages":"Team size is too small"}])
-    
-    for player in players:
-        player_id = player["player_id"]
-        start_time_minutes = player["start_time_minutes"]
-        end_time_minutes = player["end_time_minutes"]
-        position = player["position"]
-        new_player = PlayerMatch(player_id=player_id,match_id=match_id,start_time_minutes=start_time_minutes,end_time_minutes=end_time_minutes,position=position)
-        id = save_planned_match_squad(new_player)
-
-    response = api_helper.make_api_response(200,match_id,None)
-
     return response
     
 def list_matches_by_team(event, context):
@@ -104,14 +51,14 @@ def list_matches_by_team(event, context):
     matches = []
     for match in retrieve_matches_by_team(team_id):
         try:
+            self_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
+            self = match_responses.Link(link=self_url,method="get")
+            links = {"self":self}
+            match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
             
-            save_response =convertMatchDatatoMatchResponse(match)
-            
-            matches.append(save_response)
-            
-                
-            
+            matches.append(match_response)
         except ValidationError as e:
+            print(e)
             errors = response_errors.validationErrorsList(e)
             print(errors)
             response = api_helper.make_api_response(400,None,errors)
@@ -120,8 +67,7 @@ def list_matches_by_team(event, context):
             print(e)
             response = api_helper.make_api_response(400,None)
             return response
-            
-    
+
     response = api_helper.make_api_response(200,matches)
     return response
 
@@ -131,9 +77,12 @@ def next_match_by_team(event, context):
     matches = []
     
     try:
-        match = retrieve_next_match_by_team(team_id)
-        save_response =convertMatchDatatoMatchResponse(match)
-        matches.append(save_response)
+        for match in retrieve_next_match_by_team(team_id):
+            self_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
+            self = match_responses.Link(link=self_url,method="get")
+            links = {"self":self}
+            match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
+            matches.append(match_response)
         
             
         
@@ -151,29 +100,84 @@ def next_match_by_team(event, context):
     response = api_helper.make_api_response(200,matches)
     return response
 
-def update_match_status(event,context):
+def update_match_status_handler(event,context):
     lambda_handler(event,context)
-    body =json.loads(event["body"])
     pathParameters = event["pathParameters"]
+    queryParameters = event["queryParameters"]
     match_id = pathParameters["match_id"]
-    status = body["status"]
+    status = pathParameters["status"]
     team_id = pathParameters["team_id"]
+    minute = queryParameters["minute"]
     acceptable_roles = [Role.admin.value,Role.coach.value]
+    print(status)
     try:
        
         if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
-             result = match_day_data.update_match_status(match_id=match_id,status=status)
+             result =  internal_update_status(match_id=match_id,status=matches_state_machine.MatchState(status))
              response = api_helper.make_api_response(200,{"rows_updated":result})
-             return response
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
     except exceptions.AuthError as e:
+        print(e)
         response = api_helper.make_api_response(401,None,e)
         return response
     except ValidationError as e:
+        print(e)
         response = api_helper.make_api_response(400,None,e)
         return response
     except Exception as e:
+        print(e)
         response = api_helper.make_api_response(500,None,e)
         return response
+
+def internal_update_status(match_id,status:matches_state_machine.MatchState,minute):
+    result = match_day_data.update_match_status(match_id=match_id,status=status.value,minute=minute)
+    
+    return result
+       
+    
+# def retrieve_starting_lineup(event,context):
+#     lambda_handler(event,context)
+#     pathParameters = event["pathParameters"]
+#     match_id = pathParameters["match_id"]
+
+#     team_id = pathParameters["team_id"]
+#     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
+#     try:
+       
+#         if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+#              result = match_day_data.retrieve_starting_lineup(match_id=match_id)
+#              convertPlayerDataToLineupPlayerResponse(response)
+#              response = api_helper.make_api_response(200,{"rows_updated":result})
+#              return response
+#         else:
+#             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+#             return response
+#     except exceptions.AuthError as e:
+#         response = api_helper.make_api_response(401,None,e)
+#         return response
+#     except ValidationError as e:
+#         response = api_helper.make_api_response(400,None,e)
+#         return response
+#     except Exception as e:
+#         response = api_helper.make_api_response(500,None,e)
+#         return response
+
+# def convertMatchDayDataToLineupPlayerResponse(player,baseUrl) -> response_classes.SelectedPlayerResponse:
+    
+#     id = player["ID"]
+#     selection_id = player["ID"]
+#     name = player["Name"]
+#     position=position
+#     live = player["live"]
+#     url = "%s/players/%s"%(baseUrl,id)
+#     if(live == None):
+#         live = True
+#     self = response_classes.Link(link=url,method="get")
+    
+    
+    # subOnOff = response_classes.Link(link=url,method="patch")
+    # response =  response_classes.SelectedPlayerResponse(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,toggleStarting=subOnOff,isSelected=isSelected)
+    # print("Convert player %s"%(response))
+    # return response.model_dump()

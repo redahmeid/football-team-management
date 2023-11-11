@@ -7,19 +7,21 @@ import response_classes
 #         "Team_Size int NOT NULL,"\
 def convertMatchDatatoMatchResponse(match) -> response_classes.MatchResponse:
     print(match)
-    
+    # /teams/{team_id}/matches/{match_id}/players/submit_lineup
     id = match["ID"]
     lineupStatus = match["Status"]
+    if(lineupStatus == None):
+        lineupStatus = "Draft"
     length = match["Length"]
-    baseTeamUrl = "/matches/%s"%(id)
+    baseUrl = "/teams/%s/matches/%s"%(match["Team_ID"],match["ID"])
     opposition = match["Opposition"]
     homeOrAway = match["HomeOrAway"]
     date=match["Date"]
-    self = response_classes.Link(link=baseTeamUrl,method="get")
-    submitUrl = "%s/starting_lineup/submit?team_id=%s&match_id=%s"%(baseTeamUrl,match["Team_ID"],id)
+    self = response_classes.Link(link=baseUrl,method="get")
+    submitUrl = "%s/lineup_confirmed"%(baseUrl)
     submitLineup = response_classes.Link(link=submitUrl,method="patch")
 
-    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self, length=length,lineupStatus=lineupStatus,submitLinueup=submitLineup)
+    response =  response_classes.MatchResponse(id=id,opposition=opposition,homeOrAway=homeOrAway,date=date,self=self, length=length,status=lineupStatus,submitLineup=submitLineup)
     print("Convert Match %s"%(response))
     return response.model_dump()
 
@@ -40,7 +42,7 @@ def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse
 
 def convertPlayerDataToLineupPlayerResponse(player,isSelected,baseUrl,position,team_id,match_id,selection_id) -> response_classes.SelectedPlayerResponse:
     
-    id = player["ID"]
+    id = player["mdl.ID"]
     
     name = player["Name"]
     position=position
