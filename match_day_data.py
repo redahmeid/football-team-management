@@ -165,7 +165,7 @@ def retieve_lineup_by_minute(match_id,minute) -> List[player_responses.PlayerRes
     print("IS A MATCH ID THERE %s"%match_id)
     # Define the SQL query to insert data into a table
     insert_query = f"select * from {TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {TABLE.TABLE_NAME}.{TABLE.MATCH_ID}={match_id} and {TABLE.TABLE_NAME}.{TABLE.MINUTE_ON} = {minute}"
-    
+    print(insert_query)
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
@@ -191,7 +191,7 @@ def update_match_status(match_id,status,minute):
     # Create a cursor object to interact with the database
         cursor = connection.cursor()
         # Define the SQL query to insert data into a table
-        delete_query = f"delete from {MATCH_STATUS_TABLE.TABLE_NAME} where {MATCH_STATUS_TABLE.MATCH_ID}='{match_id}'  and {MATCH_STATUS_TABLE.MINUTE}={minute}"
+        delete_query = f"delete from {MATCH_STATUS_TABLE.TABLE_NAME} where {MATCH_STATUS_TABLE.MATCH_ID}='{match_id}'"
         print(delete_query)
         
         # Execute the SQL query to insert data

@@ -35,7 +35,7 @@ def enter_screen(event, context):
             match = retrieve_match_by_id(match_id)[0]
             print(match)
             print(match.status)
-            if(match.status==matches_state_machine.MatchState.lineup_confirmed):
+            if(match.status==matches_state_machine.MatchState.lineup_confirmed or match.status==matches_state_machine.MatchState.substitutions):
                 print(f"############# enter_lineup_by_minute {match.status}")
                 return enter_lineup_by_minute(event,context,match)
             else:
@@ -43,12 +43,12 @@ def enter_screen(event, context):
 
                 
                 
-                self_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
+                self_url = match_responses.getMatchUrl(team_id,match.id)
                 self = match_responses.Link(link=self_url,method="get")
-                submit_starting_lineup_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
-                submit_starting_lineup_url = "%s/lineup_confirmed?minute=0"%submit_starting_lineup_url
+                submit_starting_lineup_url = match_responses.getMatchUrl(team_id,match.id)
+                submit_starting_lineup_url = "%s/lineup_confirmed"%submit_starting_lineup_url
                 submit_starting_lineup =match_responses.Link(link=submit_starting_lineup_url,method="post")
-                links = {"self":self,"submit_starting_lineup":submit_starting_lineup}
+                links = {"self":self,"submit_lineup":submit_starting_lineup}
                 match_day_response = match_responses.MatchResponse(match=match,players=playersList,links=links).model_dump()
                 match_day_responses = [match_day_response]
                 
@@ -98,12 +98,12 @@ def enter_lineup_by_minute(event,context,match):
                 print(f"############# Om here")
                 selected_players = retieve_lineup_by_minute(match_id=match_id,minute=minute)
                 print(f"############# SELECTED_PLAYER {selected_players}")
-                url = match_responses.MATCH_CONSTS.baseUrl
+                url = match_responses.getMatchUrl(team_id,match_id)
                 
-                    
-                submit_first_subs = match_responses.Link(link='%s/substitutions?minute='%url,method="post")
+                
+                submit_first_subs = match_responses.Link(link='%s/substitutions'%url,method="post")
                 resubmit_starting_lineup = match_responses.Link(link='%s/draft'%url,method="post")
-                links = {"submit_substitutions":submit_first_subs,"resubmit_starting_lineup":resubmit_starting_lineup}
+                links = {"submit_lineup":submit_first_subs,"resubmit_starting_lineup":resubmit_starting_lineup}
                 match_day_response = match_responses.MatchResponse(match=match,players=selected_players,links=links).model_dump()
                 match_day_responses = []
                 match_day_responses.append(match_day_response)

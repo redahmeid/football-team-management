@@ -107,16 +107,10 @@ functions:
     handler: bffs.match_detail_screen.submit_lineup_by_minute
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/lineup_confirmed
-          method: post
-          cors: true
-  update_match_status:
-    handler: matches_apis.update_match_status
-    events:
-      - http:
           path: /teams/{team_id}/matches/{match_id}/{status}
           method: post
           cors: true
+  
   
   create_jwt:
     handler: auth.set_custom_claims

@@ -6,7 +6,7 @@ class MatchState(str, Enum):
     created = "created"
     draft = "draft"
     lineup_confirmed = "lineup_confirmed"
-    plan_subs = "plan_subs"
+    substitutions = "substitutions"
     plan_confirmed = "plan_confirmed"
     start_match = "start_match"
 

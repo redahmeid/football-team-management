@@ -30,7 +30,10 @@ def create_fixtures(event, context):
         try:
             new_match = MatchValidator.validate_python(request_player)
             result = retrieve_match_by_id(save_team_fixture(new_match))
-            match_response = match_responses.MatchResponse(match=result[0]).model_dump()
+            self_url = match_responses.getMatchUrl(team_id,result[0].id)
+            self = match_responses.Link(link=self_url,method="get")
+            links = {"self":self}
+            match_response = match_responses.MatchResponse(match=result[0],links=links).model_dump()
             created_matches.append(match_response)
             
                 
@@ -51,7 +54,7 @@ def list_matches_by_team(event, context):
     matches = []
     for match in retrieve_matches_by_team(team_id):
         try:
-            self_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
+            self_url = match_responses.getMatchUrl(team_id,match.id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}
             match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
@@ -78,7 +81,7 @@ def next_match_by_team(event, context):
     
     try:
         for match in retrieve_next_match_by_team(team_id):
-            self_url = match_responses.MATCH_CONSTS.baseUrl%(team_id,match.id)
+            self_url = match_responses.getMatchUrl(team_id,match.id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}
             match_response = match_responses.MatchResponse(match=match,links=links).model_dump()

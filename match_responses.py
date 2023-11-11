@@ -8,8 +8,10 @@ import player_responses
 from enum import Enum
 
 class MATCH_CONSTS:
-    baseUrl = "/teams/%s/matches/%s"
+    baseUrl = "/teams/{}/matches/{}"
 
+def getMatchUrl(team_id,match_id):
+    return MATCH_CONSTS.baseUrl.format(team_id,match_id)
 class Link(BaseModel):
     link:str
     method:str

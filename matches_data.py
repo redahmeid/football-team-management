@@ -94,6 +94,7 @@ def retrieve_matches_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     connection.close()
     # club = Club(id=id,name=row)
     matches = []
+    print(rows)
     for row in rows:
         matches.append(convertDataToMatchInfo(row))
     print(matches)
