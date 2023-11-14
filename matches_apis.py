@@ -5,7 +5,7 @@ from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
-from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_matches_by_team,retrieve_next_match_by_team
+from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_matches_by_team,retrieve_next_match_by_team,update_match_status
 import response_classes
 from data_utils import convertMatchDatatoMatchResponse,convertPlayerDataToLineupPlayerResponse
 from roles import Role
@@ -135,9 +135,9 @@ def update_match_status_handler(event,context):
         return response
 
 def internal_update_status(match_id,status:matches_state_machine.MatchState,minute):
-    result = match_day_data.update_match_status(match_id=match_id,status=status.value,minute=minute)
+    result = match_day_data.update_match_lineup_status(match_id=match_id,status=status.value,minute=minute)
+    return update_match_status(match_id=match_id,status=status)
     
-    return result
        
     
 # def retrieve_starting_lineup(event,context):

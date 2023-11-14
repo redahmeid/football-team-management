@@ -3,7 +3,7 @@ from config import app_config
 import id_generator
 import db
 import player_responses
-from typing import List
+from typing import List, Dict
 
 # # "CREATE TABLE Players" \
 #         "(ID varchar(255),"\
@@ -53,7 +53,7 @@ def save_player(player:Player):
 
 
 
-def retrieve_players_by_team(team_id:str) -> List[player_responses.PlayerResponse]:
+def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
@@ -70,12 +70,16 @@ def retrieve_players_by_team(team_id:str) -> List[player_responses.PlayerRespons
     # Close the cursor and connection
     cursor.close()
     connection.close()
-    # club = Club(id=id,name=row)
     print(results)
-    players = []
+    players = list()
     for result in results:
         players.append(convertStartingLineup(result))
-    return players
+    
+    team_players ={}
+    team_players["status"] = "squad"
+    team_players["players"] = players
+    
+    return [team_players]
 
 def squad_size_by_team(team_id:str):
     connection = db.connection(app_config.database)

@@ -80,6 +80,31 @@ def retrieve_teams_by_user_id(user_id:str):
     print(row)
     return row
 
+def does_userid_match_team(user_id:str,team_id:str):
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = f"select * from Roles where Team_ID={team_id} and Email = {user_id}" 
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query)
+   
+    row = cursor.rowcount
+    print("###################ROWS %s################"%row)
+    # Commit the transaction
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    # club = Club(id=id,name=row)
+    if(row>0):
+        return True
+    else:
+        return False
+
 def retrieve_team_by_id(team_id:str):
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database

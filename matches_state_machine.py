@@ -9,6 +9,9 @@ class MatchState(str, Enum):
     substitutions = "substitutions"
     plan_confirmed = "plan_confirmed"
     start_match = "start_match"
+    actual_substitutions = "actual_subs"
+    actual_match_started = "match_started"
+    actual_match_ended = "match_ended"
 
 state_change_map = {
     MatchState.created: [MatchState.draft],

@@ -30,5 +30,5 @@ class MatchInfo(BaseModel):
 
 class MatchResponse(BaseModel):
     match:MatchInfo
-    players:Optional[List[player_responses.PlayerResponse]]=None
+    players:List=None
     links:Optional[Dict[str,Link]]=None

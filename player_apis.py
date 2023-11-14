@@ -21,7 +21,7 @@ def create_players(event, context):
     created_players = []
     i = 0
     for player in players:
-        request_player = Player(name=player["name"],team_id=team_id)
+        request_player = Player(name=player,team_id=team_id)
         PlayerValidator = TypeAdapter(Player)
 
         try:

@@ -66,7 +66,7 @@ def save_team_fixture(match:Match):
     # Commit the transaction
     connection.commit()
     if(cursor.rowcount>0):
-        match_day_data.update_match_status(match_id=id,status=match.status,minute=0)
+        match_day_data.update_match_lineup_status(match_id=id,status=match.status,minute=0)
     # Close the cursor and connection
     cursor.close()
     connection.close()
@@ -79,7 +79,7 @@ def retrieve_matches_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = f"select * from Matches inner join {match_day_data.MATCH_STATUS_TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.ID}={match_day_data.MATCH_STATUS_TABLE.TABLE_NAME}.{match_day_data.MATCH_STATUS_TABLE.MATCH_ID} and {TABLE.TABLE_NAME}.{TABLE.TEAM_ID} = '{team_id}' order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+    insert_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.TABLE_NAME}.{TABLE.TEAM_ID} = '{team_id}' order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
     print(insert_query)
 
     # Execute the SQL query to insert data
@@ -100,13 +100,35 @@ def retrieve_matches_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     print(matches)
     return matches
 
+def update_match_status(match_id,status)  -> List[match_responses.MatchInfo]:
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.STATUS}='{status}' where {TABLE.ID}='{match_id}'" 
+    print(insert_query)
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query)
+    rowcount = cursor.rowcount
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    if(rowcount>0):
+        return retrieve_match_by_id(match_id)
+    else:
+        return None
+
 def retrieve_match_by_id(id:str) -> List[match_responses.MatchInfo]:
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = f"select * from {TABLE.TABLE_NAME} inner join {match_day_data.MATCH_STATUS_TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.ID}={match_day_data.MATCH_STATUS_TABLE.TABLE_NAME}.{match_day_data.MATCH_STATUS_TABLE.MATCH_ID} and {TABLE.TABLE_NAME}.{TABLE.ID}='{id}'" 
+    insert_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.TABLE_NAME}.{TABLE.ID}='{id}'" 
     print(insert_query)
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
@@ -131,7 +153,7 @@ def retrieve_next_match_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = f"select * from Matches inner join {match_day_data.MATCH_STATUS_TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.ID}={match_day_data.MATCH_STATUS_TABLE.TABLE_NAME}.{match_day_data.MATCH_STATUS_TABLE.MATCH_ID} and {TABLE.TEAM_ID} = {team_id} and {TABLE.TABLE_NAME}.{TABLE.DATE}>= CURRENT_DATE() order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+    insert_query = f"select * from Matches where {TABLE.TEAM_ID} = {team_id} and {TABLE.TABLE_NAME}.{TABLE.DATE}>= CURRENT_DATE() order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
     print(insert_query)
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
@@ -150,4 +172,4 @@ def retrieve_next_match_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     return matches
 
 def convertDataToMatchInfo(data):
-    return match_responses.MatchInfo(id=data[TABLE.ID],status=matches_state_machine.MatchState(data[f'{match_day_data.MATCH_STATUS_TABLE.TABLE_NAME}.{match_day_data.MATCH_STATUS_TABLE.STATUS}']),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=match_responses.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE])
+    return match_responses.MatchInfo(id=data[TABLE.ID],status=matches_state_machine.MatchState(data[f'{TABLE.STATUS}']),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=match_responses.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE])

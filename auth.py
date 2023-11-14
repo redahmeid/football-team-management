@@ -1,6 +1,6 @@
 import json
 
-from team_data import retrieve_teams_by_user_id
+from team_data import retrieve_teams_by_user_id,does_userid_match_team
 from roles_data import retrieve_role_by_user_id_and_team_id
 from secrets_util import  lambda_handler,validate_firebase_id_token
 import api_helper
@@ -62,6 +62,7 @@ def check_permissions(event,team_id,acceptable_roles):
     if intersection:
          return True
     else: 
-        return False
+        return does_userid_match_team(user_id=id_token["email"],team_id=team_id)
+        
     
 

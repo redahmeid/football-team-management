@@ -8,7 +8,7 @@ import matches_state_machine
 import match_day_data
 from typing import List
 
-sql = "insert into Match_Status (ID,Status,Match_ID,Minute_on) values ('93152','draft','24144',0)"
+sql = "select * from Matches where Matches.ID='17753'"
 def run():
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database
