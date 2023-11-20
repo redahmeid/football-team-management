@@ -36,7 +36,8 @@ def create_database():
     create_players_table()
     create_users_table()
     create_team_users_table()
-    create_tables(match_day_data.TABLE.createTable())
+    create_tables(match_day_data.PLANNED_LINEUP_TABLE.createTable())
+    create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.createTable())
     create_tables(match_day_data.MATCH_STATUS_TABLE.createTable())
     
 

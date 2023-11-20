@@ -27,8 +27,20 @@ class MatchInfo(BaseModel):
     opposition:str
     homeOrAway:HomeOrAway
     date:datetime.date
+    how_long_ago_started:int=0
 
 class MatchResponse(BaseModel):
     match:MatchInfo
-    players:List=None
+    squad:Optional[List]=None
+    links:Optional[Dict[str,Link]]=None
+
+class PlannedMatchResponse(BaseModel):
+    match:MatchInfo
+    planned_lineups:Optional[List]=None
+    links:Optional[Dict[str,Link]]=None
+
+class ActualMatchResponse(BaseModel):
+    match:MatchInfo
+    current_players:Optional[List]=None
+    next_players:Optional[List]=None
     links:Optional[Dict[str,Link]]=None

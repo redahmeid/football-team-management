@@ -8,7 +8,7 @@ import matches_state_machine
 import match_day_data
 from typing import List
 
-sql = "select * from Matches where Matches.ID='17753'"
+sql = "select * from Planned_Lineups inner join Players on Planned_Lineups.Player_ID=Players.ID and Planned_Lineups.Match_ID=92022 and (Planned_Lineups.Deleted IS NULL OR Planned_Lineups.Deleted != False) order by Planned_Lineups.Minute asc, Players.Name"
 def run():
     connection = db.connection(app_config.database)
     # Create a cursor object to interact with the database

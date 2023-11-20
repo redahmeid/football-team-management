@@ -5,8 +5,8 @@ from firebase_admin import auth
 import db
 import match_responses
 import matches_state_machine
-import match_day_data
 from typing import List
+from datetime import datetime
 
 # "CREATE TABLE Matches" \
 #         "(ID varchar(255),"\
@@ -31,6 +31,7 @@ class TABLE:
     GOALS_FOR = "Goals_For"
     GOALS_AGAINST = "Goals_Against"
     LENGTH = "Length"
+    TIME_STARTED = "Time_Started"
     TABLE_NAME="Matches"
 
     def createTable():
@@ -44,6 +45,7 @@ class TABLE:
         f"{TABLE.GOALS_FOR} int,"\
         f"{TABLE.GOALS_AGAINST} int,"\
         f"{TABLE.LENGTH} int,"\
+        f"{TABLE.TIME_STARTED} int,"\
         f"PRIMARY KEY ({TABLE.ID}),"\
         f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams({TABLE.ID}))"
 
@@ -65,8 +67,7 @@ def save_team_fixture(match:Match):
    
     # Commit the transaction
     connection.commit()
-    if(cursor.rowcount>0):
-        match_day_data.update_match_lineup_status(match_id=id,status=match.status,minute=0)
+    
     # Close the cursor and connection
     cursor.close()
     connection.close()
@@ -107,6 +108,28 @@ def update_match_status(match_id,status)  -> List[match_responses.MatchInfo]:
 
     # Define the SQL query to insert data into a table
     insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.STATUS}='{status}' where {TABLE.ID}='{match_id}'" 
+    print(insert_query)
+
+    # Execute the SQL query to insert data
+    cursor.execute(insert_query)
+    rowcount = cursor.rowcount
+    connection.commit()
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+    if(rowcount>0):
+        return retrieve_match_by_id(match_id)
+    else:
+        return None
+
+def start_match(match_id)  -> List[match_responses.MatchInfo]:
+    connection = db.connection(app_config.database)
+    # Create a cursor object to interact with the database
+    cursor = connection.cursor()
+
+    # Define the SQL query to insert data into a table
+    insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.STATUS}='{matches_state_machine.MatchState.started.value}', {TABLE.TIME_STARTED}={datetime.utcnow().timestamp()} where {TABLE.ID}='{match_id}'" 
     print(insert_query)
 
     # Execute the SQL query to insert data
@@ -172,4 +195,8 @@ def retrieve_next_match_by_team(team_id:str) -> List[match_responses.MatchInfo]:
     return matches
 
 def convertDataToMatchInfo(data):
-    return match_responses.MatchInfo(id=data[TABLE.ID],status=matches_state_machine.MatchState(data[f'{TABLE.STATUS}']),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=match_responses.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE])
+    if data.get(TABLE.TIME_STARTED) is not None and data[TABLE.TIME_STARTED] != 0:
+        how_long_ago_in_minutes = int((datetime.utcnow().timestamp()-data[TABLE.TIME_STARTED])/60)
+    else:
+        how_long_ago_in_minutes = 0
+    return match_responses.MatchInfo(id=data[TABLE.ID],status=matches_state_machine.MatchState(data[f'{TABLE.STATUS}']),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=match_responses.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes)

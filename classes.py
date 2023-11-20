@@ -13,6 +13,13 @@ class PlayerMatch(BaseModel):
     end_time_minutes:int
     position:str
 
+
+
+class PlayerStat(BaseModel):
+    match_id:str
+    assist:str
+    goal:str
+
 class Match(BaseModel):
     team_id:str
     opposition:str

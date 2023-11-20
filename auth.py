@@ -56,12 +56,15 @@ def getToken(event):
 def check_permissions(event,team_id,acceptable_roles):
     id_token = getToken(event)
     print("###########DISCOVERED TOKN %s"%id_token)
-    roles = id_token["teams"][team_id]
-    print("###########DISCOVERED ROLES %s"%roles)
-    intersection = set(roles).intersection(acceptable_roles)
-    if intersection:
-         return True
-    else: 
+    if "teams" in id_token and id_token["teams"] is not None:
+        roles = id_token["teams"][team_id]
+        print("###########DISCOVERED ROLES %s"%roles)
+        intersection = set(roles).intersection(acceptable_roles)
+        if intersection:
+            return True
+        else: 
+            return False
+    else:
         return does_userid_match_team(user_id=id_token["email"],team_id=team_id)
         
     

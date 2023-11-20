@@ -69,49 +69,48 @@ functions:
           method: get
           cors: true
   create_team_screen_bff:
-    handler: bffs.create_team_screen.submit_team
+    handler: create_team_screen.submit_team
     events:
       - http:
           path: /bff/create_team_screen
           method: post
           cors: true
   view_team_screen_bff:
-    handler: bffs.create_team_screen.enter_screen
+    handler: create_team_screen.enter_screen
     events:
       - http:
           path: /bff/view_team_screen
           method: get
           cors: true
   user_homepage_bff:
-    handler: bffs.user_homepage.enter_screen
+    handler: user_homepage.enter_screen
     events:
       - http:
           path: /bff/user_homepage
           method: get
           cors: true
   create_match_day_bff:
-    handler: bffs.match_detail_screen.enter_screen
+    handler: match_detail_screen.getMatch
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}
           method: get
           cors: true
-  add_to_starting_lineup_bff:
-    handler: bffs.match_detail_screen.select_remove_from_starting_lineup
+  submit_lineup:
+    handler: match_detail_screen.submit_lineup
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/players/{player_id}
-          method: patch
+          path: /teams/{team_id}/matches/{match_id}/players/submit_lineup
+          method: post
           cors: true
-  submit_lineup:
-    handler: bffs.match_detail_screen.submit_lineup_by_minute
+  update_match_status:
+    handler: match_detail_screen.update_match_status
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/{status}
           method: post
           cors: true
-  
-  
+
   create_jwt:
     handler: auth.set_custom_claims
     events:

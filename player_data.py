@@ -4,6 +4,7 @@ import id_generator
 import db
 import player_responses
 from typing import List, Dict
+import sys
 
 # # "CREATE TABLE Players" \
 #         "(ID varchar(255),"\
@@ -60,7 +61,7 @@ def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses
 
     # Define the SQL query to insert data into a table
     insert_query = "select * from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
-    print(insert_query)
+    
     # Execute the SQL query to insert data
     cursor.execute(insert_query,team_id)
     results = cursor.fetchall()
@@ -70,7 +71,6 @@ def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses
     # Close the cursor and connection
     cursor.close()
     connection.close()
-    print(results)
     players = list()
     for result in results:
         players.append(convertStartingLineup(result))
@@ -79,6 +79,7 @@ def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses
     team_players["status"] = "squad"
     team_players["players"] = players
     
+    print(team_players)
     return [team_players]
 
 def squad_size_by_team(team_id:str):
@@ -148,11 +149,15 @@ def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
         players.append(convertStartingLineup(result))
     return players
 
-if __name__ == "__main__":
-    retrieve_players_by_team("18071")
-    # retrieve_player("29308")
+
 
 def convertStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[TABLE.ID],name=data[TABLE.NAME])
     playerResponse = player_responses.PlayerResponse(info=player_info)
     return playerResponse.model_dump()
+
+
+if __name__ == "__main__":
+    if(sys.argv[1]=="retrievePlayers"):
+        retrieve_players_by_team(sys.argv[2])
+        

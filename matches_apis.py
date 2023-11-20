@@ -10,8 +10,9 @@ import response_classes
 from data_utils import convertMatchDatatoMatchResponse,convertPlayerDataToLineupPlayerResponse
 from roles import Role
 from auth import check_permissions
-import match_day_data
+import match_detail_screen
 import match_responses
+
 import matches_state_machine
 import exceptions
 from secrets_util import lambda_handler
@@ -24,7 +25,7 @@ def create_fixtures(event, context):
     matches = body["matches"]
     created_matches = []
     for match in matches:
-        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status="draft",team_id=team_id)
+        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,team_id=team_id)
         MatchValidator = TypeAdapter(Match)
 
         try:
@@ -117,7 +118,7 @@ def update_match_status_handler(event,context):
        
         if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
              result =  internal_update_status(match_id=match_id,status=matches_state_machine.MatchState(status))
-             response = api_helper.make_api_response(200,{"rows_updated":result})
+             return match_detail_screen.getMatch(event,context)
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -135,52 +136,5 @@ def update_match_status_handler(event,context):
         return response
 
 def internal_update_status(match_id,status:matches_state_machine.MatchState,minute):
-    result = match_day_data.update_match_lineup_status(match_id=match_id,status=status.value,minute=minute)
+    
     return update_match_status(match_id=match_id,status=status)
-    
-       
-    
-# def retrieve_starting_lineup(event,context):
-#     lambda_handler(event,context)
-#     pathParameters = event["pathParameters"]
-#     match_id = pathParameters["match_id"]
-
-#     team_id = pathParameters["team_id"]
-#     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
-#     try:
-       
-#         if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
-#              result = match_day_data.retrieve_starting_lineup(match_id=match_id)
-#              convertPlayerDataToLineupPlayerResponse(response)
-#              response = api_helper.make_api_response(200,{"rows_updated":result})
-#              return response
-#         else:
-#             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
-#             return response
-#     except exceptions.AuthError as e:
-#         response = api_helper.make_api_response(401,None,e)
-#         return response
-#     except ValidationError as e:
-#         response = api_helper.make_api_response(400,None,e)
-#         return response
-#     except Exception as e:
-#         response = api_helper.make_api_response(500,None,e)
-#         return response
-
-# def convertMatchDayDataToLineupPlayerResponse(player,baseUrl) -> response_classes.SelectedPlayerResponse:
-    
-#     id = player["ID"]
-#     selection_id = player["ID"]
-#     name = player["Name"]
-#     position=position
-#     live = player["live"]
-#     url = "%s/players/%s"%(baseUrl,id)
-#     if(live == None):
-#         live = True
-#     self = response_classes.Link(link=url,method="get")
-    
-    
-    # subOnOff = response_classes.Link(link=url,method="patch")
-    # response =  response_classes.SelectedPlayerResponse(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,toggleStarting=subOnOff,isSelected=isSelected)
-    # print("Convert player %s"%(response))
-    # return response.model_dump()

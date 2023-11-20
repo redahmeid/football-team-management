@@ -69,7 +69,6 @@ def retrieve_teams_by_user_id(user_id:str):
     cursor.execute(insert_query,user_id)
    
     row = cursor.fetchall()
-    print("###################ROWS %s################"%row)
     # Commit the transaction
     connection.commit()
 
@@ -86,7 +85,7 @@ def does_userid_match_team(user_id:str,team_id:str):
     cursor = connection.cursor()
 
     # Define the SQL query to insert data into a table
-    insert_query = f"select * from Roles where Team_ID={team_id} and Email = {user_id}" 
+    insert_query = f"select * from Roles where Team_ID={team_id} and Email = '{user_id}'" 
 
     # Execute the SQL query to insert data
     cursor.execute(insert_query)
