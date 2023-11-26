@@ -12,13 +12,13 @@ from auth import getToken
 from secrets_util import lambda_handler
 
 
-def new_user(event, context):
+async def new_user(event, context):
     lambda_handler(event,context)
     try:
         
         email = getToken(event)["email"]
         id = getToken(event)["uid"]
-        save_user(id,email)
+        await save_user(id,email)
         
         response = api_helper.make_api_response(200,{"id":id})
     except ValidationError as e:

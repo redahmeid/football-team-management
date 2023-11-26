@@ -12,12 +12,12 @@ from roles import Role
 from auth import check_permissions
 import match_detail_screen
 import match_responses
-
+import asyncio
 import matches_state_machine
 import exceptions
 from secrets_util import lambda_handler
 
-def create_fixtures(event, context):
+async def create_fixtures(event, context):
     body =json.loads(event["body"])
     print(body)
     team_id = event["pathParameters"]["team_id"]
@@ -30,7 +30,7 @@ def create_fixtures(event, context):
 
         try:
             new_match = MatchValidator.validate_python(request_player)
-            result = retrieve_match_by_id(save_team_fixture(new_match))
+            result = await retrieve_match_by_id(await save_team_fixture(new_match))
             self_url = match_responses.getMatchUrl(team_id,result[0].id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}
@@ -49,11 +49,11 @@ def create_fixtures(event, context):
     response = api_helper.make_api_response(200,created_matches)
     return response
     
-def list_matches_by_team(event, context):
+async def list_matches_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     
     matches = []
-    for match in retrieve_matches_by_team(team_id):
+    for match in await retrieve_matches_by_team(team_id):
         try:
             self_url = match_responses.getMatchUrl(team_id,match.id)
             self = match_responses.Link(link=self_url,method="get")
@@ -75,20 +75,22 @@ def list_matches_by_team(event, context):
     response = api_helper.make_api_response(200,matches)
     return response
 
-def next_match_by_team(event, context):
+async def next_match_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     
     matches = []
     
     try:
-        for match in retrieve_next_match_by_team(team_id):
+        for match in await retrieve_next_match_by_team(team_id):
             self_url = match_responses.getMatchUrl(team_id,match.id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}
             match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
             matches.append(match_response)
-        
-            
+        if(len(matches)==0):
+            response = api_helper.make_api_response(404,None)
+        else:
+            response = api_helper.make_api_response(200,matches)
         
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
@@ -101,10 +103,10 @@ def next_match_by_team(event, context):
         return response
             
     
-    response = api_helper.make_api_response(200,matches)
+    
     return response
 
-def update_match_status_handler(event,context):
+async def update_match_status_handler(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     queryParameters = event["queryParameters"]
@@ -116,9 +118,9 @@ def update_match_status_handler(event,context):
     print(status)
     try:
        
-        if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
-             result =  internal_update_status(match_id=match_id,status=matches_state_machine.MatchState(status))
-             return match_detail_screen.getMatch(event,context)
+        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+             result =  await internal_update_status(match_id=match_id,status=matches_state_machine.MatchState(status))
+             return await match_detail_screen.getMatch(event,context)
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -135,6 +137,7 @@ def update_match_status_handler(event,context):
         response = api_helper.make_api_response(500,None,e)
         return response
 
-def internal_update_status(match_id,status:matches_state_machine.MatchState,minute):
+async def internal_update_status(match_id,status:matches_state_machine.MatchState,minute):
     
-    return update_match_status(match_id=match_id,status=status)
+    return await update_match_status(match_id=match_id,status=status)
+

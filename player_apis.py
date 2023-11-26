@@ -11,8 +11,10 @@ from roles_data import retrieve_role_by_user_id_and_team_id
 from users_data import retrieve_user_id_by_email
 from roles import Role
 from auth import check_permissions
+from firebase_admin import credentials
+from firebase_admin import messaging
 
-def create_players(event, context):
+async def create_players(event, context):
     body =json.loads(event["body"])
     
     team_id = event["pathParameters"]["team_id"]
@@ -26,10 +28,28 @@ def create_players(event, context):
 
         try:
             new_player = PlayerValidator.validate_python(request_player)
-            result = retrieve_player(save_player(new_player))
+            result = await retrieve_player(await save_player(new_player))
             response = api_helper.make_api_response(200,result)
                 
-            
+            # # This registration token comes from the client FCM SDKs.
+            # registration_token = 'YOUR_REGISTRATION_TOKEN'
+
+            # # Define the notification content
+            # notification = messaging.Notification(
+            #     title='Your Notification Title',
+            #     body='Your Notification Body'
+            # )
+
+            # # Define the message
+            # message = messaging.Message(
+            #     notification=notification,
+            #     token=registration_token
+            # )
+
+            # # Send the message
+            # response = messaging.send(message)
+            # print('Successfully sent message:', response)
+
         except ValidationError as e:
             print(e)
             errors = response_errors.validationErrorsList(e)
@@ -42,14 +62,14 @@ def create_players(event, context):
 
 
 
-def list_players_by_team(event, context):
+async def list_players_by_team(event, context):
     lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
     team_id = event["pathParameters"]["team_id"]
-    if(check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+    if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
         players = []
         try:
-            players = retrieve_players_by_team(team_id)
+            players = await retrieve_players_by_team(team_id)
             response = api_helper.make_api_response(200,players)
   
         except ValidationError as e:

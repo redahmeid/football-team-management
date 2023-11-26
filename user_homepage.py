@@ -10,12 +10,12 @@ from users_data import retrieve_user_id_by_email
 from secrets_util import getEmailFromToken, lambda_handler,validate_firebase_id_token
 import api_helper
 
-def enter_screen(event, context):
+async def enter_screen(event, context):
     lambda_handler(event,context)
     teams_list = []
     try:
         email =  getEmailFromToken(event,context)
-        teams = retrieve_teams_by_user_id(email)
+        teams = await retrieve_teams_by_user_id(email)
         for team in teams:
             team_response = convertTeamDataToTeamResponse(team)
             teams_list.append(team_response)

@@ -5,7 +5,8 @@ import db
 import player_responses
 from typing import List, Dict
 import sys
-
+import aiomysql
+import asyncio
 # # "CREATE TABLE Players" \
 #         "(ID varchar(255),"\
 #         "Name varchar(255) NOT NULL,"\
@@ -29,125 +30,96 @@ class TABLE:
         f"PRIMARY KEY ({TABLE.ID}),"\
         f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams(ID))"\
     
-def save_player(player:Player):
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+async def save_player(player:Player):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-    # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Players (ID,Name,Team_ID,live) VALUES (%s,%s,%s,'true')"
+                # Define the SQL query to insert data into a table
+                insert_query = "INSERT INTO Players (ID,Name,Team_ID,live) VALUES (%s,%s,%s,'true')"
 
-    # Data to be inserted
-    id = id_generator.generate_random_number(5)
-    data_to_insert = (id,player.name,player.team_id)
+                # Data to be inserted
+                id = id_generator.generate_random_number(5)
+                data_to_insert = (id,player.name,player.team_id)
 
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query, data_to_insert)
-    row_count = cursor.rowcount
-    # Commit the transaction
-    connection.commit()
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    return id
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query, data_to_insert)
+                await conn.commit()
+                
+                return id
 
 
 
-def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-    # Define the SQL query to insert data into a table
-    insert_query = "select * from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
-    
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query,team_id)
-    results = cursor.fetchall()
-    # Commit the transaction
-    connection.commit()
+                # Define the SQL query to insert data into a table
+                insert_query = "select * from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query,team_id)
+                results = await cursor.fetchall()
+                
+                players = list()
+                for result in results:
+                    players.append(convertStartingLineup(result))
+                
+                team_players ={}
+                team_players["status"] = "squad"
+                team_players["players"] = players
+                
+                print(team_players)
+                return [team_players]
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    players = list()
-    for result in results:
-        players.append(convertStartingLineup(result))
-    
-    team_players ={}
-    team_players["status"] = "squad"
-    team_players["players"] = players
-    
-    print(team_players)
-    return [team_players]
+async def squad_size_by_team(team_id:str):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-def squad_size_by_team(team_id:str):
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+                # Define the SQL query to insert data into a table
+                insert_query = "select count(*) as count from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
+                print(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query,team_id)
+                row = await cursor.fetchone()
+                
+                # club = Club(id=id,name=row)
+                print(row)
+                return row
 
-    # Define the SQL query to insert data into a table
-    insert_query = "select count(*) as count from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
-    print(insert_query)
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query,team_id)
-    row = cursor.fetchone()
-    # Commit the transaction
-    connection.commit()
+async def delete_player(player_id:str):
+   async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Define the SQL query to insert data into a table
+                insert_query = "update Players set live='false' where ID='%s'" %(player_id)
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    # club = Club(id=id,name=row)
-    print(row)
-    return row
+                print(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+               
+                
 
-def delete_player(player_id:str):
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Define the SQL query to insert data into a table
+                insert_query = "select * from Players as p where p.ID = %s and p.live <> 'false'" 
 
-    # Define the SQL query to insert data into a table
-    insert_query = "update Players set live='false' where ID='%s'" %(player_id)
-
-    print(insert_query)
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
-    row = cursor.rowcount
-    # Commit the transaction
-    connection.commit()
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    # club = Club(id=id,name=row)
-    print(row)
-    return row
-
-def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
-
-    # Define the SQL query to insert data into a table
-    insert_query = "select * from Players as p where p.ID = %s and p.live <> 'false'" 
-
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query,id)
-    results = cursor.fetchall()
-    # Commit the transaction
-    connection.commit()
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    # club = Club(id=id,name=row)
-    print(results)
-    players = []
-    for result in results:
-        players.append(convertStartingLineup(result))
-    return players
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query,id)
+                results = await cursor.fetchall()
+               
+                # club = Club(id=id,name=row)
+                print(results)
+                players = []
+                for result in results:
+                    players.append(convertStartingLineup(result))
+                return players
 
 
 

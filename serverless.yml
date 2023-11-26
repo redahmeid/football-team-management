@@ -69,42 +69,49 @@ functions:
           method: get
           cors: true
   create_team_screen_bff:
-    handler: create_team_screen.submit_team
+    handler: handler.submit_team
     events:
       - http:
           path: /bff/create_team_screen
           method: post
           cors: true
-  view_team_screen_bff:
-    handler: create_team_screen.enter_screen
-    events:
-      - http:
-          path: /bff/view_team_screen
-          method: get
-          cors: true
   user_homepage_bff:
-    handler: user_homepage.enter_screen
+    handler: handler.getUser
     events:
       - http:
-          path: /bff/user_homepage
+          path: /users
           method: get
           cors: true
   create_match_day_bff:
-    handler: match_detail_screen.getMatch
+    handler: handler.getMatch
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}
           method: get
           cors: true
+  getMatchById:
+    handler: handler.getMatchAsGuest
+    events:
+      - http:
+          path: /matches/{match_id}
+          method: get
+          cors: true
   submit_lineup:
-    handler: match_detail_screen.submit_lineup
+    handler: handler.submit_lineup
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/players/submit_lineup
           method: post
           cors: true
+  submit_subs:
+    handler: handler.submit_subs
+    events:
+      - http:
+          path: /teams/{team_id}/matches/{match_id}/players/submit_lineup/subs
+          method: post
+          cors: true
   update_match_status:
-    handler: match_detail_screen.update_match_status
+    handler: handler.update_match_status
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/{status}
@@ -112,7 +119,7 @@ functions:
           cors: true
 
   create_jwt:
-    handler: auth.set_custom_claims
+    handler: handler.set_tokens
     events:
       - http:
           path: /auth/token

@@ -24,7 +24,7 @@ def enter_screen(event, context):
     except exceptions.AuthError as e:
         response = api_helper.make_api_response(401,None,e)
 
-def submit_team(event, context):
+async def submit_team(event, context):
     lambda_handler(event,context)
     body =json.loads(event["body"])
     teams = []
@@ -33,12 +33,12 @@ def submit_team(event, context):
         
         team = Team(age_group=body["age_group"],name=body["name"])
         
-        team_id = save_team(team)
+        team_id = await save_team(team)
         teamUser = TeamUser(user_id=email,team_id=str(team_id),role=roles.Role.admin)
-        role_id = save_role(teamUser)
-        set_custom_claims(event=event,context=context)
+        role_id = await save_role(teamUser)
+        await set_custom_claims(event=event,context=context)
         # get the user
-        save_response =convertTeamDataToTeamResponse(retrieve_team_by_id(team_id))
+        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_id))
         teams.append(save_response)
         response = api_helper.make_api_response(200,teams)
        

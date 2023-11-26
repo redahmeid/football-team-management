@@ -6,12 +6,12 @@ import response_classes
 from config import app_config
 import api_helper
 import response_errors
-from team_data import save_team,retrieve_teams_by_club,retrieve_team_by_id
-from matches_data import retrieve_next_match_by_team
+from team_data import save_team,retrieve_team_by_id
 from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
+import asyncio
 
-def create_team(event, context):
+async def create_team(event, context):
     lambda_handler(event,context)
     
 
@@ -26,7 +26,7 @@ def create_team(event, context):
         save_response = save_team(new_team)
         set_custom_claims(getEmailFromToken(event,context))
         print("CREATE TEAM: %s"%(save_response))
-        teams.append(convertTeamDataToTeamResponse(retrieve_team_by_id(save_response)))
+        teams.append(convertTeamDataToTeamResponse(await retrieve_team_by_id(save_response)))
         response = api_helper.make_api_response(200,teams)
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
@@ -40,32 +40,7 @@ def create_team(event, context):
     return response
 
 
-def list_teams_by_club(event, context):
-   
-    
-    club_id = event["pathParameters"]["club_id"]
-    
-    teams = []
-    for team in retrieve_teams_by_club(club_id):
-        try:
-            
-            
-            save_response =convertTeamDataToTeamResponse(team)
-            teams.append(save_response)
-            actions = list()
-                
-            
-        except ValidationError as e:
-            errors = response_errors.validationErrorsList(e)
-            response = api_helper.make_api_response(400,None)
-        except ValueError as e:
-            response = api_helper.make_api_response(400,None)
-
-    
-    response = api_helper.make_api_response(200,teams)
-    return response
-
-def retrieve_team_summary(event, context):
+async def retrieve_team_summary(event, context):
    
     
     team_id = event["pathParameters"]["team_id"]
@@ -74,7 +49,7 @@ def retrieve_team_summary(event, context):
 
     try:
         
-        save_response =convertTeamDataToTeamResponse(retrieve_team_by_id(team_id))
+        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_id))
         teams.append(save_response)
         actions = list()
             

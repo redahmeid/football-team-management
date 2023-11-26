@@ -9,7 +9,7 @@ class Link(BaseModel):
 
 class PlayerInfo(BaseModel):
     id:str
-    name:str
+    name:Optional[str]=None
 
 class SelectionInfo(BaseModel):
     id:Optional[str]=None

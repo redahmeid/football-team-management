@@ -2,65 +2,61 @@ from config import app_config
 import db
 import match_day_data
 import matches_data
+import sys
+import notifications
+import aiomysql
+import asyncio
 
-
-
-def create_database():
+async def create_database():
     try:
         # Define the SQL query to insert data into a table
         insert_query = "CREATE database %s" %(app_config.database)
         print(insert_query)
-        connection = db.connection()
-        print("CREATE DATABASE IN %s" %(connection.db))     
-        # Create a cursor object to interact with the database
-        cursor = connection.cursor()
+        async with aiomysql.create_pool(**db.admin_db_config) as pool:
+            async with pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-        
-        
+                # Execute the SQL query to insert data
+                    await cursor.execute(insert_query)
 
-        # Execute the SQL query to insert data
-        cursor.execute(insert_query)
-
-        # Commit the transaction
-        connection.commit()
-        # Close the cursor and connection
-        cursor.close()
-        connection.close()
-        
-        # create_teams_table()
+                    # Commit the transaction
+                    await conn.commit()
+                    
+                    
+                    # create_teams_table()
     except Exception as e:
         print(e)
+    await create_teams_table()
+    await create_tables(matches_data.TABLE.createTable())
+    await create_players_table()
+    await create_users_table()
+    await create_team_users_table()
     
-    create_teams_table()
-    create_tables(matches_data.TABLE.createTable())
-    create_players_table()
-    create_users_table()
-    create_team_users_table()
-    create_tables(match_day_data.PLANNED_LINEUP_TABLE.createTable())
-    create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.createTable())
-    create_tables(match_day_data.MATCH_STATUS_TABLE.createTable())
+    await create_tables(match_day_data.PLANNED_LINEUP_TABLE.createTable()),
+    await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.createTable()),
+    await create_tables(match_day_data.MATCH_STATUS_TABLE.createTable()),
+    await create_tables(match_day_data.GOALS_TABLE.createTable()),
+    await create_tables(match_day_data.ASSISTS_TABLE.createTable()),
+    await create_tables(match_day_data.OPPOSITION_GOALS_TABLE.createTable()),
+    await create_tables(notifications.TABLE.createTable()),
+    await create_tables(match_day_data.PERIODS_TABLE.createTable()),
+        
+    
+    
     
 
-def create_tables(sql):
-    print(sql)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+async def create_tables(sql):
+   async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-   
-    # Execute the SQL query to insert data
-    cursor.execute(sql)
+                # Execute the SQL query to insert data
+                await cursor.execute(sql)
+                await conn.commit()
 
-    # Commit the transaction
-    connection.commit()
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-
-def create_teams_table():
+async def create_teams_table():
      # Define the SQL query to insert data into a table
-    insert_query = "CREATE TABLE Teams" \
+    insert_query = "CREATE TABLE if not exists Teams" \
         "(ID varchar(255),"\
         "Name varchar(255) NOT NULL,"\
         "AgeGroup varchar(255) NOT NULL,"\
@@ -69,24 +65,21 @@ def create_teams_table():
 
 
     print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
    
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
 
-    # Commit the transaction
-    connection.commit()
+                # Commit the transaction
+                await conn.commit()
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
 
-def create_users_table():
+async def create_users_table():
      # Define the SQL query to insert data into a table
-    insert_query = "CREATE TABLE Users" \
+    insert_query = "CREATE TABLE if not exists Users" \
         "(ID varchar(255),"\
         "Email varchar(255) NOT NULL Unique,"\
         "live VARCHAR(255),"\
@@ -94,24 +87,21 @@ def create_users_table():
 
 
     print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
-   
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
+            
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
 
-    # Commit the transaction
-    connection.commit()
+                # Commit the transaction
+                await conn.commit()
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
 
-def create_team_users_table():
+async def create_team_users_table():
      # Define the SQL query to insert data into a table
-    insert_query = "CREATE TABLE Roles" \
+    insert_query = "CREATE TABLE if not exists Roles" \
         "(ID varchar(255),"\
         "Email varchar(255),"\
         "Team_ID varchar(255),"\
@@ -123,24 +113,21 @@ def create_team_users_table():
 
 
     print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
    
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
 
-    # Commit the transaction
-    connection.commit()
+                # Commit the transaction
+                await conn.commit()
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
 
-def create_players_table():
+async def create_players_table():
      # Define the SQL query to insert data into a table
-    insert_query = "CREATE TABLE Players" \
+    insert_query = "CREATE TABLE if not exists Players" \
         "(ID varchar(255),"\
         "Name varchar(255) NOT NULL,"\
         "Team_ID varchar(255) NOT NULL,"\
@@ -151,20 +138,17 @@ def create_players_table():
 
 
     print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
    
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
 
-    # Commit the transaction
-    connection.commit()
+                # Commit the transaction
+                await conn.commit()
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
 
 def alter_players_table(field_name,data_type):
      # Define the SQL query to insert data into a table
@@ -198,7 +182,7 @@ def alter_players_table(field_name,data_type):
     cursor.close()
     connection.close()
 
-def create_matches_table():
+async def create_matches_table():
      # Define the SQL query to insert data into a table
     insert_query = "CREATE TABLE Matches" \
         "(ID varchar(255),"\
@@ -215,20 +199,17 @@ def create_matches_table():
 
 
     print(insert_query)
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
 
    
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
 
-    # Commit the transaction
-    connection.commit()
+                # Commit the transaction
+                await conn.commit()
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
 
 def create_match_day_lineup_table():
      # Define the SQL query to insert data into a table
@@ -260,3 +241,6 @@ def create_match_day_lineup_table():
     cursor.close()
     connection.close()
 
+if __name__ == "__main__":
+    if(sys.argv[1]=="create"):   
+        asyncio.run(create_database())
