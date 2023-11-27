@@ -91,12 +91,7 @@ async def getMatchPlanning(team_id,match):
 
 @timeit
 async def getMatchGuest(match):
-    current_lineup, goals,assists,opposition = await asyncio.gather(
-        retrieveCurrentActual(match,time_playing),
-        match_day_data.retrieve_player_goals(match),
-        match_day_data.retrieve_player_assists(match),
-        match_day_data.retrieve_opposition_goals(match)
-    ) 
+    
     periods = await retrieve_periods_by_match(match.id)
     time_playing = 0
     last_period = {}
@@ -116,12 +111,19 @@ async def getMatchGuest(match):
                 started_at = period.time
             last_period = period
     
-    time_playing = int((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
+    time_playing = ((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
 
     if(ended):
         how_long_left = 0
     else:
         how_long_left = match.length-time_playing
+
+    current_lineup, goals,assists,opposition = await asyncio.gather(
+        retrieveCurrentActual(match,time_playing),
+        match_day_data.retrieve_player_goals(match),
+        match_day_data.retrieve_player_assists(match),
+        match_day_data.retrieve_opposition_goals(match)
+    ) 
     print(f"HOW LONG LEFT {how_long_left}")
     print(f"TIME PLAYING {time_playing}")
     
@@ -194,12 +196,53 @@ async def getMatchStarted(team_id,match):
     return response
 
 async def setGoalsFor(match_id, goal_scorer,assister):
-    await save_assists_for(match_id,assister)
-    await save_goals_for(match_id,goal_scorer)
+    periods = await retrieve_periods_by_match(match_id)
+    time_playing = 0
+    last_period = {}
+    started_at = 0
+    ended = False
+    for period in periods:
+        if(period.status=="ended"):
+            time_playing = time_playing + (period.time - last_period.time)
+            ended = True
+        if(period.status == "paused"):
+            time_playing = time_playing + (period.time - last_period.time)
+            print(f"TIME PLAYING PAUSE {time_playing}")
+            last_period = period
+        if(period.status=="started" or period.status=="restarted"):
+            print(f"TIME PLAYING STARTED {time_playing}")
+            if(period.status=="started"):
+                started_at = period.time
+            last_period = period
+    
+    time_playing = int((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
+
+    await save_assists_for(match_id,assister,time_playing)
+    await save_goals_for(match_id,goal_scorer,time_playing)
     await matches_data.increment_goals_scored(match_id=match_id,goals=1)
 
 async def setGoalsAgainst(match_id):
-    await save_opposition_goal(match_id)
+    periods = await retrieve_periods_by_match(match_id)
+    time_playing = 0
+    last_period = {}
+    started_at = 0
+    ended = False
+    for period in periods:
+        if(period.status=="ended"):
+            time_playing = time_playing + (period.time - last_period.time)
+            ended = True
+        if(period.status == "paused"):
+            time_playing = time_playing + (period.time - last_period.time)
+            print(f"TIME PLAYING PAUSE {time_playing}")
+            last_period = period
+        if(period.status=="started" or period.status=="restarted"):
+            print(f"TIME PLAYING STARTED {time_playing}")
+            if(period.status=="started"):
+                started_at = period.time
+            last_period = period
+    
+    time_playing = int((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
+    await save_opposition_goal(match_id,time_playing)
     await matches_data.increment_goals_conceded(match_id=match_id,goals=1)
      
 

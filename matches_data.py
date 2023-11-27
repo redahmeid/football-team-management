@@ -216,7 +216,7 @@ async def retrieve_next_match_by_team(team_id:str) -> List[match_responses.Match
                 # club = Club(id=id,name=row)
                 matches = []
                 
-                matches.append(convertDataToMatchInfo(rows))
+                if(rows is not None): matches.append(convertDataToMatchInfo(rows))
                 return matches
 
 def convertDataToMatchInfo(data):

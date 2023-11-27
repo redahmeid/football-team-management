@@ -6,8 +6,10 @@ frameworkVersion: '3'
 provider:
   name: aws
   runtime: python3.8
-  stage: dev
+  stage: ${opt:stage, 'dev'}
   region: eu-west-2
+  environment:
+    ENVIRONMENT: ${opt:stage, 'dev'}
 
 functions:
   create_team_players:
@@ -16,30 +18,35 @@ functions:
       - http:
           path: /teams/{team_id}/players
           method: post
+          cors: true
   create_team:
     handler: handler.create_team
     events:
       - http:
           path: /teams
           method: post
+          cors : true
   create_team_fixtures:
     handler: handler.create_team_fixtures
     events:
       - http:
           path: /teams/{team_id}/matches
           method: post
+          cors: true
   create_user:
     handler: handler.create_user
     events:
       - http:
           path: /users
           method: post
+          cors: true
   retrieve_team_squad:
     handler: handler.list_players_by_team
     events:
       - http:
           path: /teams/{team_id}/players
           method: get
+          cors: true
   retrieve_matches_by_team:
     handler: handler.list_matches_by_team
     events:

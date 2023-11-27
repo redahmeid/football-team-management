@@ -71,7 +71,7 @@ async def list_matches_by_team(event, context):
             print(e)
             response = api_helper.make_api_response(400,None)
             return response
-
+   
     response = api_helper.make_api_response(200,matches)
     return response
 

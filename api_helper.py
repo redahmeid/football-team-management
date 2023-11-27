@@ -4,14 +4,15 @@ import json
 import datetime
 
 def make_api_response(statusCode: int, result: str,  errors = None):
-    if statusCode >= 400:
-        
+    if statusCode == 404:
+        body = {}
+    elif statusCode >= 400:
         body = {"errors": errors}
     else:
         # Handle success response
         body = {"result": result}
 
-    response = {"statusCode": statusCode, "body": json.dumps(body,default=str), "headers": {"Content-Type": "application/json"}}
+    response = {"statusCode": statusCode, "body": json.dumps(body,default=str), "headers": {"Access-Control-Allow-Origin": "*","Content-Type": "application/json"}}
     return response
 
 def serialize_datetime(obj): 

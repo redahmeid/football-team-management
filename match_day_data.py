@@ -227,15 +227,15 @@ async def retrieve_periods_by_match(match_id) -> List[match_responses.MatchPerio
                     periods.append(convertToPeriods(result))
                 
                 return periods
-async def save_goals_for(match_id,player_id):
+async def save_goals_for(match_id,player_id,time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
-    
+                
         
                 id = id_generator.generate_random_number(5)
             
-                insert_query = f"insert INTO {GOALS_TABLE.TABLE_NAME} ({GOALS_TABLE.ID},{GOALS_TABLE.MATCH_ID},{GOALS_TABLE.PLAYER_ID}, {GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{int(datetime.utcnow().timestamp())})"
+                insert_query = f"insert INTO {GOALS_TABLE.TABLE_NAME} ({GOALS_TABLE.ID},{GOALS_TABLE.MATCH_ID},{GOALS_TABLE.PLAYER_ID}, {GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{time_playing})"
                 await cursor.execute(insert_query)
                     
                     # Commit the transaction
@@ -243,7 +243,7 @@ async def save_goals_for(match_id,player_id):
 
                 return True
 @timeit
-async def save_assists_for(match_id,player_id):
+async def save_assists_for(match_id,player_id,time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -251,7 +251,7 @@ async def save_assists_for(match_id,player_id):
                     
                 id = id_generator.generate_random_number(5)
             
-                insert_query = f"insert INTO {ASSISTS_TABLE.TABLE_NAME} ({ASSISTS_TABLE.ID},{ASSISTS_TABLE.MATCH_ID},{ASSISTS_TABLE.PLAYER_ID}, {ASSISTS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{int(datetime.utcnow().timestamp())})"
+                insert_query = f"insert INTO {ASSISTS_TABLE.TABLE_NAME} ({ASSISTS_TABLE.ID},{ASSISTS_TABLE.MATCH_ID},{ASSISTS_TABLE.PLAYER_ID}, {ASSISTS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{time_playing})"
                 
                 await cursor.execute(insert_query)
                     
@@ -325,14 +325,14 @@ async def retrieve_opposition_goals(match:match_responses.MatchInfo):
                     player_stats.append(convertToOppositionPlayerMatchStats(result,match))
                     
                 return player_stats
-async def save_opposition_goal(match_id):
+async def save_opposition_goal(match_id,time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
         
                 id = id_generator.generate_random_number(5)
             
-                insert_query = f"insert INTO {OPPOSITION_GOALS_TABLE.TABLE_NAME} ({OPPOSITION_GOALS_TABLE.ID},{OPPOSITION_GOALS_TABLE.MATCH_ID}, {OPPOSITION_GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}',{int(datetime.utcnow().timestamp())})"
+                insert_query = f"insert INTO {OPPOSITION_GOALS_TABLE.TABLE_NAME} ({OPPOSITION_GOALS_TABLE.ID},{OPPOSITION_GOALS_TABLE.MATCH_ID}, {OPPOSITION_GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}',{time_playing})"
                 
                 await cursor.execute(insert_query)
                 await conn.commit()
@@ -356,7 +356,7 @@ async def save_planned_lineup(match_id,minute,players:List[player_responses.Play
                 await conn.commit()
                 return True
 
-async def save_actual_lineup(match_id,players:List[player_responses.PlayerResponse]):
+async def save_actual_lineup(match_id,players:List[player_responses.PlayerResponse],time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -364,7 +364,7 @@ async def save_actual_lineup(match_id,players:List[player_responses.PlayerRespon
                     
                     id = id_generator.generate_random_number(5)
                     
-                    insert_query = f"insert INTO {ACTUAL_LINEDUP_TABLE.TABLE_NAME} ({ACTUAL_LINEDUP_TABLE.ID},{ACTUAL_LINEDUP_TABLE.MATCH_ID},{ACTUAL_LINEDUP_TABLE.PLAYER_ID}, {ACTUAL_LINEDUP_TABLE.POSITION},{ACTUAL_LINEDUP_TABLE.TIME}) VALUES ('{id}','{match_id}','{player.info.id}','{player.selectionInfo.position}',{int(datetime.utcnow().timestamp())})"
+                    insert_query = f"insert INTO {ACTUAL_LINEDUP_TABLE.TABLE_NAME} ({ACTUAL_LINEDUP_TABLE.ID},{ACTUAL_LINEDUP_TABLE.MATCH_ID},{ACTUAL_LINEDUP_TABLE.PLAYER_ID}, {ACTUAL_LINEDUP_TABLE.POSITION},{ACTUAL_LINEDUP_TABLE.TIME}) VALUES ('{id}','{match_id}','{player.info.id}','{player.selectionInfo.position}',{time_playing})"
                     print(insert_query)
                     await cursor.execute(insert_query)
                 await conn.commit()
@@ -494,8 +494,9 @@ async def retrieveCurrentActual(match,how_log_ago):
                 minutes = how_log_ago
                 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match.id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME}<={int(datetime.utcnow().timestamp())} and ({ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} IS NULL or {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} != False) order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} desc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match.id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME}<={minutes} and ({ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} IS NULL or {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} != False) order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} desc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
                 # Execute the SQL query to insert data
+                print(insert_query)
                 await cursor.execute(insert_query)
                 results = await cursor.fetchall()
                 players = []
@@ -542,7 +543,7 @@ def convertToPlannedStartingLineup(data):
 
 def convertToActualStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[ACTUAL_LINEDUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
-    selection_info = player_responses.SelectionInfo(id=data[ACTUAL_LINEDUP_TABLE.ID],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=int(data[ACTUAL_LINEDUP_TABLE.TIME]/60))
+    selection_info = player_responses.SelectionInfo(id=data[ACTUAL_LINEDUP_TABLE.ID],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=int(data[ACTUAL_LINEDUP_TABLE.TIME]))
     playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info)
     return playerResponse
 

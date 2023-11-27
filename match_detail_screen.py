@@ -7,7 +7,7 @@ from player_data import retrieve_players_by_team
 import sys
 from matches_data import retrieve_match_by_id
 import matches_data
-from match_day_data import retrieveNextPlanned,retrieveAllPlannedLineups,save_actual_lineup,save_planned_lineup,retrieveCurrentActual, save_assists_for,save_goals_for,save_opposition_goal
+from match_day_data import retrieve_periods_by_match,retrieveNextPlanned,retrieveAllPlannedLineups,save_actual_lineup,save_planned_lineup,retrieveCurrentActual, save_assists_for,save_goals_for,save_opposition_goal
 from secrets_util import lambda_handler
 import api_helper
 from auth import check_permissions
@@ -20,6 +20,7 @@ from datetime import date
 import logging
 import time
 import asyncio
+import datetime
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -223,11 +224,31 @@ async def submit_planned_lineup(match_id,players:List[player_responses.PlayerRes
 async def submit_actual_lineup(match_id,players:List[player_responses.PlayerResponse]):
     await updateMatchPeriod(match_id,matches_state_machine.MatchState.started.value)
     await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(matches_state_machine.MatchState.started.value))
-    await save_actual_lineup(match_id=match_id,players=players)
+    await save_actual_lineup(match_id=match_id,players=players,time_playing=0)
 
 async def submit_subs(match_id,players:List[player_responses.PlayerResponse]):
+    periods = await retrieve_periods_by_match(match_id)
+    time_playing = 0
+    last_period = {}
+    started_at = 0
+    ended = False
+    for period in periods:
+        if(period.status=="ended"):
+            time_playing = time_playing + (period.time - last_period.time)
+            ended = True
+        if(period.status == "paused"):
+            time_playing = time_playing + (period.time - last_period.time)
+            print(f"TIME PLAYING PAUSE {time_playing}")
+            last_period = period
+        if(period.status=="started" or period.status=="restarted"):
+            print(f"TIME PLAYING STARTED {time_playing}")
+            if(period.status=="started"):
+                started_at = period.time
+            last_period = period
+    
+    time_playing = int((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
     await updateMatchPeriod(match_id,matches_state_machine.MatchState.substitutions.value)
-    await save_actual_lineup(match_id=match_id,players=players)
+    await save_actual_lineup(match_id=match_id,players=players,time_playing=time_playing)
                 
       
 

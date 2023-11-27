@@ -12,6 +12,7 @@ async def create_database():
         # Define the SQL query to insert data into a table
         insert_query = "CREATE database %s" %(app_config.database)
         print(insert_query)
+        print(db.admin_db_config)
         async with aiomysql.create_pool(**db.admin_db_config) as pool:
             async with pool.acquire() as conn:
                 async with conn.cursor(aiomysql.DictCursor) as cursor:

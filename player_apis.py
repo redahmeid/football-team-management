@@ -29,7 +29,7 @@ async def create_players(event, context):
         try:
             new_player = PlayerValidator.validate_python(request_player)
             result = await retrieve_player(await save_player(new_player))
-            response = api_helper.make_api_response(200,result)
+            created_players.append(result[0])
                 
             # # This registration token comes from the client FCM SDKs.
             # registration_token = 'YOUR_REGISTRATION_TOKEN'
@@ -57,7 +57,7 @@ async def create_players(event, context):
         except ValueError as e:
             print(e)
             response = api_helper.make_api_response(400,None,None)
-
+    response = api_helper.make_api_response(200,created_players)
     return response
 
 

@@ -49,7 +49,7 @@ class MatchPeriod(BaseModel):
 
 class PlayerMatchStat(BaseModel):
     player: player_responses.PlayerInfo
-    time: float
+    time: int
 class MatchResponse(BaseModel):
     match:MatchInfo
     squad:Optional[List]=None
