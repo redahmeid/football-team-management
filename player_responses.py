@@ -21,3 +21,11 @@ class PlayerResponse(BaseModel):
     info:PlayerInfo
     selectionInfo:Optional[SelectionInfo]=None
     links:Optional[Dict[str,Link]]=None
+    def __eq__(self, other):
+        if isinstance(other, PlayerResponse):
+            return (self.info.id == other.info.id and
+                    self.selectionInfo.position == other.selectionInfo.position)
+        return NotImplemented
+    def __hash__(self):
+        # Create a hash based on the same attributes you're using in __eq__
+        return hash((self.info.id, self.selectionInfo.position))

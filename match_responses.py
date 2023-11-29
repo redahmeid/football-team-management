@@ -19,6 +19,7 @@ class Link(BaseModel):
 class HomeOrAway(str, Enum):
     home = "Home"
     away = "Away"
+    neutral="Neutral"
 
 class TeamResponse(BaseModel):
     id:str
@@ -49,6 +50,7 @@ class MatchPeriod(BaseModel):
 
 class PlayerMatchStat(BaseModel):
     player: player_responses.PlayerInfo
+    position: Optional[str]=""
     time: int
 class MatchResponse(BaseModel):
     match:MatchInfo
@@ -66,6 +68,8 @@ class ActualMatchResponse(BaseModel):
     how_long_left:Optional[float]=0
     current_players:Optional[List]=None
     next_players:Optional[List]=None
+    subsOn:Optional[List]=None
+    subsOff:Optional[List]=None
     assisters:Optional[List]=None
     goals:Optional[List]=None
     opposition:Optional[List]=None

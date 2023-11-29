@@ -12,6 +12,8 @@ class MatchState(str, Enum):
     actual_match_ended = "match_ended"
     plan="plan"
     started="started"
+    paused="paused"
+    restarted="restarted"
     ended="ended"
 
 state_change_map = {

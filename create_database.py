@@ -41,7 +41,7 @@ async def create_database():
     await create_tables(match_day_data.OPPOSITION_GOALS_TABLE.createTable()),
     await create_tables(notifications.TABLE.createTable()),
     await create_tables(match_day_data.PERIODS_TABLE.createTable()),
-        
+    await create_tables(match_day_data.SUBS_TABLE.createTable()), 
     
     
     

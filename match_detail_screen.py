@@ -15,7 +15,8 @@ from roles import Role
 import matches_state_machine
 import player_responses
 import match_responses
-from match_planning_backend import getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
+import match_planning_backend
+from match_planning_backend import submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
 from datetime import date
 import logging
 import time
@@ -96,8 +97,9 @@ async def submit_substitutions(event,context):
     try:
     
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
-            await submit_subs(match_id=match_id,players=new_players)
-            return await getMatch(event,context)
+            
+            await submit_subs(match=match[0],players=new_players)
+            return await match_planning_backend.getMatchStarted(team_id,match)
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -125,7 +127,7 @@ async def getMatchAsGuest(event,context):
             response = api_helper.make_api_response(404,None,e)
         else:
             match = matchList[0]
-            response = await getMatchGuest(match)
+            response = await match_planning_backend.getMatchGuest(match)
         print(response)
         return response
     except exceptions.AuthError as e:
@@ -147,7 +149,7 @@ async def getMatch(event,context):
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     team_id = pathParameters["team_id"]
-
+    
     try:
         matchList = await retrieve_match_by_id(match_id)
         match = matchList[0]
@@ -160,7 +162,7 @@ async def getMatch(event,context):
                 response = await getMatchPlanning(team_id,match)
             elif(match.status==matches_state_machine.MatchState.plan_confirmed and match.date==date.today()):
                 response = await getMatchConfirmedPlanReadyToStart(team_id,match)
-            elif(match.status==matches_state_machine.MatchState.started or match.status==matches_state_machine.MatchState.ended):
+            elif(match.status==matches_state_machine.MatchState.started or match.status==matches_state_machine.MatchState.ended or match.status==matches_state_machine.MatchState.paused or match.status==matches_state_machine.MatchState.restarted):
                 response =  await getMatchStarted(team_id,match)
             logging.info(response)
             return response
@@ -215,40 +217,7 @@ async def set_match_stats(event,context):
 
 
 
-async def submit_planned_lineup(match_id,players:List[player_responses.PlayerResponse],minute):
-   
-    await save_planned_lineup(match_id=match_id,minute=minute,players=players)
-           
-      
 
-async def submit_actual_lineup(match_id,players:List[player_responses.PlayerResponse]):
-    await updateMatchPeriod(match_id,matches_state_machine.MatchState.started.value)
-    await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(matches_state_machine.MatchState.started.value))
-    await save_actual_lineup(match_id=match_id,players=players,time_playing=0)
-
-async def submit_subs(match_id,players:List[player_responses.PlayerResponse]):
-    periods = await retrieve_periods_by_match(match_id)
-    time_playing = 0
-    last_period = {}
-    started_at = 0
-    ended = False
-    for period in periods:
-        if(period.status=="ended"):
-            time_playing = time_playing + (period.time - last_period.time)
-            ended = True
-        if(period.status == "paused"):
-            time_playing = time_playing + (period.time - last_period.time)
-            print(f"TIME PLAYING PAUSE {time_playing}")
-            last_period = period
-        if(period.status=="started" or period.status=="restarted"):
-            print(f"TIME PLAYING STARTED {time_playing}")
-            if(period.status=="started"):
-                started_at = period.time
-            last_period = period
-    
-    time_playing = int((datetime.datetime.utcnow().timestamp()-time_playing-started_at)/60)
-    await updateMatchPeriod(match_id,matches_state_machine.MatchState.substitutions.value)
-    await save_actual_lineup(match_id=match_id,players=players,time_playing=time_playing)
                 
       
 
