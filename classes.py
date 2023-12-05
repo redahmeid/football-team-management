@@ -27,6 +27,7 @@ class Match(BaseModel):
     status:str
     length:int
     date:datetime.date
+    type:str
 
 class Player(BaseModel):
     name:str

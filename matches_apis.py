@@ -25,12 +25,16 @@ async def create_fixtures(event, context):
     matches = body["matches"]
     created_matches = []
     for match in matches:
-        request_player = Match(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,team_id=team_id)
-        MatchValidator = TypeAdapter(Match)
+        type = match.get("type",None)
+        if(type):
+            type = match_responses.MatchType(type)
+
+        matchInfo = match_responses.MatchInfo(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,team_id=team_id,type=type)
+        
 
         try:
-            new_match = MatchValidator.validate_python(request_player)
-            result = await retrieve_match_by_id(await save_team_fixture(new_match))
+            
+            result = await retrieve_match_by_id(await save_team_fixture(matchInfo))
             self_url = match_responses.getMatchUrl(team_id,result[0].id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}

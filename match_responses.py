@@ -33,6 +33,13 @@ class TeamResponse(BaseModel):
     addPlayers:Link        #save_response["addPlayers"] = {"link":"/teams/%s/players"%(save_response["ID"]),"method":"post"}
     addFixtures:Link 
 
+
+class MatchType(str, Enum):
+    friendly = "friendly"
+    league = "league"
+    trophy = "trophy"
+    
+
 class MatchInfo(BaseModel):
     id:str
     team:TeamResponse
@@ -43,6 +50,7 @@ class MatchInfo(BaseModel):
     opposition:str
     homeOrAway:HomeOrAway
     date:datetime.date
+    type:Optional[MatchType]=None
 
 class MatchPeriod(BaseModel):
     status:str
