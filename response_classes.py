@@ -46,6 +46,8 @@ class TeamResponse(BaseModel):
     id:str
     name:str
     ageGroup:str
+    fixtures:Optional[List] = []
+    squad:Optional[List] = []
     live:bool
     self:Link
     nextMatch:Link        #save_response["next_match"] = {"ID":match["ID"],"opposition":match["Opposition"],"date":match["Date"].isoformat(),"homeOrAway":match["HomeOrAway"], "club_name":match["c.Name"], "team_name":match["Name"], "age_group":match["AgeGroup"]}

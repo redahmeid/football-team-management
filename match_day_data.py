@@ -95,12 +95,15 @@ class ACTUAL_LINEDUP_TABLE:
         f"{ACTUAL_LINEDUP_TABLE.MATCH_ID} varchar(255) NOT NULL,"\
         f"{ACTUAL_LINEDUP_TABLE.PLAYER_ID} varchar(255) NOT NULL,"\
         f"{ACTUAL_LINEDUP_TABLE.POSITION} varchar(255),"\
-        f"{ACTUAL_LINEDUP_TABLE.TIME} int,"\
+        f"{ACTUAL_LINEDUP_TABLE.TIME} double,"\
         f"{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} bool,"\
         f"{ACTUAL_LINEDUP_TABLE.SOFT_DELETE_TIME} int,"\
         f"PRIMARY KEY ({ACTUAL_LINEDUP_TABLE.ID}),"\
         f"FOREIGN KEY({ACTUAL_LINEDUP_TABLE.MATCH_ID}) references Matches(ID),"\
         f"FOREIGN KEY({ACTUAL_LINEDUP_TABLE.PLAYER_ID}) references Players(ID))"
+    def alterTable():
+        return f"ALTER TABLE {ACTUAL_LINEDUP_TABLE.TABLE_NAME}"\
+        f" MODIFY {ACTUAL_LINEDUP_TABLE.TIME} double"
 
 class SUBS_TABLE:
     TABLE_NAME = "Subs"
@@ -118,7 +121,7 @@ class SUBS_TABLE:
         f"{SUBS_TABLE.MATCH_ID} varchar(255) NOT NULL,"\
         f"{SUBS_TABLE.PLAYER_ID} varchar(255) NOT NULL,"\
         f"{SUBS_TABLE.POSITION} varchar(255) NOT NULL,"\
-        f"{SUBS_TABLE.TIME} int,"\
+        f"{SUBS_TABLE.TIME} double,"\
         f"{SUBS_TABLE.SOFT_DELETE} bool,"\
         f"{SUBS_TABLE.SOFT_DELETE_TIME} int,"\
         f"PRIMARY KEY ({SUBS_TABLE.ID}),"\
@@ -130,6 +133,7 @@ class GOALS_TABLE:
     ID = "ID"
     MATCH_ID="Match_ID"
     PLAYER_ID="Player_ID"
+    TYPE="Type"
     TIME="Time"
     SOFT_DELETE="Deleted"
     SOFT_DELETE_TIME="Deleted_TIME"
@@ -145,6 +149,9 @@ class GOALS_TABLE:
         f"PRIMARY KEY ({GOALS_TABLE.ID}),"\
         f"FOREIGN KEY({GOALS_TABLE.MATCH_ID}) references Matches(ID),"\
         f"FOREIGN KEY({GOALS_TABLE.PLAYER_ID}) references Players(ID))"
+    def alterTable():
+        return f"ALTER TABLE {GOALS_TABLE.TABLE_NAME}"\
+        f" ADD {GOALS_TABLE.TYPE} varchar(255)"
 
 class OPPOSITION_GOALS_TABLE:
     TABLE_NAME = "Opposition_Goals"
@@ -250,7 +257,7 @@ async def retrieve_periods_by_match(match_id) -> List[match_responses.MatchPerio
                     periods.append(convertToPeriods(result))
                 
                 return periods
-async def save_goals_for(match_id,player_id,time_playing):
+async def save_goals_for(match_id,player_id,time_playing,type):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -258,7 +265,7 @@ async def save_goals_for(match_id,player_id,time_playing):
         
                 id = id_generator.generate_random_number(5)
             
-                insert_query = f"insert INTO {GOALS_TABLE.TABLE_NAME} ({GOALS_TABLE.ID},{GOALS_TABLE.MATCH_ID},{GOALS_TABLE.PLAYER_ID}, {GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{time_playing})"
+                insert_query = f"insert INTO {GOALS_TABLE.TABLE_NAME} ({GOALS_TABLE.ID},{GOALS_TABLE.MATCH_ID},{GOALS_TABLE.PLAYER_ID}, {GOALS_TABLE.TIME},{GOALS_TABLE.TYPE}) VALUES ('{id}','{match_id}','{player_id}',{time_playing},'{type}')"
                 await cursor.execute(insert_query)
                     
                     # Commit the transaction
@@ -461,14 +468,14 @@ async def retrieveAllPlannedLineups(match_id):
     return all_lineups
 
 @timeit
-async def retrieveNextPlanned(match:match_responses.MatchInfo,how_long_ago):
+async def retrieveNextPlanned(match:match_responses.MatchInfo,how_long_ago) -> List[player_responses.PlayerResponse]:
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 minutes =how_long_ago
                 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match.id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}>{minutes} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match.id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}>{minutes} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.POSITION}"
                 
 
                 # Execute the SQL query to insert data
@@ -488,6 +495,30 @@ async def retrieveNextPlanned(match:match_responses.MatchInfo,how_long_ago):
                     players.append(player)
                 
                 return players
+@timeit
+async def retrieveLastPlanned(match:match_responses.MatchInfo,how_long_ago):
+     async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                minutes =how_long_ago
+                
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match.id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}<{minutes} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} desc, {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.POSITION}"
+                
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                results = await cursor.fetchall()
+                
+                players = []
+                i = 0
+                minute = 0
+                for result in results:
+                    player = convertToPlannedStartingLineup(result)
+                    
+                    players.append(player)
+                
+                return players
     
 @timeit
 async def retrieveNextPlannedByMinute(match:match_responses.MatchInfo,minutes):
@@ -497,7 +528,7 @@ async def retrieveNextPlannedByMinute(match:match_responses.MatchInfo,minutes):
    
     
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match.id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}>{minutes} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match.id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}>{minutes} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.POSITION}"
             
 
                 # Execute the SQL query to insert data
@@ -524,7 +555,7 @@ async def retrieveStartingLineup(match_id):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match_id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}=0 and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match_id} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE}=0 and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.POSITION}"
                 
 
                 # Execute the SQL query to insert data
@@ -552,7 +583,7 @@ async def retrieveCurrentActual(match,how_log_ago) -> List[player_responses.Play
                 minutes = how_log_ago
                 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match.id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME}<={minutes} and ({ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} IS NULL or {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} != False) order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} desc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match.id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME}<={minutes} and ({ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} IS NULL or {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} != False) order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} desc, {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.POSITION}"
                 # Execute the SQL query to insert data
                 print(insert_query)
                 await cursor.execute(insert_query)
@@ -568,26 +599,37 @@ async def retrieveCurrentActual(match,how_log_ago) -> List[player_responses.Play
                         break
                     players.append(player)
                 
-                return players    
+                return players  
 
 @timeit
-async def retrieveAllActualLineups(match_id):
+async def retrieveAllActualLineups(match,how_log_ago) -> List[List[player_responses.PlayerResponse]]:
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
-                # Define the SQL query to insert data into a table
-                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match_id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} <> False order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} asc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
+                minutes = how_log_ago
                 
-
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} inner join {player_data.TABLE.TABLE_NAME} on {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.MATCH_ID}={match.id} and {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME}<={minutes} and ({ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} IS NULL or {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.SOFT_DELETE} != False) order by {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.TIME} desc, {ACTUAL_LINEDUP_TABLE.TABLE_NAME}.{ACTUAL_LINEDUP_TABLE.POSITION}"
                 # Execute the SQL query to insert data
+                print(insert_query)
                 await cursor.execute(insert_query)
                 results = await cursor.fetchall()
-           
+                lineups=[]
                 players = []
+                i = 0
+                minute = 0
                 for result in results:
-                    players.append(convertToActualStartingLineup(result))
-                
-                return players
+                    player = convertToActualStartingLineup(result)
+                    if(i==0): minute = player.selectionInfo.minuteOn
+                    i+=1
+                    if(minute!=player.selectionInfo.minuteOn):
+                        lineups.append(players)
+                        minute=player.selectionInfo.minuteOn
+                        players = []
+                    players.append(player)
+                lineups.append(players)
+                return lineups   
+
 
 
 
@@ -601,7 +643,7 @@ def convertToPlannedStartingLineup(data):
 
 def convertToActualStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[ACTUAL_LINEDUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
-    selection_info = player_responses.SelectionInfo(id=data[ACTUAL_LINEDUP_TABLE.ID],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=int(data[ACTUAL_LINEDUP_TABLE.TIME]))
+    selection_info = player_responses.SelectionInfo(id=data[ACTUAL_LINEDUP_TABLE.ID],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=data[ACTUAL_LINEDUP_TABLE.TIME])
     playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info)
     return playerResponse
 

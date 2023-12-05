@@ -61,6 +61,7 @@ class TABLE:
     GOALS_FOR = "Goals_For"
     GOALS_AGAINST = "Goals_Against"
     LENGTH = "Length"
+    TYPE="Type"
     TIME_STARTED = "Time_Started"
     TABLE_NAME="Matches"
 
@@ -75,9 +76,14 @@ class TABLE:
         f"{TABLE.GOALS_FOR} int,"\
         f"{TABLE.GOALS_AGAINST} int,"\
         f"{TABLE.LENGTH} int,"\
+        f"{TABLE.TYPE} varchar(255),"\
         f"{TABLE.TIME_STARTED} int,"\
         f"PRIMARY KEY ({TABLE.ID}),"\
         f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams({TABLE.ID}))"
+    def alterTable():
+        return f"ALTER TABLE {TABLE.TABLE_NAME}"\
+        f" ADD {TABLE.TYPE} varchar(255)"
+
 
 @timeit
 async def save_team_fixture(match:Match):

@@ -11,7 +11,10 @@ import asyncio
 import user_homepage
 import create_team_screen
 import auth
+import api_helper
 
+def check_online(event,context):
+    return api_helper.make_api_response(200,{})
 def create_team(event, context):
     response = asyncio.run(team_apis.create_team(event,context))
     return response

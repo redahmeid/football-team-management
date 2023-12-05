@@ -5,16 +5,15 @@ from enum import Enum
 class MatchState(str, Enum):
     created = "created"
     draft = "draft"
-    starting_lineup_set = "starting_lineup_set"
     substitutions = "substitutions"
     plan_confirmed = "plan_confirmed"
-    actual_match_started = "match_started"
-    actual_match_ended = "match_ended"
     plan="plan"
     started="started"
     paused="paused"
     restarted="restarted"
     ended="ended"
+    postponed="postponed"
+    cancelled="cancelled"
 
 state_change_map = {
     MatchState.created: [MatchState.plan],

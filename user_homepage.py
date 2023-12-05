@@ -2,10 +2,12 @@ import json
 from pydantic import TypeAdapter, ValidationError
 
 from classes import User
+from matches_apis import list_matches_by_team_backend
 import response_classes
 import exceptions
+from player_data import retrieve_players_by_team
 from team_data import retrieve_teams_by_user_id
-from matches_data import retrieve_next_match_by_team
+from matches_data import retrieve_next_match_by_team,retrieve_matches_by_team
 from users_data import retrieve_user_id_by_email
 from secrets_util import getEmailFromToken, lambda_handler,validate_firebase_id_token
 import api_helper
@@ -17,8 +19,13 @@ async def enter_screen(event, context):
         email =  getEmailFromToken(event,context)
         teams = await retrieve_teams_by_user_id(email)
         for team in teams:
+            
             team_response = convertTeamDataToTeamResponse(team)
-            teams_list.append(team_response)
+            players = await retrieve_players_by_team(team_response.id)
+            team_response.squad = players[0]["players"]
+            matches = await list_matches_by_team_backend(team_response.id)
+            team_response.fixtures = matches
+            teams_list.append(team_response.model_dump())
         response = api_helper.make_api_response(200,teams_list)
         # get the user
         return response
@@ -51,4 +58,4 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
 
     response =  response_classes.TeamResponse(id=id,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     print("Convert team %s"%(response))
-    return response.model_dump()
+    return response

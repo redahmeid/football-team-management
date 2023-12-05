@@ -9,6 +9,8 @@ import response_errors
 from team_data import save_team,retrieve_team_by_id
 from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
+from player_data import retrieve_players_by_team
+from matches_apis import list_matches_by_team_backend
 import asyncio
 
 async def create_team(event, context):
@@ -48,9 +50,13 @@ async def retrieve_team_summary(event, context):
     teams = []
 
     try:
-        
-        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_id))
-        teams.append(save_response)
+        team = await retrieve_team_by_id(team_id)
+        team_response = convertTeamDataToTeamResponse(team)
+        players = await retrieve_players_by_team(team_response.id)
+        team_response.squad = players[0]["players"]
+        matches = await list_matches_by_team_backend(team_response.id)
+        team_response.fixtures = matches
+        teams.append(team_response.model_dump())
         actions = list()
             
         
@@ -67,6 +73,10 @@ async def retrieve_team_summary(event, context):
     
     response = api_helper.make_api_response(200,teams)
     return response
+
+
+
+
 
 # "(ID varchar(255),"\
 #         "Name varchar(255) NOT NULL,"\
@@ -93,4 +103,4 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
 
     response =  response_classes.TeamResponse(id=id,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     print("Convert team %s"%(response))
-    return response.model_dump()
+    return response

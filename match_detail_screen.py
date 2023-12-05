@@ -190,7 +190,8 @@ async def set_match_stats(event,context):
     team_id = pathParameters["team_id"]
     body =json.loads(event["body"])
     goal_scorer = body["for"]["goal"]
-    assister = body["for"]["assist"]
+    assister = body.get('for').get('assist')
+    type = body.get('for').get('type')
 
     we_conceded = body["against"]
     
@@ -198,7 +199,7 @@ async def set_match_stats(event,context):
     try:
     
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)): 
-           await setGoalsFor(match_id,goal_scorer,assister)
+           await setGoalsFor(match_id,goal_scorer,assister,type)
             
         return response
     except exceptions.AuthError as e:
@@ -232,8 +233,10 @@ async def update_match_status(event,context):
              if(status=="score_for"):
                 body =json.loads(event["body"])
                 goal_scorer = body["scorer"]["info"]["id"]
-                assister = body["assister"]["info"]["id"]
-                await setGoalsFor(match_id,goal_scorer,assister)
+                assister = body.get('assister')
+                
+                type = body.get('type')
+                await setGoalsFor(match_id,goal_scorer,assister,type)
              elif(status=="score_against"):
                 await setGoalsAgainst(match_id)
              elif(status=="paused" or status=="restarted" or status=="started"):

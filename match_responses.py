@@ -67,10 +67,11 @@ class ActualMatchResponse(BaseModel):
     started_at:Optional[int]=0
     how_long_left:Optional[float]=0
     current_players:Optional[List]=None
+    last_planned:Optional[List]=None
     next_players:Optional[List]=None
-    subsOn:Optional[List]=None
-    subsOff:Optional[List]=None
+    planned_subs:Optional[List]=None
+    actual_subs:Optional[List]=None
     assisters:Optional[List]=None
-    goals:Optional[List]=None
+    scorers:Optional[List]=None
     opposition:Optional[List]=None
     links:Optional[Dict[str,Link]]=None

@@ -52,6 +52,11 @@ async def create_fixtures(event, context):
 async def list_matches_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     
+    response =  await list_matches_by_team_backend(team_id)
+    return api_helper.make_api_response(200,response)
+
+
+async def list_matches_by_team_backend(team_id):
     matches = []
     for match in await retrieve_matches_by_team(team_id):
         try:
@@ -72,9 +77,7 @@ async def list_matches_by_team(event, context):
             response = api_helper.make_api_response(400,None)
             return response
    
-    response = api_helper.make_api_response(200,matches)
-    return response
-
+    return matches
 async def next_match_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     

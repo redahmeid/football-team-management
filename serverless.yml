@@ -12,6 +12,13 @@ provider:
     ENVIRONMENT: ${opt:stage, 'dev'}
 
 functions:
+  check_online:
+    handler: handler.check_online
+    events:
+      - http:
+          path: /
+          method: head
+          cors: true
   create_team_players:
     handler: handler.create_team_players
     events:

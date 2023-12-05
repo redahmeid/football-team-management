@@ -14,7 +14,7 @@ class PlayerInfo(BaseModel):
 class SelectionInfo(BaseModel):
     id:Optional[str]=None
     position:str
-    minuteOn:int
+    minuteOn:float
    
 
 class PlayerResponse(BaseModel):
