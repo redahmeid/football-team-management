@@ -19,6 +19,10 @@ def create_team(event, context):
     response = asyncio.run(team_apis.create_team(event,context))
     return response
 
+def add_users_to_team(event,context):
+    response = asyncio.run(team_apis.addUserToTeam(event,context))
+    return response
+
 def create_team_players(event, context):
     response = asyncio.run(player_apis.create_players(event,context))
     return response

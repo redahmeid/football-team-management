@@ -50,6 +50,23 @@ async def retrieve_teams_by_user_id(user_id:str):
                 print(row)
                 return row
 
+async def retrieve_users_by_team_id(team_id:str):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = "select Email from Roles as r inner join Teams as t on r.Team_ID = t.ID and r.Team_ID=%s" 
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query,team_id)
+            
+                row = await cursor.fetchall()
+                
+                # club = Club(id=id,name=row)
+                print(row)
+                return row
+
 async def does_userid_match_team(user_id:str,team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:

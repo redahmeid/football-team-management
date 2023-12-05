@@ -6,7 +6,7 @@ from matches_apis import list_matches_by_team_backend
 import response_classes
 import exceptions
 from player_data import retrieve_players_by_team
-from team_data import retrieve_teams_by_user_id
+from team_data import retrieve_teams_by_user_id, retrieve_users_by_team_id
 from matches_data import retrieve_next_match_by_team,retrieve_matches_by_team
 from users_data import retrieve_user_id_by_email
 from secrets_util import getEmailFromToken, lambda_handler,validate_firebase_id_token
@@ -21,8 +21,10 @@ async def enter_screen(event, context):
         for team in teams:
             
             team_response = convertTeamDataToTeamResponse(team)
+            emails = await retrieve_users_by_team_id(team_response.id)
             players = await retrieve_players_by_team(team_response.id)
             team_response.squad = players[0]["players"]
+            team_response.coaches = emails
             matches = await list_matches_by_team_backend(team_response.id)
             team_response.fixtures = matches
             teams_list.append(team_response.model_dump())

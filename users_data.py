@@ -34,13 +34,17 @@ async def retrieve_user_id_by_email(email:str):
 
                     # Define the SQL query to insert data into a table
                     insert_query = "select * from Users where Email=%s" 
-                    
+                    print(insert_query)
                     # Execute the SQL query to insert data
                     await cursor.execute(insert_query,email)
                     row = await cursor.fetchone()
                     # Commit the transaction
                     
                     # club = Club(id=id,name=row)
+                    print("USER is ")
                     print(row)
-                    return row["ID"]  
+                    if(row):
+                       return row["ID"]  
+                    else:
+                        return None
 

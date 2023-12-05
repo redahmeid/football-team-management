@@ -3,7 +3,6 @@ from pydantic import TypeAdapter, ValidationError
 from exceptions import AuthError
 from classes import Team
 import response_classes
-from config import app_config
 import api_helper
 import response_errors
 from team_data import save_team,retrieve_team_by_id
@@ -11,7 +10,11 @@ from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
 from player_data import retrieve_players_by_team
 from matches_apis import list_matches_by_team_backend
-import asyncio
+from auth import check_permissions
+from roles import Role
+
+from team_backend import addSingleUser
+
 
 async def create_team(event, context):
     lambda_handler(event,context)
@@ -40,6 +43,21 @@ async def create_team(event, context):
 
     print(response)
     return response
+async def addUserToTeam(event,context):
+    lambda_handler(event,context)
+    acceptable_roles = [Role.admin.value]
+    team_id = event["pathParameters"]["team_id"]
+    body =json.loads(event["body"])
+    emails = body["emails"]
+    if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+        for email in emails:
+            await addSingleUser(email,team_id)
+        response = api_helper.make_api_response(200,None,"Users added")
+    else:
+            response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+    return response
+
+
 
 
 async def retrieve_team_summary(event, context):
@@ -75,6 +93,7 @@ async def retrieve_team_summary(event, context):
     return response
 
 
+    
 
 
 
