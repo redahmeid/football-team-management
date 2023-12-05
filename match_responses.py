@@ -42,7 +42,7 @@ class MatchType(str, Enum):
 
 class MatchInfo(BaseModel):
     id:str
-    team:TeamResponse
+    team:Optional[TeamResponse]=None
     status:MatchState
     goals:Optional[int]=0
     conceded:Optional[int]=0

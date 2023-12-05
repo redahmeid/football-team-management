@@ -29,20 +29,16 @@ async def create_fixtures(event, context):
         if(type):
             type = match_responses.MatchType(type)
 
-        matchInfo = match_responses.MatchInfo(opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,team_id=team_id,type=type)
+        matchInfo = match_responses.MatchInfo(id="",opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,type=type)
         
 
         try:
-            
-            result = await retrieve_match_by_id(await save_team_fixture(matchInfo))
+            result = await retrieve_match_by_id(await save_team_fixture(matchInfo,team_id))
             self_url = match_responses.getMatchUrl(team_id,result[0].id)
             self = match_responses.Link(link=self_url,method="get")
             links = {"self":self}
             match_response = match_responses.MatchResponse(match=result[0],links=links).model_dump()
             created_matches.append(match_response)
-            
-                
-            
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)

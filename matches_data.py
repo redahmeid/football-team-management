@@ -4,6 +4,7 @@ import id_generator
 from firebase_admin import auth
 import db
 import match_responses
+
 import matches_state_machine
 from typing import List
 from datetime import datetime
@@ -86,7 +87,7 @@ class TABLE:
 
 
 @timeit
-async def save_team_fixture(match:Match):
+async def save_team_fixture(match:match_responses.MatchInfo,team_id):
     start_time = datetime.utcnow().timestamp()
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -94,7 +95,7 @@ async def save_team_fixture(match:Match):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 id = id_generator.generate_random_number(5)
                 # Define the SQL query to insert data into a table
-                insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against) VALUES ('{id}','{match.opposition}','{match.homeOrAway}','{match.date}','{match.length}','{match.team_id}','{match.status}',0,0)"
+                insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against,Type) VALUES ('{id}','{match.opposition}','{match.homeOrAway}','{match.date}','{match.length}','{team_id}','{match.status}',0,0,'{match.type.value}')"
                 print(insert_query)
                 # Data to be inserted
                 
