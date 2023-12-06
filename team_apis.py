@@ -12,6 +12,7 @@ from player_data import retrieve_players_by_team
 from matches_apis import list_matches_by_team_backend
 from auth import check_permissions
 from roles import Role
+import team_season_data
 
 from team_backend import addSingleUser
 
@@ -28,7 +29,8 @@ async def create_team(event, context):
         
         team = Team(name=body["name"],age_group=body["age_group"])
         new_team = TeamValidator.validate_python(team)
-        save_response = save_team(new_team)
+        save_response = await save_team(new_team)
+        team_season_data.save_team_season(save_response,body["season"],body["age_group"])
         set_custom_claims(getEmailFromToken(event,context))
         print("CREATE TEAM: %s"%(save_response))
         teams.append(convertTeamDataToTeamResponse(await retrieve_team_by_id(save_response)))

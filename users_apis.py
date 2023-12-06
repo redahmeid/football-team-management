@@ -15,19 +15,22 @@ from secrets_util import lambda_handler
 async def new_user(event, context):
     lambda_handler(event,context)
     try:
-        
+        body =json.loads(event["body"])
+        print(body)
         email = getToken(event)["email"]
+        
         id = getToken(event)["uid"]
         user = await retrieve_user_id_by_email(email)
+        
         if(not user):
-            await save_user(id,email)
+            await save_user(id,email,body["name"])
         
         response = api_helper.make_api_response(200,{"id":id})
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None,None,errors)
+        response = api_helper.make_api_response(400,None,errors)
     except ValueError as e:
-        response = api_helper.make_api_response(400,None,None,None)
+        response = api_helper.make_api_response(400,None,e)
 
     print(response)
     return response

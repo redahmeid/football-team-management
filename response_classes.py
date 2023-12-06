@@ -4,12 +4,16 @@ from validators import validate_email,validate_short_name
 import datetime
 import match_responses
 import player_responses
+from roles import Role
 
 class Link(BaseModel):
     link:str
     method:str
 
-
+class Admin(BaseModel):
+    name:Optional[str]=""
+    role:Optional[Role]=None
+    email:str
 class PlayerResponse(BaseModel):
     id:str
     name:str

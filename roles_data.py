@@ -28,6 +28,18 @@ async def save_role(user:TeamUser):
                 await conn.commit()
                 
                 return id
+async def delete_role(user:TeamUser):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Define the SQL query to insert data into a table
+                insert_query = f"Delete from Roles where Email={user.user_id} and Team_ID={user.team_id}"
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return id
 
 async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
     async with aiomysql.create_pool(**db.db_config) as pool:

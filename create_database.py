@@ -6,6 +6,7 @@ import sys
 import notifications
 import aiomysql
 import asyncio
+import users_data
 
 async def create_database():
     try:
@@ -30,7 +31,8 @@ async def create_database():
     await create_teams_table()
     await create_tables(matches_data.TABLE.createTable())
     await create_players_table()
-    await create_users_table()
+    await create_tables(users_data.TABLE.createTable()), 
+    await create_tables(users_data.TABLE.alterTable())
     await create_team_users_table()
     
     await create_tables(match_day_data.PLANNED_LINEUP_TABLE.createTable()),
@@ -42,9 +44,9 @@ async def create_database():
     await create_tables(notifications.TABLE.createTable()),
     await create_tables(match_day_data.PERIODS_TABLE.createTable()),
     await create_tables(match_day_data.SUBS_TABLE.createTable()), 
-    # await create_tables(matches_data.TABLE.alterTable())
+    await create_tables(matches_data.TABLE.alterTable())
     await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.alterTable())
-    await create_tables(match_day_data.GOALS_TABLE.alterTable())
+    # await create_tables(match_day_data.GOALS_TABLE.alterTable())
     
 
 async def create_tables(sql):

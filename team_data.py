@@ -3,6 +3,9 @@ from config import app_config
 import id_generator
 import db
 import aiomysql
+import response_classes
+import users_data
+import roles
 import asyncio
 # "CREATE TABLE Teams" \
 #         "(ID varchar(255),"\
@@ -56,16 +59,17 @@ async def retrieve_users_by_team_id(team_id:str):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = "select Email from Roles as r inner join Teams as t on r.Team_ID = t.ID and r.Team_ID=%s" 
+                insert_query = f"select * from Roles as r inner join Teams as t on r.Team_ID = t.ID inner join {users_data.TABLE.TABLE_NAME} as u on r.Email=u.{users_data.TABLE.EMAIL} and r.Team_ID={team_id}" 
 
                 # Execute the SQL query to insert data
-                await cursor.execute(insert_query,team_id)
+                await cursor.execute(insert_query)
             
-                row = await cursor.fetchall()
-                
-                # club = Club(id=id,name=row)
-                print(row)
-                return row
+                rows = await cursor.fetchall()
+                coaches = []
+                for row in rows:  
+                    user = convertAdminDataToAdminResponse(row)
+                    coaches.append(user)
+                return coaches
 
 async def does_userid_match_team(user_id:str,team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -99,6 +103,16 @@ async def retrieve_team_by_id(team_id:str):
                 print(row)
                 return row
 
+def convertAdminDataToAdminResponse(team) -> response_classes.Admin:
+    print(team)
+    role = team["Role"]
+    
+    email = team["Email"]
+    name = team["u.Name"]
+    
 
+    response =  response_classes.Admin(email=email,role=roles.Role(role),name=name)
+    print(response)
+    return response
 if __name__ == "__main__":
-  asyncio.run(retrieve_teams_by_user_id("r.hmeid@gmail.com"))
+  asyncio.run(retrieve_users_by_team_id("47586"))
