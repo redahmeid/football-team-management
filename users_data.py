@@ -40,6 +40,21 @@ async def save_user(id,email,name):
                 await conn.commit()
                 
                 return id
+            
+async def update_user(id,name):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"UPDATE {TABLE.TABLE_NAME} set {TABLE.NAME}={name} where {TABLE.ID}={id}"
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return id
 
 async def retrieve_user_id_by_email(email:str):
     async with aiomysql.create_pool(**db.db_config) as pool:

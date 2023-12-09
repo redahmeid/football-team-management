@@ -6,7 +6,7 @@ import response_classes
 from config import app_config
 import api_helper
 import response_errors
-from users_data import save_user,retrieve_user_id_by_email
+from users_data import save_user,retrieve_user_id_by_email,update_user
 from matches_data import retrieve_next_match_by_team
 from auth import getToken
 from secrets_util import lambda_handler
@@ -19,11 +19,12 @@ async def new_user(event, context):
         print(body)
         email = getToken(event)["email"]
         
-        id = getToken(event)["uid"]
         user = await retrieve_user_id_by_email(email)
         
         if(not user):
             await save_user(id,email,body["name"])
+        else:
+            await update_user(user,body["name"])
         
         response = api_helper.make_api_response(200,{"id":id})
     except ValidationError as e:

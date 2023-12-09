@@ -13,7 +13,7 @@ from roles import Role
 from auth import check_permissions
 from firebase_admin import credentials
 from firebase_admin import messaging
-
+import player_backend
 async def create_players(event, context):
     body =json.loads(event["body"])
     
@@ -23,40 +23,8 @@ async def create_players(event, context):
     created_players = []
     i = 0
     for player in players:
-        request_player = Player(name=player,team_id=team_id)
-        PlayerValidator = TypeAdapter(Player)
-
-        try:
-            new_player = PlayerValidator.validate_python(request_player)
-            result = await retrieve_player(await save_player(new_player))
-            created_players.append(result[0])
-                
-            # # This registration token comes from the client FCM SDKs.
-            # registration_token = 'YOUR_REGISTRATION_TOKEN'
-
-            # # Define the notification content
-            # notification = messaging.Notification(
-            #     title='Your Notification Title',
-            #     body='Your Notification Body'
-            # )
-
-            # # Define the message
-            # message = messaging.Message(
-            #     notification=notification,
-            #     token=registration_token
-            # )
-
-            # # Send the message
-            # response = messaging.send(message)
-            # print('Successfully sent message:', response)
-
-        except ValidationError as e:
-            print(e)
-            errors = response_errors.validationErrorsList(e)
-            response = api_helper.make_api_response(400,None,errors)
-        except ValueError as e:
-            print(e)
-            response = api_helper.make_api_response(400,None,None)
+        result = await player_backend.create_players(player,team_id)
+        created_players.append(result)
     response = api_helper.make_api_response(200,created_players)
     return response
 

@@ -1,6 +1,6 @@
 import json
 from pydantic import ValidationError
-
+import traceback
 import exceptions
 from typing import List
 from player_data import retrieve_players_by_team
@@ -14,7 +14,7 @@ from auth import check_permissions
 from roles import Role
 import matches_state_machine
 import player_responses
-import match_responses
+import response_classes
 import match_planning_backend
 from match_planning_backend import submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
 from datetime import date
@@ -131,15 +131,15 @@ async def getMatchAsGuest(event,context):
         print(response)
         return response
     except exceptions.AuthError as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(401,None,e)
         return response
     except ValidationError as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(400,None,e)
         return response
     except Exception as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(500,None,e)
         return response      
 
@@ -171,15 +171,15 @@ async def getMatch(event,context):
             print(response)
             return response
     except exceptions.AuthError as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(401,None,e)
         return response
     except ValidationError as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(400,None,e)
         return response
     except Exception as e:
-        print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(500,None,e)
         return response      
 

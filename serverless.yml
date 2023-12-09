@@ -54,6 +54,13 @@ functions:
           path: /teams/{team_id}/players
           method: get
           cors: true
+  user_homepage_bff:
+    handler: handler.getUser
+    events:
+      - http:
+          path: /users
+          method: get
+          cors: true
   add_user_to_team:
     handler: handler.add_users_to_team
     events:
@@ -96,13 +103,7 @@ functions:
           path: /bff/create_team_screen
           method: post
           cors: true
-  user_homepage_bff:
-    handler: handler.getUser
-    events:
-      - http:
-          path: /users
-          method: get
-          cors: true
+  
   create_match_day_bff:
     handler: handler.getMatch
     events:

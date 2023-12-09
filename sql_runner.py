@@ -3,7 +3,7 @@ from config import app_config
 import id_generator
 from firebase_admin import auth
 import db
-import match_responses
+import response_classes
 import matches_state_machine
 import match_day_data
 from typing import List

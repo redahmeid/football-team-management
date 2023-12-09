@@ -16,6 +16,8 @@ import functools
 import player_responses
 from datetime import date
 from pydantic import ValidationError
+from matches_data import retrieve_match_by_id,retrieve_matches_by_team,save_team_fixture
+import response_errors
 
 import exceptions
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,13 +43,15 @@ def timeit(func):
         return async_wrapper
     else:
         return sync_wrapper
-import match_responses
+import response_classes
 
 baseUrl = "/teams/%s/matches/%s"
 
 async def getMatchParent(team_id,match_id):
     try:
         matchList = await retrieve_match_by_id(match_id)
+        print(f"############################MATCH LIST##################################")
+        print(matchList)
         match = matchList[0]
         
         print(f"MATCH STATUS {match.status}")
@@ -75,14 +79,14 @@ async def getMatchParent(team_id,match_id):
         response = api_helper.make_api_response(500,None,e)
         return response  
 @timeit
-async def getMatchCreated(team_id,match:match_responses.MatchInfo):
+async def getMatchCreated(team_id,match:response_classes.MatchInfo):
     playersList = await retrieve_players_by_team(team_id)  
-    url = match_responses.getMatchUrl(team_id,match.id)
-    submit_first_subs = match_responses.Link(link=f'{url}/players/submit_lineup',method="post")
-    confirm_plan = match_responses.Link(link=f'{url}/{matches_state_machine.MatchState.plan.value}',method="post")
+    url = response_classes.getMatchUrl(team_id,match.id)
+    submit_first_subs = response_classes.Link(link=f'{url}/players/submit_lineup',method="post")
+    confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan.value}',method="post")
 
     links = {"submit_lineup":submit_first_subs,"confirm_plan":confirm_plan }
-    match_day_response = match_responses.MatchResponse(match=match,squad=playersList,links=createMatchLinks(url,links)).model_dump()
+    match_day_response = response_classes.MatchResponse(match=match,squad=playersList,links=createMatchLinks(url,links)).model_dump()
     match_day_responses = [match_day_response]
 
     response = api_helper.make_api_response(200,match_day_responses)
@@ -90,17 +94,17 @@ async def getMatchCreated(team_id,match:match_responses.MatchInfo):
     return response
 
 
-async def getMatchConfirmedPlanReadyToStart(team_id,match:match_responses.MatchInfo):
+async def getMatchConfirmedPlanReadyToStart(team_id,match:response_classes.MatchInfo):
     selected_players = await retrieveStartingLineup(match_id=match.id)
     
     next_players = await retrieveNextPlannedByMinute(match,minutes=0)
     
     planned_subs = await getSubs(next_players,selected_players)
-    url = match_responses.getMatchUrl(team_id,match.id)
-    submit_first_subs = match_responses.Link(link=f'{url}/players/submit_lineup',method="post")
-    end_match = match_responses.Link(link=f'{url}/{matches_state_machine.MatchState.ended.value}',method="post")
+    url = response_classes.getMatchUrl(team_id,match.id)
+    submit_first_subs = response_classes.Link(link=f'{url}/players/submit_lineup',method="post")
+    end_match = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.ended.value}',method="post")
     links = {"submit_lineup":submit_first_subs,"end_match":end_match }
-    match_day_response = match_responses.ActualMatchResponse(match=match,current_players=selected_players,planned_subs=planned_subs,next_players= next_players,how_long_left=match.length, links=createMatchLinks(url,links)).model_dump()
+    match_day_response = response_classes.ActualMatchResponse(match=match,current_players=selected_players,planned_subs=planned_subs,next_players= next_players,how_long_left=match.length, links=createMatchLinks(url,links)).model_dump()
     match_day_responses = []
     match_day_responses.append(match_day_response)
 
@@ -111,11 +115,11 @@ async def getMatchConfirmedPlanReadyToStart(team_id,match:match_responses.MatchI
 async def getMatchPlanning(team_id,match):
     selected_players = await retrieveAllPlannedLineups(match_id=match.id)
     
-    url = match_responses.getMatchUrl(team_id,match.id)
-    submit_first_subs = match_responses.Link(link=f'{url}/players/submit_lineup',method="post")
-    confirm_plan = match_responses.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
+    url = response_classes.getMatchUrl(team_id,match.id)
+    submit_first_subs = response_classes.Link(link=f'{url}/players/submit_lineup',method="post")
+    confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
     links = {"submit_lineup":submit_first_subs,"confirm_plan":confirm_plan }
-    match_day_response = match_responses.PlannedMatchResponse(match=match,planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
+    match_day_response = response_classes.PlannedMatchResponse(match=match,planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
     match_day_responses = []
     match_day_responses.append(match_day_response)
 
@@ -157,7 +161,7 @@ async def getMatchGuest(match):
     logging.info(f"GOALS {goals}")
     logging.info(f"ASSISTS {assists}")
     
-    match_day_response = match_responses.ActualMatchResponse(match=match,current_players=current_lineup, how_long_left=how_long_left,started_at=0 , next_players=None,links=None,scorers=goals,opposition=opposition,assisters=assists,actual_subs=subsOn,subsOff=subsOff).model_dump()
+    match_day_response = response_classes.ActualMatchResponse(match=match,current_players=current_lineup, how_long_left=how_long_left,started_at=0 , next_players=None,links=None,scorers=goals,opposition=opposition,assisters=assists,actual_subs=subsOn,subsOff=subsOff).model_dump()
     match_day_responses = []
     match_day_responses.append(match_day_response)
 
@@ -222,12 +226,12 @@ async def getMatchStarted(team_id,match):
     logging.info(f"ASSISTS {assists}")
 
 
-    url = match_responses.getMatchUrl(team_id,match.id)
-    submit_first_subs = match_responses.Link(link=f'{url}/players/submit_lineup/subs',method="post")
-    confirm_plan = match_responses.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
-    end_match = match_responses.Link(link=f'{url}/{matches_state_machine.MatchState.ended.value}',method="post")
+    url = response_classes.getMatchUrl(team_id,match.id)
+    submit_first_subs = response_classes.Link(link=f'{url}/players/submit_lineup/subs',method="post")
+    confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
+    end_match = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.ended.value}',method="post")
     links = {"submit_lineup":submit_first_subs,"confirm_plan":confirm_plan,"end_match":end_match }
-    match_day_response = match_responses.ActualMatchResponse(match=match,planned_subs=planned_subs,last_planned=last_planned,started_at=0, how_long_left=how_long_left, current_players=current_lineup,next_players=next_lineup,links=createMatchLinks(url,links),scorers=goals,opposition=opposition,assisters=assists,actual_subs=subs).model_dump()
+    match_day_response = response_classes.ActualMatchResponse(match=match,planned_subs=planned_subs,last_planned=last_planned,started_at=0, how_long_left=how_long_left, current_players=current_lineup,next_players=next_lineup,links=createMatchLinks(url,links),scorers=goals,opposition=opposition,assisters=assists,actual_subs=subs).model_dump()
     match_day_responses = []
     match_day_responses.append(match_day_response)
 
@@ -321,14 +325,56 @@ async def submit_subs(match,players:List[player_responses.PlayerResponse]):
     await match_day_data.save_subs(match_id=match.id,players=difference,time_playing=time_playing)
     await match_day_data.save_actual_lineup(match_id=match.id,players=players,time_playing=time_playing)
 
-def createMatchLinks(url, links:Dict[str,match_responses.Link]):
-    self = match_responses.Link(link=url,method="get")
+def createMatchLinks(url, links:Dict[str,response_classes.Link]):
+    self = response_classes.Link(link=url,method="get")
     print(links)
     links["self"] = self
     print(links)
     return links
 
+async def create_match_backend(match,team_id) -> response_classes.MatchResponse:
+    type = match.get("type",None)
+    if(type):
+        type = response_classes.MatchType(type)
+
+    matchInfo = response_classes.MatchInfo(id="",opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created,type=type)
+        
+    result = await retrieve_match_by_id(await save_team_fixture(matchInfo,team_id))
+    print("########################################RESULT FROM RETRIEVE MATCH BY ID ")
+    print(result)
+    self_url = response_classes.getMatchUrl(team_id,result[0].id)
+    self = response_classes.Link(link=self_url,method="get")
+    links = {"self":self}
+    match_response = response_classes.MatchResponse(match=result[0],links=links)
+    
+    return match_response
+
+async def list_matches_by_team_backend(team_id):
+    matches = []
+    for match in await retrieve_matches_by_team(team_id):
+        try:
+            self_url = response_classes.getMatchUrl(team_id,match.id)
+            self = response_classes.Link(link=self_url,method="get")
+            links = {"self":self}
+            match_response = response_classes.MatchResponse(match=match,links=links).model_dump()
+            
+            matches.append(match_response)
+        except ValidationError as e:
+            print(e)
+            errors = response_errors.validationErrorsList(e)
+            print(errors)
+            response = api_helper.make_api_response(400,None,errors)
+            return response
+        except ValueError as e:
+            print(e)
+            response = api_helper.make_api_response(400,None)
+            return response
+   
+    return matches
 async def main():
+    if(sys.argv[1]=="getMatchParent"):
+        
+        await getMatchParent(sys.argv[2],sys.argv[3] )
     if(sys.argv[1]=="getMatchCreated"):
         matchList = await retrieve_match_by_id(sys.argv[3])
         print(matchList)

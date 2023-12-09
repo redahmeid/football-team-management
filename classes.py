@@ -47,14 +47,18 @@ class ClubAdministrator(BaseModel):
     role:str
 
 class TeamUser(BaseModel):
-    user_id:str
+    email:str
     team_id:str
     role:roles.Role
 
 class Team(BaseModel):
     name:str
     age_group:str
-
+class UpdateTeam(BaseModel):
+    id:str
+    name:str
+    age_group:str
+    
 class Club(BaseModel):
     id:Optional[str]=None
     name:str

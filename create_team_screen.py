@@ -12,7 +12,7 @@ import api_helper
 from roles_data import save_role
 import roles
 from auth import set_custom_claims
-
+import team_season_data
 def enter_screen(event, context):
     lambda_handler(event,context)
     
@@ -34,11 +34,13 @@ async def submit_team(event, context):
         team = Team(age_group=body["age_group"],name=body["name"])
         
         team_id = await save_team(team)
-        teamUser = TeamUser(user_id=email,team_id=str(team_id),role=roles.Role.admin)
+
+        team_season_id = await team_season_data.save_team_season(team_id,body["season"],body["age_group"])
+        teamUser = TeamUser(email=email,team_id=str(team_season_id),role=roles.Role.admin)
         role_id = await save_role(teamUser)
         await set_custom_claims(event=event,context=context)
         # get the user
-        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_id))
+        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_season_id))
         teams.append(save_response)
         response = api_helper.make_api_response(200,teams)
        
@@ -62,6 +64,7 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     baseTeamUrl = "/teams/%s"%(id)
     name = team["Name"]
     ageGroup = team["AgeGroup"]
+    season = team[f"{team_season_data.TABLE.SEASON_NAME}"]
     live = team["live"]
     print("Convert team live %s"%(live))
     if(live == None):
@@ -73,6 +76,6 @@ def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     addFixtures = response_classes.Link(link="%s/matches"%(baseTeamUrl),method="post")
     nextMatch = response_classes.Link(link="%s/next_match"%(baseTeamUrl),method="get")
 
-    response =  response_classes.TeamResponse(id=id,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
+    response =  response_classes.TeamResponse(id=id,season=season,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     print("Convert team %s"%(response))
     return response.model_dump()

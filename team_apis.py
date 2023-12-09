@@ -13,6 +13,7 @@ from matches_apis import list_matches_by_team_backend
 from auth import check_permissions
 from roles import Role
 import team_season_data
+from team_backend import retrieveTeamResponse
 
 from team_backend import addSingleUser
 
@@ -52,9 +53,11 @@ async def addUserToTeam(event,context):
     body =json.loads(event["body"])
     emails = body["emails"]
     if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+        results = []
         for email in emails:
-            await addSingleUser(email,team_id)
-        response = api_helper.make_api_response(200,None,"Users added")
+            result = await addSingleUser(email,team_id)
+            results.append(result.model_dump())
+        response = api_helper.make_api_response(200,results)
     else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
     return response
@@ -71,11 +74,7 @@ async def retrieve_team_summary(event, context):
 
     try:
         team = await retrieve_team_by_id(team_id)
-        team_response = convertTeamDataToTeamResponse(team)
-        players = await retrieve_players_by_team(team_response.id)
-        team_response.squad = players[0]["players"]
-        matches = await list_matches_by_team_backend(team_response.id)
-        team_response.fixtures = matches
+        team_response = await retrieveTeamResponse(team)
         teams.append(team_response.model_dump())
         actions = list()
             
@@ -107,10 +106,10 @@ async def retrieve_team_summary(event, context):
 #         "live VARCHAR(255),"\
 def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     print("convertTeamDataToTeamResponse: %s"%(team))
-    id = team["ID"]
+    id = team["ts.ID"]
     baseTeamUrl = "/teams/%s"%(id)
     name = team["Name"]
-    ageGroup = team["AgeGroup"]
+    ageGroup = team["Age_Group"]
     live = team["live"]
     print("Convert team live %s"%(live))
     if(live == None):

@@ -7,7 +7,31 @@ import notifications
 import aiomysql
 import asyncio
 import users_data
+import team_season_data
+import player_data
 
+async def drop_database():
+    try:
+        # Define the SQL query to insert data into a table
+        insert_query = "Drop database %s" %(app_config.database)
+        print(insert_query)
+        print(db.admin_db_config)
+        async with aiomysql.create_pool(**db.admin_db_config) as pool:
+            async with pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Execute the SQL query to insert data
+                    await cursor.execute(insert_query)
+
+                    # Commit the transaction
+                    await conn.commit()
+                    
+                    
+                    # create_teams_table()
+    except Exception as e:
+        print(e)
+
+                                    
 async def create_database():
     try:
         # Define the SQL query to insert data into a table
@@ -32,7 +56,7 @@ async def create_database():
     await create_tables(matches_data.TABLE.createTable())
     await create_players_table()
     await create_tables(users_data.TABLE.createTable()), 
-    await create_tables(users_data.TABLE.alterTable())
+    await create_tables(player_data.PLAYER_SEASON_TABLE.createTable()), 
     await create_team_users_table()
     
     await create_tables(match_day_data.PLANNED_LINEUP_TABLE.createTable()),
@@ -44,10 +68,28 @@ async def create_database():
     await create_tables(notifications.TABLE.createTable()),
     await create_tables(match_day_data.PERIODS_TABLE.createTable()),
     await create_tables(match_day_data.SUBS_TABLE.createTable()), 
-    await create_tables(matches_data.TABLE.alterTable())
-    await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.alterTable())
-    # await create_tables(match_day_data.GOALS_TABLE.alterTable())
-    
+    await create_tables(team_season_data.TABLE.createTable()), 
+    try:
+        await create_tables(matches_data.TABLE.alterTable())
+    except Exception as e:
+        print(e)
+    try:
+        await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.alterTable())
+    except Exception as e:
+        print(e)
+    try:
+        await create_tables(users_data.TABLE.alterTable())
+    except Exception as e:
+        print(e)
+    try:
+        await create_tables(match_day_data.GOALS_TABLE.alterTable())
+    except Exception as e:
+        print(e)
+    try:
+        await create_tables(matches_data.TABLE.alterForeignkey())
+    except Exception as e:
+        print(e)
+
 
 async def create_tables(sql):
    async with aiomysql.create_pool(**db.db_config) as pool:
@@ -111,9 +153,7 @@ async def create_team_users_table():
         "Team_ID varchar(255),"\
         "Role varchar(255),"\
         "live VARCHAR(255),"\
-        "PRIMARY KEY (ID),"\
-        "FOREIGN KEY(Email) references Users(Email),"\
-        "FOREIGN KEY(Team_ID) references Teams(ID))"
+        "PRIMARY KEY (ID))"
 
 
     print(insert_query)
@@ -137,8 +177,7 @@ async def create_players_table():
         "Team_ID varchar(255) NOT NULL,"\
         "Email varchar(255),"\
         "live varchar(255),"\
-        "PRIMARY KEY (ID),"\
-        "FOREIGN KEY(Team_ID) references Teams(ID))"
+        "PRIMARY KEY (ID))"
 
 
     print(insert_query)

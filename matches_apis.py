@@ -1,21 +1,19 @@
 import json
 from pydantic import TypeAdapter, ValidationError, BaseModel
 
-from classes import Team, Match,PlayerMatch
 from config import app_config
 import api_helper
 import response_errors
 from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_matches_by_team,retrieve_next_match_by_team,update_match_status
-import response_classes
-from data_utils import convertMatchDatatoMatchResponse,convertPlayerDataToLineupPlayerResponse
+
 from roles import Role
 from auth import check_permissions
 import match_detail_screen
-import match_responses
-import asyncio
+import response_classes
 import matches_state_machine
 import exceptions
 from secrets_util import lambda_handler
+from match_planning_backend import list_matches_by_team_backend,create_match_backend
 
 async def create_fixtures(event, context):
     body =json.loads(event["body"])
@@ -25,20 +23,10 @@ async def create_fixtures(event, context):
     matches = body["matches"]
     created_matches = []
     for match in matches:
-        type = match.get("type",None)
-        if(type):
-            type = match_responses.MatchType(type)
-
-        matchInfo = match_responses.MatchInfo(id="",opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created.value,type=type)
-        
-
+       
         try:
-            result = await retrieve_match_by_id(await save_team_fixture(matchInfo,team_id))
-            self_url = match_responses.getMatchUrl(team_id,result[0].id)
-            self = match_responses.Link(link=self_url,method="get")
-            links = {"self":self}
-            match_response = match_responses.MatchResponse(match=result[0],links=links).model_dump()
-            created_matches.append(match_response)
+            result = await create_match_backend(match,team_id)
+            created_matches.append(result.model_dump())
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
@@ -56,28 +44,7 @@ async def list_matches_by_team(event, context):
     return api_helper.make_api_response(200,response)
 
 
-async def list_matches_by_team_backend(team_id):
-    matches = []
-    for match in await retrieve_matches_by_team(team_id):
-        try:
-            self_url = match_responses.getMatchUrl(team_id,match.id)
-            self = match_responses.Link(link=self_url,method="get")
-            links = {"self":self}
-            match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
-            
-            matches.append(match_response)
-        except ValidationError as e:
-            print(e)
-            errors = response_errors.validationErrorsList(e)
-            print(errors)
-            response = api_helper.make_api_response(400,None,errors)
-            return response
-        except ValueError as e:
-            print(e)
-            response = api_helper.make_api_response(400,None)
-            return response
-   
-    return matches
+
 async def next_match_by_team(event, context):
     team_id = event["pathParameters"]["team_id"]
     
@@ -85,10 +52,10 @@ async def next_match_by_team(event, context):
     
     try:
         for match in await retrieve_next_match_by_team(team_id):
-            self_url = match_responses.getMatchUrl(team_id,match.id)
-            self = match_responses.Link(link=self_url,method="get")
+            self_url = response_classes.getMatchUrl(team_id,match.id)
+            self = response_classes.Link(link=self_url,method="get")
             links = {"self":self}
-            match_response = match_responses.MatchResponse(match=match,links=links).model_dump()
+            match_response = response_classes.MatchResponse(match=match,links=links).model_dump()
             matches.append(match_response)
         if(len(matches)==0):
             response = api_helper.make_api_response(404,None)

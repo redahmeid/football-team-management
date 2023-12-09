@@ -1,10 +1,20 @@
 import os
 from dotenv import load_dotenv
 # Determine the environment (default to 'dev' if not specified)
-env = os.environ.get('ENVIRONMENT', 'dev')
+env = os.environ.get('ENVIRONMENT', 'test')
 
+
+
+def load_dotenv_path():
+    if env=='prod':
+        return 'prod.env'
+    elif env == 'dev':
+        return 'dev.env'
+    else:
+        return 'test.env'
 # Load the appropriate .env file
-dotenv_path = 'prod.env' if env == 'prod' else 'dev.env'
+dotenv_path = load_dotenv_path()
+
 load_dotenv(dotenv_path=dotenv_path)
 
 class AppConfig:

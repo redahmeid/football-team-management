@@ -28,27 +28,57 @@ class TABLE:
         f"{TABLE.TEAM_ID} varchar(255) NOT NULL,"\
         f"{TABLE.EMAIL} int,"\
         f"PRIMARY KEY ({TABLE.ID}),"\
-        f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams(ID))"\
-    
+        f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams(ID))"
+
+class PLAYER_SEASON_TABLE:
+    TABLE_NAME = "Players_Seasons"
+    ID = "ID"
+    PLAYER_ID = "Player_ID"
+    TEAM_SEASON_ID="Team_Season_ID"
+
+    def createTable():
+        return f"CREATE TABLE {PLAYER_SEASON_TABLE.TABLE_NAME}" \
+        f"({PLAYER_SEASON_TABLE.ID} varchar(255),"\
+        f"{PLAYER_SEASON_TABLE.PLAYER_ID} varchar(255) NOT NULL,"\
+        f"{PLAYER_SEASON_TABLE.TEAM_SEASON_ID} varchar(255) NOT NULL,"\
+        f"PRIMARY KEY ({TABLE.ID}))"
+        
 async def save_player(player:Player):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
-
-                # Define the SQL query to insert data into a table
-                insert_query = "INSERT INTO Players (ID,Name,Team_ID,live) VALUES (%s,%s,%s,'true')"
-
                 # Data to be inserted
                 id = id_generator.generate_random_number(5)
-                data_to_insert = (id,player.name,player.team_id)
-
+                # Define the SQL query to insert data into a table
+                insert_query = "INSERT INTO Players (ID,Name,Team_ID,live) VALUES (%s,%s,'','true')"
+                # Define the SQL query to insert data into a table
+                
+                
+                
+                data_to_insert = (id,player.name)
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query, data_to_insert)
+                
                 await conn.commit()
                 
                 return id
 
-
+async def save_player_season(player_id,team_season_id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Data to be inserted
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"INSERT INTO {PLAYER_SEASON_TABLE.TABLE_NAME} ({PLAYER_SEASON_TABLE.ID},{PLAYER_SEASON_TABLE.TEAM_SEASON_ID},{PLAYER_SEASON_TABLE.PLAYER_ID}) VALUES ({id},{team_season_id},{player_id})"
+                # Define the SQL query to insert data into a table
+                 # Execute the SQL query to insert data
+                print(insert_query)
+                await cursor.execute(insert_query)
+               
+                await conn.commit()
+                
+                return id
 
 async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -56,10 +86,10 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = "select * from Players where Team_ID = %s and live <> 'false' or live IS NULL" 
-                
+                insert_query = f"select * from Players inner join {PLAYER_SEASON_TABLE.TABLE_NAME} on {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.PLAYER_ID}={TABLE.TABLE_NAME}.{TABLE.ID} and {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.TEAM_SEASON_ID} = {team_id} and live <> 'false' or live IS NULL" 
+                print(insert_query)
                 # Execute the SQL query to insert data
-                await cursor.execute(insert_query,team_id)
+                await cursor.execute(insert_query)
                 results = await cursor.fetchall()
                 
                 players = list()
@@ -108,10 +138,10 @@ async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 # Define the SQL query to insert data into a table
-                insert_query = "select * from Players as p where p.ID = %s and p.live <> 'false'" 
+                insert_query = f"select * from Players inner join {PLAYER_SEASON_TABLE.TABLE_NAME} on {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.PLAYER_ID}={TABLE.TABLE_NAME}.{TABLE.ID} and {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}={id} and live <> 'false' or live IS NULL" 
 
                 # Execute the SQL query to insert data
-                await cursor.execute(insert_query,id)
+                await cursor.execute(insert_query)
                 results = await cursor.fetchall()
                
                 # club = Club(id=id,name=row)
@@ -124,7 +154,7 @@ async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
 
 
 def convertStartingLineup(data):
-    player_info = player_responses.PlayerInfo(id=data[TABLE.ID],name=data[TABLE.NAME])
+    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME])
     playerResponse = player_responses.PlayerResponse(info=player_info)
     return playerResponse.model_dump()
 

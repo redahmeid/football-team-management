@@ -21,7 +21,7 @@ async def save_role(user:TeamUser):
 
                 # Data to be inserted
                 id = id_generator.generate_random_number(5)
-                data_to_insert = (id,user.user_id,user.team_id,user.role.value,True)
+                data_to_insert = (id,user.email,user.team_id,user.role.value,True)
 
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query, data_to_insert)
@@ -33,7 +33,7 @@ async def delete_role(user:TeamUser):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 # Define the SQL query to insert data into a table
-                insert_query = f"Delete from Roles where Email={user.user_id} and Team_ID={user.team_id}"
+                insert_query = f"Delete from Roles where Email={user.email} and Team_ID={user.team_id}"
 
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query)

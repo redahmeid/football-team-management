@@ -1,13 +1,8 @@
-from classes import Match, PlayerMatch
+
 from config import app_config
 import id_generator
 from firebase_admin import auth
 import db
-import match_responses
-
-import matches_state_machine
-from typing import List
-from datetime import datetime
 import logging
 import time
 import asyncio
@@ -15,7 +10,7 @@ import aiomysql
 logger = logging.getLogger(__name__)
 import functools
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-import response_classes
+
 
 def timeit(func):
     @functools.wraps(func)
@@ -65,9 +60,22 @@ class TABLE:
         f"{TABLE.TEAM_ID} varchar(255) NOT NULL,"\
         f"{TABLE.SEASON_NAME} varchar(255) NOT NULL,"\
         f"{TABLE.TEAM_AGE_GROUP} varchar(255) NOT NULL,"\
-        f"PRIMARY KEY ({TABLE.ID}),"\
-        f"FOREIGN KEY({TABLE.TEAM_ID}) references Teams({TABLE.ID}))"
-    
+        f"PRIMARY KEY ({TABLE.ID}))"
+    async def dataTransform():
+        async with aiomysql.create_pool(**db.db_config) as pool:
+            async with pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cursor:
+                    id = id_generator.generate_random_number(5)
+                    # Define the SQL query to insert data into a table
+                    insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.TABLE_NAME},{TABLE.TEAM_AGE_GROUP}, {TABLE.SEASON_NAME}) VALUES ('{id}','{team_id}','{age_group}','{season_name}')"
+                    print(insert_query)
+                    # Data to be inserted
+                    
+                    # Execute the SQL query to insert data
+                    await cursor.execute(insert_query)
+                    await conn.commit()
+                    
+                    return id
 
 
 @timeit
@@ -79,7 +87,7 @@ async def save_team_season(team_id,season_name,age_group):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 id = id_generator.generate_random_number(5)
                 # Define the SQL query to insert data into a table
-                insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.TABLE_NAME},{TABLE.TEAM_AGE_GROUP}, {TABLE.SEASON_NAME}) VALUES ('{id}','{team_id}','{age_group}','{season_name}')"
+                insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.TEAM_ID},{TABLE.TEAM_AGE_GROUP}, {TABLE.SEASON_NAME}) VALUES ('{id}','{team_id}','{age_group}','{season_name}')"
                 print(insert_query)
                 # Data to be inserted
                 
@@ -89,6 +97,42 @@ async def save_team_season(team_id,season_name,age_group):
                 
                 return id
 
+@timeit
+async def retrieve_seasons_by_user_id(user_id):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join Roles on {TABLE.TEAM_ID}=Roles.Team_ID and Roles.Email={user_id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return id
 
+@timeit
+async def retrieve_seasons_by_team_id(team_id):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.TEAM_ID}={team_id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                rows = cursor.fetchall()
+                
+                return rows
 
 

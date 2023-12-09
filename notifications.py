@@ -1,5 +1,5 @@
 from classes import Match, PlayerMatch
-import match_responses
+import response_classes
 from config import app_config
 import id_generator
 from firebase_admin import auth

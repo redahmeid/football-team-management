@@ -122,6 +122,12 @@
               "LogGroupName": "/aws/lambda/football-team-management-dev-retrieve_team_squad"
             }
           },
+          "UserUnderscorehomepageUnderscorebffLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/football-team-management-dev-user_homepage_bff"
+            }
+          },
           "AddUnderscoreuserUnderscoretoUnderscoreteamLogGroup": {
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
@@ -156,12 +162,6 @@
             "Type": "AWS::Logs::LogGroup",
             "Properties": {
               "LogGroupName": "/aws/lambda/football-team-management-dev-create_team_screen_bff"
-            }
-          },
-          "UserUnderscorehomepageUnderscorebffLogGroup": {
-            "Type": "AWS::Logs::LogGroup",
-            "Properties": {
-              "LogGroupName": "/aws/lambda/football-team-management-dev-user_homepage_bff"
             }
           },
           "CreateUnderscorematchUnderscoredayUnderscorebffLogGroup": {
@@ -348,6 +348,12 @@
                           },
                           {
                             "Fn::GetAtt": [
+                              "UserUnderscorehomepageUnderscorebffLogGroup",
+                              "Arn"
+                            ]
+                          },
+                          {
+                            "Fn::GetAtt": [
                               "AddUnderscoreuserUnderscoretoUnderscoreteamLogGroup",
                               "Arn"
                             ]
@@ -379,12 +385,6 @@
                           {
                             "Fn::GetAtt": [
                               "CreateUnderscoreteamUnderscorescreenUnderscorebffLogGroup",
-                              "Arn"
-                            ]
-                          },
-                          {
-                            "Fn::GetAtt": [
-                              "UserUnderscorehomepageUnderscorebffLogGroup",
                               "Arn"
                             ]
                           },
@@ -439,7 +439,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_check_online.handler",
               "Runtime": "python3.8",
@@ -469,7 +469,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_team_players.handler",
               "Runtime": "python3.8",
@@ -499,7 +499,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_team.handler",
               "Runtime": "python3.8",
@@ -529,7 +529,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_team_fixtures.handler",
               "Runtime": "python3.8",
@@ -559,7 +559,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_user.handler",
               "Runtime": "python3.8",
@@ -589,7 +589,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_retrieve_team_squad.handler",
               "Runtime": "python3.8",
@@ -612,6 +612,36 @@
               "RetrieveUnderscoreteamUnderscoresquadLogGroup"
             ]
           },
+          "UserUnderscorehomepageUnderscorebffLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
+              },
+              "Handler": "s_user_homepage_bff.handler",
+              "Runtime": "python3.8",
+              "FunctionName": "football-team-management-dev-user_homepage_bff",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "ENVIRONMENT": "dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "UserUnderscorehomepageUnderscorebffLogGroup"
+            ]
+          },
           "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -619,7 +649,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_add_user_to_team.handler",
               "Runtime": "python3.8",
@@ -649,7 +679,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_retrieve_matches_by_team.handler",
               "Runtime": "python3.8",
@@ -679,7 +709,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_retrieve_team_summary.handler",
               "Runtime": "python3.8",
@@ -709,7 +739,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_delete_player.handler",
               "Runtime": "python3.8",
@@ -739,7 +769,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_retrieve_next_match_by_team.handler",
               "Runtime": "python3.8",
@@ -769,7 +799,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_team_screen_bff.handler",
               "Runtime": "python3.8",
@@ -792,36 +822,6 @@
               "CreateUnderscoreteamUnderscorescreenUnderscorebffLogGroup"
             ]
           },
-          "UserUnderscorehomepageUnderscorebffLambdaFunction": {
-            "Type": "AWS::Lambda::Function",
-            "Properties": {
-              "Code": {
-                "S3Bucket": {
-                  "Ref": "ServerlessDeploymentBucket"
-                },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
-              },
-              "Handler": "s_user_homepage_bff.handler",
-              "Runtime": "python3.8",
-              "FunctionName": "football-team-management-dev-user_homepage_bff",
-              "MemorySize": 1024,
-              "Timeout": 6,
-              "Environment": {
-                "Variables": {
-                  "ENVIRONMENT": "dev"
-                }
-              },
-              "Role": {
-                "Fn::GetAtt": [
-                  "IamRoleLambdaExecution",
-                  "Arn"
-                ]
-              }
-            },
-            "DependsOn": [
-              "UserUnderscorehomepageUnderscorebffLogGroup"
-            ]
-          },
           "CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
@@ -829,7 +829,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_match_day_bff.handler",
               "Runtime": "python3.8",
@@ -859,7 +859,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_getMatchById.handler",
               "Runtime": "python3.8",
@@ -889,7 +889,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_submit_lineup.handler",
               "Runtime": "python3.8",
@@ -919,7 +919,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_submit_subs.handler",
               "Runtime": "python3.8",
@@ -949,7 +949,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_update_match_status.handler",
               "Runtime": "python3.8",
@@ -979,7 +979,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/football-team-management.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/football-team-management.zip"
               },
               "Handler": "s_create_jwt.handler",
               "Runtime": "python3.8",
@@ -1002,194 +1002,194 @@
               "CreateUnderscorejwtLogGroup"
             ]
           },
-          "CheckUnderscoreonlineLambdaVersionOJTzuDXL6sh5oS2ro5MY5iAuZ9uY5uHfOmgUaAgo8": {
+          "CheckUnderscoreonlineLambdaVersiono3td1Szd5BpHL6YE0gcyU2oUMvvz2n7A249ESc52Yg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CheckUnderscoreonlineLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscoreteamUnderscoreplayersLambdaVersionFRndGgWm88ivDpL4fjLDbpAKY9ULY1jitCNG2G9gm4": {
+          "CreateUnderscoreteamUnderscoreplayersLambdaVersion5gOFRjyciINbbpfvLGzAHDtzMnDv5esAPlefXleg": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscoreteamLambdaVersioneO7Wz59SofeCmhIWzOk4hflKaAPbQqjMYAimjQ4QA": {
+          "CreateUnderscoreteamLambdaVersionMUTskpoPlT5ObSYg0An7aCXUNpNQhrQDZXhlNBBY98": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscoreteamLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscoreteamUnderscorefixturesLambdaVersioncF6lVIrgSWFgHdbfhBstxmOO96wce3FTiqMB3Gq6U": {
+          "CreateUnderscoreteamUnderscorefixturesLambdaVersionBSPEmsJO9MlNi2tujX4FAuGtG2tr9gTDFQfOulbE9zs": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscoreuserLambdaVersionFTZINZA4XGKvz89okPT24AE5UCTel6pXNQZsNaXhE": {
+          "CreateUnderscoreuserLambdaVersiongZyxkyQbmkeV9gZVDCQ1y2n3HPhD59MAWKzo6oes": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscoreuserLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "RetrieveUnderscoreteamUnderscoresquadLambdaVersionKaLnN7ooUYVcCYVi8Q88AObp1UFx1oVSKBo5LHk": {
+          "RetrieveUnderscoreteamUnderscoresquadLambdaVersionh4BNYnn5VQ3TCLHtvu59U98f7Q3vMG8V3LqrDSjLqdo": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion9lH5t998fshnHh3zXjvvDdI3pVyakAoSOyfI5e4Gw": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersion55xJq9edjWTScQ77lot33JLuUDOWMoOzZQgeIJzcU": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "RetrieveUnderscoreteamUnderscoresummaryLambdaVersioncLxqKsMOZr2j22baOl9vbv6b90FbB07ugjYMQrW2szw": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "DeleteUnderscoreplayerLambdaVersionCcA1TuRBuR6aDARFogC92SMJ8AOipWcQEMKPLrUH8": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "DeleteUnderscoreplayerLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionYNzjB1CGAfQXaGmBut1fY7ZmhhTXkay3n1MRRZOzJI": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionRJD95p0IsWuZ4CRD9BNWCoEL8243FWEwTL2jjLaUns": {
-            "Type": "AWS::Lambda::Version",
-            "DeletionPolicy": "Retain",
-            "Properties": {
-              "FunctionName": {
-                "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunction"
-              },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
-            }
-          },
-          "UserUnderscorehomepageUnderscorebffLambdaVersionq08RFjOOl6ps7A6wbwbXm73U84NOEmq77bhPZZ19bs": {
+          "UserUnderscorehomepageUnderscorebffLambdaVersionCNHFss3liAoiHemmMBv7JSs0WOPvO3oNL9XJr46aY": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "UserUnderscorehomepageUnderscorebffLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionnTZZd1rFoatZTnE5zRS5tcYxZvOkXNzt7SCZni5KoY": {
+          "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion2rHvHxhsJGI52yS7prAOGQcJZMeUWaMIHm1vMtf1Q": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersionZUOyRLP8dvOb2fBqJbuZa9IWbLejUPuV6B6bFe7Iy4": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionPvEadEt0N2AlRy476KUUdjifmm4sa8xhoom1O4bO0": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "DeleteUnderscoreplayerLambdaVersionw6hqhn02Gt3lY60RdxOTElAN0layTqlCbFFAgGBovc": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "DeleteUnderscoreplayerLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersion2lTOHKDmHLcFkGZyeykNVOAEJQq5nNLoqlSuvJlwJo": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersion9HelM3960G4Y0TUcegTGXepiB4MpDBNfIFfcMwWJdjQ": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunction"
+              },
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
+            }
+          },
+          "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionUXCLK7x36CdhC3nQ4zbHJyccQJff07ztQ3DGTfFKbOo": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "GetMatchByIdLambdaVersionIxsSflV10WIPY1e7ZjOwE5rxvum32asRgt3IdLQRJBs": {
+          "GetMatchByIdLambdaVersion0aUluqNCYhe64xb1PVocYllJryIgmMCJwUod9IV0": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "GetMatchByIdLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "SubmitUnderscorelineupLambdaVersiontw4fYtVGtaoPK6ZFCMy6NYMqO9VeIqMYzmwCkLgRSNY": {
+          "SubmitUnderscorelineupLambdaVersion8RpUf4Mb0ndEDuSUhkvi2jHtM0kDBRvr43vZVB4w": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "SubmitUnderscorelineupLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "SubmitUnderscoresubsLambdaVersioniMPE6VtIBjy3IKWgiPAQXDIjh9GkaUErfjzrNOJpO5k": {
+          "SubmitUnderscoresubsLambdaVersionaEQjPMJJW2W6o26P8Me93wISQIsy2miOaNetOwb6qA": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "SubmitUnderscoresubsLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "UpdateUnderscorematchUnderscorestatusLambdaVersionfQuQGao9glzLAdV8wO0uXi5SBxtjOSAvtyM3K6Jo": {
+          "UpdateUnderscorematchUnderscorestatusLambdaVersion0sExGB8bPdQpH76QEp8AsKVtx57bwbNcIjxL5Pc4s": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "UpdateUnderscorematchUnderscorestatusLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
-          "CreateUnderscorejwtLambdaVersionMaGmOBixPTD5tTJAvctac6pjCx77vLT3QaGIOxYWh0": {
+          "CreateUnderscorejwtLambdaVersionRUix0qOhW7hKEtL3IRNFFEHkg8c4epb0qhsK42rP8": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "CreateUnderscorejwtLambdaFunction"
               },
-              "CodeSha256": "4TmjO/dkX5QFVNtm7maHAJv2iCEs5a2fWm0VX9ZHRo4="
+              "CodeSha256": "U8VdMn+Gp++LEAwNhetWClJYoZeK2EYjqy4Tf7P35uw="
             }
           },
           "ApiGatewayRestApi": {
@@ -2464,6 +2464,52 @@
               "RetrieveUnderscoreteamUnderscoresquadLambdaPermissionApiGateway"
             ]
           },
+          "ApiGatewayMethodUsersGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "UserUnderscorehomepageUnderscorebffLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "UserUnderscorehomepageUnderscorebffLambdaPermissionApiGateway"
+            ]
+          },
           "ApiGatewayMethodTeamsTeamidVarUsersPost": {
             "Type": "AWS::ApiGateway::Method",
             "Properties": {
@@ -2738,52 +2784,6 @@
             },
             "DependsOn": [
               "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaPermissionApiGateway"
-            ]
-          },
-          "ApiGatewayMethodUsersGet": {
-            "Type": "AWS::ApiGateway::Method",
-            "Properties": {
-              "HttpMethod": "GET",
-              "RequestParameters": {},
-              "ResourceId": {
-                "Ref": "ApiGatewayResourceUsers"
-              },
-              "RestApiId": {
-                "Ref": "ApiGatewayRestApi"
-              },
-              "ApiKeyRequired": false,
-              "AuthorizationType": "NONE",
-              "Integration": {
-                "IntegrationHttpMethod": "POST",
-                "Type": "AWS_PROXY",
-                "Uri": {
-                  "Fn::Join": [
-                    "",
-                    [
-                      "arn:",
-                      {
-                        "Ref": "AWS::Partition"
-                      },
-                      ":apigateway:",
-                      {
-                        "Ref": "AWS::Region"
-                      },
-                      ":lambda:path/2015-03-31/functions/",
-                      {
-                        "Fn::GetAtt": [
-                          "UserUnderscorehomepageUnderscorebffLambdaFunction",
-                          "Arn"
-                        ]
-                      },
-                      "/invocations"
-                    ]
-                  ]
-                }
-              },
-              "MethodResponses": []
-            },
-            "DependsOn": [
-              "UserUnderscorehomepageUnderscorebffLambdaPermissionApiGateway"
             ]
           },
           "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarGet": {
@@ -3062,7 +3062,7 @@
               "CreateUnderscorejwtLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1701886007427": {
+          "ApiGatewayDeployment1702157551284": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -3093,13 +3093,13 @@
               "ApiGatewayMethodTeamsTeamidVarMatchesPost",
               "ApiGatewayMethodUsersPost",
               "ApiGatewayMethodTeamsTeamidVarPlayersGet",
+              "ApiGatewayMethodUsersGet",
               "ApiGatewayMethodTeamsTeamidVarUsersPost",
               "ApiGatewayMethodTeamsTeamidVarMatchesGet",
               "ApiGatewayMethodTeamsTeamidVarGet",
               "ApiGatewayMethodPlayersPlayeridVarDelete",
               "ApiGatewayMethodTeamsTeamidVarNextmatchGet",
               "ApiGatewayMethodBffCreateteamscreenPost",
-              "ApiGatewayMethodUsersGet",
               "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarGet",
               "ApiGatewayMethodMatchesMatchidVarGet",
               "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupPost",
@@ -3330,6 +3330,43 @@
               }
             }
           },
+          "UserUnderscorehomepageUnderscorebffLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "UserUnderscorehomepageUnderscorebffLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
           "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaPermissionApiGateway": {
             "Type": "AWS::Lambda::Permission",
             "Properties": {
@@ -3521,43 +3558,6 @@
               "FunctionName": {
                 "Fn::GetAtt": [
                   "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunction",
-                  "Arn"
-                ]
-              },
-              "Action": "lambda:InvokeFunction",
-              "Principal": "apigateway.amazonaws.com",
-              "SourceArn": {
-                "Fn::Join": [
-                  "",
-                  [
-                    "arn:",
-                    {
-                      "Ref": "AWS::Partition"
-                    },
-                    ":execute-api:",
-                    {
-                      "Ref": "AWS::Region"
-                    },
-                    ":",
-                    {
-                      "Ref": "AWS::AccountId"
-                    },
-                    ":",
-                    {
-                      "Ref": "ApiGatewayRestApi"
-                    },
-                    "/*/*"
-                  ]
-                ]
-              }
-            }
-          },
-          "UserUnderscorehomepageUnderscorebffLambdaPermissionApiGateway": {
-            "Type": "AWS::Lambda::Permission",
-            "Properties": {
-              "FunctionName": {
-                "Fn::GetAtt": [
-                  "UserUnderscorehomepageUnderscorebffLambdaFunction",
                   "Arn"
                 ]
               },
@@ -3920,7 +3920,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z/custom-resources.zip"
+                "S3Key": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z/custom-resources.zip"
               },
               "FunctionName": "football-team-management-dev-custom-resource-apigw-cw-role",
               "Handler": "api-gateway-cloud-watch-role/handler.handler",
@@ -3962,7 +3962,7 @@
           "CheckUnderscoreonlineLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CheckUnderscoreonlineLambdaVersionOJTzuDXL6sh5oS2ro5MY5iAuZ9uY5uHfOmgUaAgo8"
+              "Ref": "CheckUnderscoreonlineLambdaVersiono3td1Szd5BpHL6YE0gcyU2oUMvvz2n7A249ESc52Yg"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CheckUnderscoreonlineLambdaFunctionQualifiedArn"
@@ -3971,7 +3971,7 @@
           "CreateUnderscoreteamUnderscoreplayersLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaVersionFRndGgWm88ivDpL4fjLDbpAKY9ULY1jitCNG2G9gm4"
+              "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaVersion5gOFRjyciINbbpfvLGzAHDtzMnDv5esAPlefXleg"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreteamUnderscoreplayersLambdaFunctionQualifiedArn"
@@ -3980,7 +3980,7 @@
           "CreateUnderscoreteamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreteamLambdaVersioneO7Wz59SofeCmhIWzOk4hflKaAPbQqjMYAimjQ4QA"
+              "Ref": "CreateUnderscoreteamLambdaVersionMUTskpoPlT5ObSYg0An7aCXUNpNQhrQDZXhlNBBY98"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreteamLambdaFunctionQualifiedArn"
@@ -3989,7 +3989,7 @@
           "CreateUnderscoreteamUnderscorefixturesLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaVersioncF6lVIrgSWFgHdbfhBstxmOO96wce3FTiqMB3Gq6U"
+              "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaVersionBSPEmsJO9MlNi2tujX4FAuGtG2tr9gTDFQfOulbE9zs"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreteamUnderscorefixturesLambdaFunctionQualifiedArn"
@@ -3998,7 +3998,7 @@
           "CreateUnderscoreuserLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreuserLambdaVersionFTZINZA4XGKvz89okPT24AE5UCTel6pXNQZsNaXhE"
+              "Ref": "CreateUnderscoreuserLambdaVersiongZyxkyQbmkeV9gZVDCQ1y2n3HPhD59MAWKzo6oes"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreuserLambdaFunctionQualifiedArn"
@@ -4007,16 +4007,25 @@
           "RetrieveUnderscoreteamUnderscoresquadLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionKaLnN7ooUYVcCYVi8Q88AObp1UFx1oVSKBo5LHk"
+              "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionh4BNYnn5VQ3TCLHtvu59U98f7Q3vMG8V3LqrDSjLqdo"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-RetrieveUnderscoreteamUnderscoresquadLambdaFunctionQualifiedArn"
             }
           },
+          "UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "UserUnderscorehomepageUnderscorebffLambdaVersionCNHFss3liAoiHemmMBv7JSs0WOPvO3oNL9XJr46aY"
+            },
+            "Export": {
+              "Name": "sls-football-team-management-dev-UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn"
+            }
+          },
           "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion9lH5t998fshnHh3zXjvvDdI3pVyakAoSOyfI5e4Gw"
+              "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion2rHvHxhsJGI52yS7prAOGQcJZMeUWaMIHm1vMtf1Q"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4025,7 +4034,7 @@
           "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersion55xJq9edjWTScQ77lot33JLuUDOWMoOzZQgeIJzcU"
+              "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersionZUOyRLP8dvOb2fBqJbuZa9IWbLejUPuV6B6bFe7Iy4"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4034,7 +4043,7 @@
           "RetrieveUnderscoreteamUnderscoresummaryLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersioncLxqKsMOZr2j22baOl9vbv6b90FbB07ugjYMQrW2szw"
+              "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionPvEadEt0N2AlRy476KUUdjifmm4sa8xhoom1O4bO0"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-RetrieveUnderscoreteamUnderscoresummaryLambdaFunctionQualifiedArn"
@@ -4043,7 +4052,7 @@
           "DeleteUnderscoreplayerLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "DeleteUnderscoreplayerLambdaVersionCcA1TuRBuR6aDARFogC92SMJ8AOipWcQEMKPLrUH8"
+              "Ref": "DeleteUnderscoreplayerLambdaVersionw6hqhn02Gt3lY60RdxOTElAN0layTqlCbFFAgGBovc"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-DeleteUnderscoreplayerLambdaFunctionQualifiedArn"
@@ -4052,7 +4061,7 @@
           "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionYNzjB1CGAfQXaGmBut1fY7ZmhhTXkay3n1MRRZOzJI"
+              "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersion2lTOHKDmHLcFkGZyeykNVOAEJQq5nNLoqlSuvJlwJo"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4061,25 +4070,16 @@
           "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionRJD95p0IsWuZ4CRD9BNWCoEL8243FWEwTL2jjLaUns"
+              "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersion9HelM3960G4Y0TUcegTGXepiB4MpDBNfIFfcMwWJdjQ"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunctionQualifiedArn"
             }
           },
-          "UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn": {
-            "Description": "Current Lambda function version",
-            "Value": {
-              "Ref": "UserUnderscorehomepageUnderscorebffLambdaVersionq08RFjOOl6ps7A6wbwbXm73U84NOEmq77bhPZZ19bs"
-            },
-            "Export": {
-              "Name": "sls-football-team-management-dev-UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn"
-            }
-          },
           "CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionnTZZd1rFoatZTnE5zRS5tcYxZvOkXNzt7SCZni5KoY"
+              "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionUXCLK7x36CdhC3nQ4zbHJyccQJff07ztQ3DGTfFKbOo"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunctionQualifiedArn"
@@ -4088,7 +4088,7 @@
           "GetMatchByIdLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "GetMatchByIdLambdaVersionIxsSflV10WIPY1e7ZjOwE5rxvum32asRgt3IdLQRJBs"
+              "Ref": "GetMatchByIdLambdaVersion0aUluqNCYhe64xb1PVocYllJryIgmMCJwUod9IV0"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-GetMatchByIdLambdaFunctionQualifiedArn"
@@ -4097,7 +4097,7 @@
           "SubmitUnderscorelineupLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SubmitUnderscorelineupLambdaVersiontw4fYtVGtaoPK6ZFCMy6NYMqO9VeIqMYzmwCkLgRSNY"
+              "Ref": "SubmitUnderscorelineupLambdaVersion8RpUf4Mb0ndEDuSUhkvi2jHtM0kDBRvr43vZVB4w"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-SubmitUnderscorelineupLambdaFunctionQualifiedArn"
@@ -4106,7 +4106,7 @@
           "SubmitUnderscoresubsLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "SubmitUnderscoresubsLambdaVersioniMPE6VtIBjy3IKWgiPAQXDIjh9GkaUErfjzrNOJpO5k"
+              "Ref": "SubmitUnderscoresubsLambdaVersionaEQjPMJJW2W6o26P8Me93wISQIsy2miOaNetOwb6qA"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-SubmitUnderscoresubsLambdaFunctionQualifiedArn"
@@ -4115,7 +4115,7 @@
           "UpdateUnderscorematchUnderscorestatusLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "UpdateUnderscorematchUnderscorestatusLambdaVersionfQuQGao9glzLAdV8wO0uXi5SBxtjOSAvtyM3K6Jo"
+              "Ref": "UpdateUnderscorematchUnderscorestatusLambdaVersion0sExGB8bPdQpH76QEp8AsKVtx57bwbNcIjxL5Pc4s"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-UpdateUnderscorematchUnderscorestatusLambdaFunctionQualifiedArn"
@@ -4124,7 +4124,7 @@
           "CreateUnderscorejwtLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "CreateUnderscorejwtLambdaVersionMaGmOBixPTD5tTJAvctac6pjCx77vLT3QaGIOxYWh0"
+              "Ref": "CreateUnderscorejwtLambdaVersionRUix0qOhW7hKEtL3IRNFFEHkg8c4epb0qhsK42rP8"
             },
             "Export": {
               "Name": "sls-football-team-management-dev-CreateUnderscorejwtLambdaFunctionQualifiedArn"
@@ -4293,7 +4293,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CheckUnderscoreonlineLambdaVersionOJTzuDXL6sh5oS2ro5MY5iAuZ9uY5uHfOmgUaAgo8"
+        "versionLogicalId": "CheckUnderscoreonlineLambdaVersiono3td1Szd5BpHL6YE0gcyU2oUMvvz2n7A249ESc52Yg"
       },
       "create_team_players": {
         "handler": "s_create_team_players.handler",
@@ -4329,7 +4329,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscoreteamUnderscoreplayersLambdaVersionFRndGgWm88ivDpL4fjLDbpAKY9ULY1jitCNG2G9gm4"
+        "versionLogicalId": "CreateUnderscoreteamUnderscoreplayersLambdaVersion5gOFRjyciINbbpfvLGzAHDtzMnDv5esAPlefXleg"
       },
       "create_team": {
         "handler": "s_create_team.handler",
@@ -4365,7 +4365,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscoreteamLambdaVersioneO7Wz59SofeCmhIWzOk4hflKaAPbQqjMYAimjQ4QA"
+        "versionLogicalId": "CreateUnderscoreteamLambdaVersionMUTskpoPlT5ObSYg0An7aCXUNpNQhrQDZXhlNBBY98"
       },
       "create_team_fixtures": {
         "handler": "s_create_team_fixtures.handler",
@@ -4401,7 +4401,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscoreteamUnderscorefixturesLambdaVersioncF6lVIrgSWFgHdbfhBstxmOO96wce3FTiqMB3Gq6U"
+        "versionLogicalId": "CreateUnderscoreteamUnderscorefixturesLambdaVersionBSPEmsJO9MlNi2tujX4FAuGtG2tr9gTDFQfOulbE9zs"
       },
       "create_user": {
         "handler": "s_create_user.handler",
@@ -4437,7 +4437,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscoreuserLambdaVersionFTZINZA4XGKvz89okPT24AE5UCTel6pXNQZsNaXhE"
+        "versionLogicalId": "CreateUnderscoreuserLambdaVersiongZyxkyQbmkeV9gZVDCQ1y2n3HPhD59MAWKzo6oes"
       },
       "retrieve_team_squad": {
         "handler": "s_retrieve_team_squad.handler",
@@ -4473,223 +4473,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionKaLnN7ooUYVcCYVi8Q88AObp1UFx1oVSKBo5LHk"
-      },
-      "add_user_to_team": {
-        "handler": "s_add_user_to_team.handler",
-        "events": [
-          {
-            "http": {
-              "path": "teams/{team_id}/users",
-              "method": "post",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "POST"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-add_user_to_team",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion9lH5t998fshnHh3zXjvvDdI3pVyakAoSOyfI5e4Gw"
-      },
-      "retrieve_matches_by_team": {
-        "handler": "s_retrieve_matches_by_team.handler",
-        "events": [
-          {
-            "http": {
-              "path": "teams/{team_id}/matches",
-              "method": "get",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "GET"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-retrieve_matches_by_team",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersion55xJq9edjWTScQ77lot33JLuUDOWMoOzZQgeIJzcU"
-      },
-      "retrieve_team_summary": {
-        "handler": "s_retrieve_team_summary.handler",
-        "events": [
-          {
-            "http": {
-              "path": "teams/{team_id}",
-              "method": "get",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "GET"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-retrieve_team_summary",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersioncLxqKsMOZr2j22baOl9vbv6b90FbB07ugjYMQrW2szw"
-      },
-      "delete_player": {
-        "handler": "s_delete_player.handler",
-        "events": [
-          {
-            "http": {
-              "path": "players/{player_id}",
-              "method": "delete",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "DELETE"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-delete_player",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "DeleteUnderscoreplayerLambdaVersionCcA1TuRBuR6aDARFogC92SMJ8AOipWcQEMKPLrUH8"
-      },
-      "retrieve_next_match_by_team": {
-        "handler": "s_retrieve_next_match_by_team.handler",
-        "events": [
-          {
-            "http": {
-              "path": "teams/{team_id}/next_match",
-              "method": "get",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "GET"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-retrieve_next_match_by_team",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionYNzjB1CGAfQXaGmBut1fY7ZmhhTXkay3n1MRRZOzJI"
-      },
-      "create_team_screen_bff": {
-        "handler": "s_create_team_screen_bff.handler",
-        "events": [
-          {
-            "http": {
-              "path": "bff/create_team_screen",
-              "method": "post",
-              "cors": {
-                "origin": "*",
-                "methods": [
-                  "OPTIONS",
-                  "POST"
-                ],
-                "headers": [
-                  "Content-Type",
-                  "X-Amz-Date",
-                  "Authorization",
-                  "X-Api-Key",
-                  "X-Amz-Security-Token",
-                  "X-Amz-User-Agent",
-                  "X-Amzn-Trace-Id"
-                ],
-                "allowCredentials": false
-              },
-              "integration": "AWS_PROXY"
-            }
-          }
-        ],
-        "name": "football-team-management-dev-create_team_screen_bff",
-        "package": {},
-        "memory": 1024,
-        "timeout": 6,
-        "runtime": "python3.8",
-        "vpc": {},
-        "versionLogicalId": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionRJD95p0IsWuZ4CRD9BNWCoEL8243FWEwTL2jjLaUns"
+        "versionLogicalId": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionh4BNYnn5VQ3TCLHtvu59U98f7Q3vMG8V3LqrDSjLqdo"
       },
       "user_homepage_bff": {
         "handler": "s_user_homepage_bff.handler",
@@ -4725,7 +4509,223 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "UserUnderscorehomepageUnderscorebffLambdaVersionq08RFjOOl6ps7A6wbwbXm73U84NOEmq77bhPZZ19bs"
+        "versionLogicalId": "UserUnderscorehomepageUnderscorebffLambdaVersionCNHFss3liAoiHemmMBv7JSs0WOPvO3oNL9XJr46aY"
+      },
+      "add_user_to_team": {
+        "handler": "s_add_user_to_team.handler",
+        "events": [
+          {
+            "http": {
+              "path": "teams/{team_id}/users",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-add_user_to_team",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersion2rHvHxhsJGI52yS7prAOGQcJZMeUWaMIHm1vMtf1Q"
+      },
+      "retrieve_matches_by_team": {
+        "handler": "s_retrieve_matches_by_team.handler",
+        "events": [
+          {
+            "http": {
+              "path": "teams/{team_id}/matches",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-retrieve_matches_by_team",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersionZUOyRLP8dvOb2fBqJbuZa9IWbLejUPuV6B6bFe7Iy4"
+      },
+      "retrieve_team_summary": {
+        "handler": "s_retrieve_team_summary.handler",
+        "events": [
+          {
+            "http": {
+              "path": "teams/{team_id}",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-retrieve_team_summary",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionPvEadEt0N2AlRy476KUUdjifmm4sa8xhoom1O4bO0"
+      },
+      "delete_player": {
+        "handler": "s_delete_player.handler",
+        "events": [
+          {
+            "http": {
+              "path": "players/{player_id}",
+              "method": "delete",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "DELETE"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-delete_player",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "DeleteUnderscoreplayerLambdaVersionw6hqhn02Gt3lY60RdxOTElAN0layTqlCbFFAgGBovc"
+      },
+      "retrieve_next_match_by_team": {
+        "handler": "s_retrieve_next_match_by_team.handler",
+        "events": [
+          {
+            "http": {
+              "path": "teams/{team_id}/next_match",
+              "method": "get",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "GET"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-retrieve_next_match_by_team",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersion2lTOHKDmHLcFkGZyeykNVOAEJQq5nNLoqlSuvJlwJo"
+      },
+      "create_team_screen_bff": {
+        "handler": "s_create_team_screen_bff.handler",
+        "events": [
+          {
+            "http": {
+              "path": "bff/create_team_screen",
+              "method": "post",
+              "cors": {
+                "origin": "*",
+                "methods": [
+                  "OPTIONS",
+                  "POST"
+                ],
+                "headers": [
+                  "Content-Type",
+                  "X-Amz-Date",
+                  "Authorization",
+                  "X-Api-Key",
+                  "X-Amz-Security-Token",
+                  "X-Amz-User-Agent",
+                  "X-Amzn-Trace-Id"
+                ],
+                "allowCredentials": false
+              },
+              "integration": "AWS_PROXY"
+            }
+          }
+        ],
+        "name": "football-team-management-dev-create_team_screen_bff",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "python3.8",
+        "vpc": {},
+        "versionLogicalId": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersion9HelM3960G4Y0TUcegTGXepiB4MpDBNfIFfcMwWJdjQ"
       },
       "create_match_day_bff": {
         "handler": "s_create_match_day_bff.handler",
@@ -4761,7 +4761,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionnTZZd1rFoatZTnE5zRS5tcYxZvOkXNzt7SCZni5KoY"
+        "versionLogicalId": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionUXCLK7x36CdhC3nQ4zbHJyccQJff07ztQ3DGTfFKbOo"
       },
       "getMatchById": {
         "handler": "s_getMatchById.handler",
@@ -4797,7 +4797,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "GetMatchByIdLambdaVersionIxsSflV10WIPY1e7ZjOwE5rxvum32asRgt3IdLQRJBs"
+        "versionLogicalId": "GetMatchByIdLambdaVersion0aUluqNCYhe64xb1PVocYllJryIgmMCJwUod9IV0"
       },
       "submit_lineup": {
         "handler": "s_submit_lineup.handler",
@@ -4833,7 +4833,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "SubmitUnderscorelineupLambdaVersiontw4fYtVGtaoPK6ZFCMy6NYMqO9VeIqMYzmwCkLgRSNY"
+        "versionLogicalId": "SubmitUnderscorelineupLambdaVersion8RpUf4Mb0ndEDuSUhkvi2jHtM0kDBRvr43vZVB4w"
       },
       "submit_subs": {
         "handler": "s_submit_subs.handler",
@@ -4869,7 +4869,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "SubmitUnderscoresubsLambdaVersioniMPE6VtIBjy3IKWgiPAQXDIjh9GkaUErfjzrNOJpO5k"
+        "versionLogicalId": "SubmitUnderscoresubsLambdaVersionaEQjPMJJW2W6o26P8Me93wISQIsy2miOaNetOwb6qA"
       },
       "update_match_status": {
         "handler": "s_update_match_status.handler",
@@ -4905,7 +4905,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "UpdateUnderscorematchUnderscorestatusLambdaVersionfQuQGao9glzLAdV8wO0uXi5SBxtjOSAvtyM3K6Jo"
+        "versionLogicalId": "UpdateUnderscorematchUnderscorestatusLambdaVersion0sExGB8bPdQpH76QEp8AsKVtx57bwbNcIjxL5Pc4s"
       },
       "create_jwt": {
         "handler": "s_create_jwt.handler",
@@ -4941,7 +4941,7 @@
         "timeout": 6,
         "runtime": "python3.8",
         "vpc": {},
-        "versionLogicalId": "CreateUnderscorejwtLambdaVersionMaGmOBixPTD5tTJAvctac6pjCx77vLT3QaGIOxYWh0"
+        "versionLogicalId": "CreateUnderscorejwtLambdaVersionRUix0qOhW7hKEtL3IRNFFEHkg8c4epb0qhsK42rP8"
       }
     },
     "configValidationMode": "warn",
@@ -4972,7 +4972,7 @@
         ],
         "artifactsS3KeyDirname": "serverless/football-team-management/dev/code-artifacts",
         "artifact": "/Users/redahmeid/Documents/personal-projects/club-management-website/football-team-management/.serverless/football-team-management.zip",
-        "artifactDirectoryName": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z"
+        "artifactDirectoryName": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z"
       }
     },
     "app": "football-team-management",
@@ -4985,7 +4985,7 @@
     "artifact": "/Users/redahmeid/Documents/personal-projects/club-management-website/football-team-management/.serverless/football-team-management.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/football-team-management/dev/1701886047004-2023-12-06T18:07:27.004Z",
+    "artifactDirectoryName": "serverless/football-team-management/dev/1702157593026-2023-12-09T21:33:13.026Z",
     "artifact": "football-team-management.zip"
   }
 }
