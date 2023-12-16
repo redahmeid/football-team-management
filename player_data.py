@@ -37,7 +37,7 @@ class PLAYER_SEASON_TABLE:
     TEAM_SEASON_ID="Team_Season_ID"
 
     def createTable():
-        return f"CREATE TABLE {PLAYER_SEASON_TABLE.TABLE_NAME}" \
+        return f"CREATE TABLE if not exists {PLAYER_SEASON_TABLE.TABLE_NAME}" \
         f"({PLAYER_SEASON_TABLE.ID} varchar(255),"\
         f"{PLAYER_SEASON_TABLE.PLAYER_ID} varchar(255) NOT NULL,"\
         f"{PLAYER_SEASON_TABLE.TEAM_SEASON_ID} varchar(255) NOT NULL,"\

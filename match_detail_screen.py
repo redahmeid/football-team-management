@@ -99,7 +99,7 @@ async def submit_substitutions(event,context):
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
             
             await submit_subs(match=match[0],players=new_players)
-            return await match_planning_backend.getMatchStarted(team_id,match)
+            return await match_planning_backend.getMatchStarted(team_id,match[0])
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -199,7 +199,7 @@ async def set_match_stats(event,context):
     try:
     
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)): 
-           await setGoalsFor(match_id,goal_scorer,assister,type)
+           await setGoalsFor(team_id,match_id,goal_scorer,assister,type)
             
         return response
     except exceptions.AuthError as e:
@@ -219,7 +219,8 @@ async def set_match_stats(event,context):
 
 
 
-                
+async def subs_due(event,context):
+    match_planning_backend.subs_due(event)
       
 
 async def update_match_status(event,context):
@@ -232,18 +233,19 @@ async def update_match_status(event,context):
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
              if(status=="score_for"):
                 body =json.loads(event["body"])
-                goal_scorer = body["scorer"]["info"]["id"]
+                goal_scorer = body["scorer"]
                 assister = body.get('assister')
                 
                 type = body.get('type')
-                await setGoalsFor(match_id,goal_scorer,assister,type)
+                await setGoalsFor(team_id,match_id,goal_scorer,assister,type)
              elif(status=="score_against"):
-                await setGoalsAgainst(match_id)
+                await setGoalsAgainst(match_id,team_id,"opposition")
              elif(status=="paused" or status=="restarted" or status=="started"):
+                 
                  await updateMatchPeriod(match_id,status)
                  await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
              else:
-                await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
+                await match_planning_backend.updateStatus(match_id=match_id,status=matches_state_machine.MatchState(status))
              return await getMatch(event,context)    
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")

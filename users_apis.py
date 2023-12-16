@@ -10,7 +10,7 @@ from users_data import save_user,retrieve_user_id_by_email,update_user
 from matches_data import retrieve_next_match_by_team
 from auth import getToken
 from secrets_util import lambda_handler
-
+from notifications import save_token
 
 async def new_user(event, context):
     lambda_handler(event,context)
@@ -18,7 +18,7 @@ async def new_user(event, context):
         body =json.loads(event["body"])
         print(body)
         email = getToken(event)["email"]
-        
+        saveDeviceToken(event)
         user = await retrieve_user_id_by_email(email)
         
         if(not user):
@@ -36,7 +36,10 @@ async def new_user(event, context):
     print(response)
     return response
 
-
+def saveDeviceToken(event):
+    device_token = event["headers"]['Device']
+    email = getToken(event)["email"]
+    save_token(email=email,token=device_token)
 
 
 # "(ID varchar(255),"\

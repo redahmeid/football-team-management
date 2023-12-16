@@ -85,9 +85,7 @@ class TABLE:
     def alterTable():
         return f"ALTER TABLE {TABLE.TABLE_NAME}"\
         f" ADD {TABLE.TYPE} varchar(255)"
-    def alterForeignkey():
-        return f"ALTER TABLE {TABLE.TABLE_NAME}"\
-        f" MODIFY FOREIGN KEY({TABLE.TEAM_ID}) references Team_Season({TABLE.ID})"
+   
         
 
 
@@ -131,7 +129,7 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
                 matches = []
                 
                 for row in rows:
-                    matches.append(convertDataToMatchInfo(row))
+                    matches.append(await convertDataToMatchInfo(row))
                 
             
                 return matches
@@ -210,7 +208,7 @@ async def retrieve_match_by_id(id:str) -> List[response_classes.MatchInfo]:
                 # club = Club(id=id,name=row)
                 matches = []
                 for row in rows:
-                    matches.append(convertDataToMatchInfo(row))
+                    matches.append(await convertDataToMatchInfo(row))
                 
                 return matches
 @timeit
@@ -229,12 +227,12 @@ async def retrieve_next_match_by_team(team_id:str) -> List[response_classes.Matc
                 # club = Club(id=id,name=row)
                 matches = []
                 
-                if(rows is not None): matches.append(convertDataToMatchInfo(rows))
+                if(rows is not None): matches.append(await convertDataToMatchInfo(rows))
                 return matches
 
-def convertDataToMatchInfo(data):
+async def convertDataToMatchInfo(data):
     print(data)
-    team_response = team_response_creator.convertTeamSeasonDataToTeamResponse(data)
+    team_response = await team_response_creator.convertTeamSeasonDataToTeamResponse(data)
     if data.get(TABLE.TIME_STARTED) is not None and data[TABLE.TIME_STARTED] != 0:
         how_long_ago_in_minutes = int((datetime.utcnow().timestamp()-data[TABLE.TIME_STARTED])/60)  
     else:

@@ -14,6 +14,7 @@ from auth import check_permissions
 from roles import Role
 import team_season_data
 from team_backend import retrieveTeamResponse
+import team_season_data
 
 from team_backend import addSingleUser
 
@@ -34,7 +35,7 @@ async def create_team(event, context):
         team_season_data.save_team_season(save_response,body["season"],body["age_group"])
         set_custom_claims(getEmailFromToken(event,context))
         print("CREATE TEAM: %s"%(save_response))
-        teams.append(convertTeamDataToTeamResponse(await retrieve_team_by_id(save_response)))
+        teams.append(retrieve_team_by_id(save_response))
         response = api_helper.make_api_response(200,teams)
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)

@@ -8,9 +8,12 @@ import sys
 import team_season_data
 from team_data import retrieve_teams_by_user_id,retrieve_users_by_team_id
 from player_data import retrieve_players_by_team
+import logging
 from match_planning_backend import list_matches_by_team_backend
-
-from team_response_creator import convertTeamSeasonDataToTeamResponse
+logger = logging.getLogger(__name__)
+import functools
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
+from team_response_creator import convertTeamSeasonDataToTeamResponse,convertTeamSeasonDataToTeamSeaonOnlyResponse
 
 async def addSingleUser(email,team_id):
     user_id = await retrieve_user_id_by_email(email)
@@ -26,20 +29,25 @@ async def addSingleUser(email,team_id):
 
         return user
 
-async def retrieveTeamResponse(team:Team):
-    team_response = convertTeamSeasonDataToTeamResponse(team)
-    emails = await retrieve_users_by_team_id(team_response.id)
-    players = await retrieve_players_by_team(team_response.id)
-    team_seasons = await team_season_data.retrieve_seasons_by_team_id(team_response.id)
+async def retrieveTeamResponse(team):
+    
+    emails = await retrieve_users_by_team_id(team.id)
+    players = await retrieve_players_by_team(team.id)
+    logger.info(f"PLAYERS {players}")
+    team_seasons = await team_season_data.retrieve_seasons_by_team_id(team.team_id)
     seasons = []
+    logger.info(f"TEAM SEASONS {team_seasons}")
     for team_season in team_seasons:
-        seasons.append(convertTeamSeasonDataToTeamResponse(team_season))
-    team_response.seasons = seasons
-    team_response.squad = players[0]["players"]
-    team_response.coaches = emails
-    matches = await list_matches_by_team_backend(team_response.id)
-    team_response.fixtures = matches
-    return team_response
+        logger.info(team_season)
+        season = await convertTeamSeasonDataToTeamSeaonOnlyResponse(team_season,2)
+        seasons.append(season)
+    logger.info(f"SEASONS {seasons}")
+    team.seasons = seasons
+    team.squad = players[0]["players"]
+    team.coaches = emails
+    matches = await list_matches_by_team_backend(team.id)
+    team.fixtures = matches
+    return team
 
 async def main():
     print("main 1")

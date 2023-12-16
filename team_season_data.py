@@ -9,7 +9,7 @@ import asyncio
 import aiomysql
 logger = logging.getLogger(__name__)
 import functools
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
 
 def timeit(func):
@@ -119,20 +119,20 @@ async def retrieve_seasons_by_user_id(user_id):
 @timeit
 async def retrieve_seasons_by_team_id(team_id):
     
-    
+    logger.info(team_id)
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 id = id_generator.generate_random_number(5)
                 # Define the SQL query to insert data into a table
                 insert_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.TEAM_ID}={team_id}"
-                print(insert_query)
+                logger.info(insert_query)
                 # Data to be inserted
                 
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query)
-                rows = cursor.fetchall()
-                
+                rows = await cursor.fetchall()
+                logger.info(rows)
                 return rows
 
 

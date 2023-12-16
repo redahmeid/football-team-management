@@ -1,7 +1,4 @@
 
-import create_database
-import drop_database
-import club_apis
 import team_apis
 import player_apis
 import matches_apis
@@ -18,6 +15,9 @@ def check_online(event,context):
 def create_team(event, context):
     response = asyncio.run(team_apis.create_team(event,context))
     return response
+def subs_due(event, context):
+    response = asyncio.run(match_detail_screen.subs_due(event,context))
+    return response
 
 def add_users_to_team(event,context):
     response = asyncio.run(team_apis.addUserToTeam(event,context))
@@ -27,6 +27,9 @@ def create_team_players(event, context):
     response = asyncio.run(player_apis.create_players(event,context))
     return response
 
+def set_device_token(event,context):
+    response = asyncio.run(auth.saveDeviceToken(event,context))
+    return response
 def set_tokens(event,context):
     response = asyncio.run(auth.set_custom_claims(event,context))
     return response

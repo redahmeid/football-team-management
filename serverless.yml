@@ -146,9 +146,45 @@ functions:
       - http:
           path: /auth/token
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
+  save_notifications:
+    handler: handler.set_device_token
+    events:
+      - http:
+          path: /notifications/token/{match_id}
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
+      - http:
+          path: /notifications/token
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   
-  
+  subs_due:
+    handler: handler.subs_due
  
   
 

@@ -1,50 +1,149 @@
-from classes import Club, Team
+
 from config import app_config
 import id_generator
+from firebase_admin import auth
 import db
+import roles_data
+import logging
+import time
+import response_classes
+import asyncio
+import aiomysql
+logger = logging.getLogger(__name__)
+import functools
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def timeit(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
 
 
 
-def save_club(club:Club):
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+class TABLE:
+    ID = "ID"
+    CLUB_NAME="Club_Name"
+    TABLE_NAME="Clubs"
 
-    # Define the SQL query to insert data into a table
-    insert_query = "INSERT INTO Clubs (ID,name,short_name, email,phone) VALUES (%s,%s,%s,%s,%s)"
+    def createTable():
+        return f"CREATE TABLE if not exists {TABLE.TABLE_NAME}" \
+        f"({TABLE.ID} varchar(255),"\
+        f"{TABLE.CLUB_NAME} varchar(255) NOT NULL,"\
+        f"PRIMARY KEY ({TABLE.ID}))"
 
-    # Data to be inserted
-    id = id_generator.generate_random_number(5)
-    data_to_insert = (id,club.name,club.short_name,club.email,club.phone)
+class ClUB_TEAM_TABLE:
+    ID = "ID"
+    TEAM_ID="Team_ID"
+    CLUB_ID="Club_ID"
+    TABLE_NAME="Clubs_Teams"
 
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query, data_to_insert)
-    row_count = cursor.rowcount
-    # Commit the transaction
-    connection.commit()
+    def createTable():
+        return f"CREATE TABLE if not exists {ClUB_TEAM_TABLE.TABLE_NAME}" \
+        f"({ClUB_TEAM_TABLE.ID} varchar(255),"\
+        f"{ClUB_TEAM_TABLE.CLUB_ID} varchar(255) NOT NULL,"\
+        f"{ClUB_TEAM_TABLE.TEAM_ID} varchar(255) NOT NULL,"\
+        f"PRIMARY KEY ({TABLE.ID}))"
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    return (row_count,id)
 
-def retrieve_club(id:str):
-    connection = db.connection(app_config.database)
-    # Create a cursor object to interact with the database
-    cursor = connection.cursor()
+@timeit
+async def save_club(club_name):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID}, {TABLE.CLUB_NAME}) VALUES ('{id}','{club_name}')"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return id
 
-    # Define the SQL query to insert data into a table
-    insert_query = "select * from Clubs where ID = %s" %(id)
+@timeit
+async def add_team_to_club(club_id,team_id):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"INSERT INTO {ClUB_TEAM_TABLE.TABLE_NAME} ({ClUB_TEAM_TABLE.ID}, {ClUB_TEAM_TABLE.CLUB_ID}, {ClUB_TEAM_TABLE.TEAM_ID}) VALUES ('{id}','{club_id}','{team_id}')"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return id
 
-    # Execute the SQL query to insert data
-    cursor.execute(insert_query)
-    row = cursor.fetchone()
-    # Commit the transaction
-    connection.commit()
+@timeit
+async def retrieve_clubs_by_user_id(user_id):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {roles_data.TABLE.TABLE_NAME} on {TABLE.CLUB_ID}={roles_data.TABLE.TABLE_NAME}.{roles_data.TABLE.CLUB_ID} and {roles_data.TABLE.TABLE_NAME}.{roles_data.TABLE.EMAIL}={user_id}"
+                print(insert_query)
+                
+                cursor.execute(insert_query)
+                rows = cursor.fetchall()
+                
+                return id
 
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    # club = Club(id=id,name=row)
-    print(row)
-    return row
+@timeit
+async def retrieve_seasons_by_team_id(team_id):
+    
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                id = id_generator.generate_random_number(5)
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.TEAM_ID}={team_id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                rows = cursor.fetchall()
+                
+                return rows
+
+
+def convertAdminDataToAdminResponse(team) -> response_classes.ClubResponse:
+    print(team)
+    club_name = team[TABLE.CLUB_NAME]
+    id = team[TABLE.ID]
+    
+
+    response =  response_classes.ClubResponse(name=club_name,id=id)
+    print(response)
+    return response

@@ -13,6 +13,9 @@ from roles_data import save_role
 import roles
 from auth import set_custom_claims
 import team_season_data
+import notifications
+import team_data
+import asyncio
 def enter_screen(event, context):
     lambda_handler(event,context)
     
@@ -23,7 +26,17 @@ def enter_screen(event, context):
         return ""
     except exceptions.AuthError as e:
         response = api_helper.make_api_response(401,None,e)
+async def sendMessagesOnTeamUpdate(token,message,title,team_id):
+    await notifications.send_push_notification(token, title, message,"new_team",f"/teams/{team_id}")
+    
 
+async def submitTeamEvent(team:response_classes.TeamResponse):
+    users = await team_data.retrieve_users_by_team_id(team.id)
+    for user in users:
+        tokens = await notifications.getDeviceToken(user.email)
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnTeamUpdate(new_token, f"{team.name} has been created", "New team added",team.id))
 async def submit_team(event, context):
     lambda_handler(event,context)
     body =json.loads(event["body"])
@@ -40,10 +53,10 @@ async def submit_team(event, context):
         role_id = await save_role(teamUser)
         await set_custom_claims(event=event,context=context)
         # get the user
-        save_response =convertTeamDataToTeamResponse(await retrieve_team_by_id(team_season_id))
-        teams.append(save_response)
+        save_response = await retrieve_team_by_id(team_season_id)
+        teams.append(save_response.model_dump())
         response = api_helper.make_api_response(200,teams)
-       
+        await submitTeamEvent(save_response)
         
     except exceptions.AuthError as e:
         print(e)

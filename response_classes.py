@@ -35,21 +35,6 @@ class SelectedPlayerResponse(BaseModel):
     self:Link
     toggleStarting:Link
 
-# (ID varchar(255),"\
-#         "Name varchar(255) NOT NULL,"\
-#         "Short_Name varchar(255) NOT NULL,"\
-#         "Email varchar(255),"\
-#         "Phone varchar(255)NOT NULL,"\
-class ClubResponse(BaseModel):
-    id:str
-    name:str
-    shortName:str
-    email:str
-    phone:str
-    self:Link
-    createTeams:Link
-    listTeams:Link
-
 class TeamResponse(BaseModel):
     id:str
     name:Optional[str]=""
@@ -67,7 +52,19 @@ class TeamResponse(BaseModel):
     teamPlayers:Optional[Link]=None         #save_response["players"] = {"link":"/teams/%s/players"%(save_response["ID"]),"method":"get"}
     teamFixtures:Optional[Link]=None         #save_response["fixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"get"}
     addPlayers:Optional[Link]=None         #save_response["addPlayers"] = {"link":"/teams/%s/players"%(save_response["ID"]),"method":"post"}
-    addFixtures:Optional[Link]=None         #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
+    addFixtures:Optional[Link]=None  
+    
+# (ID varchar(255),"\
+#         "Name varchar(255) NOT NULL,"\
+#         "Short_Name varchar(255) NOT NULL,"\
+#         "Email varchar(255),"\
+#         "Phone varchar(255)NOT NULL,"\
+class ClubResponse(BaseModel):
+    id:str
+    name:str
+    teams:Optional[TeamResponse]=[]
+
+       #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
 
 
 class MATCH_CONSTS:
@@ -125,6 +122,7 @@ class ActualMatchResponse(BaseModel):
     match:MatchInfo
     started_at:Optional[int]=0
     how_long_left:Optional[float]=0
+    refresh_at:Optional[int]=0
     current_players:Optional[List]=None
     last_planned:Optional[List]=None
     next_players:Optional[List]=None

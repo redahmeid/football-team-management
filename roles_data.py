@@ -4,13 +4,36 @@ import id_generator
 import db
 import asyncio
 import aiomysql
-# "CREATE TABLE Teams" \
+#  "CREATE TABLE if not exists Roles" \
 #         "(ID varchar(255),"\
-#         "Name varchar(255) NOT NULL,"\
-#         "AgeGroup varchar(255) NOT NULL,"\
-#         "Email varchar(255) NOT NULL,"\
-#         "PRIMARY KEY (ID),"\
-#         "FOREIGN KEY(Club_ID) references Clubs(ID))"
+#         "Email varchar(255),"\
+#         "Team_ID varchar(255),"\
+#         "Role varchar(255),"\
+#         "live VARCHAR(255),"\
+#         "PRIMARY KEY (ID))"
+
+class TABLE:
+    ID = "ID"
+    TEAM_ID="Team_ID"
+    CLUB_ID="Club_ID"
+    ROLE="Role"
+    EMAIL = "Email"
+    LIVE="live"
+    TABLE_NAME="Roles"
+
+    def createTable():
+        return f"CREATE TABLE if not exists {TABLE.TABLE_NAME}" \
+        f"({TABLE.ID} varchar(255),"\
+        f"{TABLE.TEAM_ID} varchar(255),"\
+        f"{TABLE.CLUB_ID} varchar(255),"\
+        f"{TABLE.ROLE} varchar(255),"\
+        f"{TABLE.EMAIL} varchar(255),"\
+        f"{TABLE.LIVE} varchar(255),"\
+        f"PRIMARY KEY ({TABLE.ID}))"
+    def alterTable():
+        return f"ALTER TABLE {TABLE.TABLE_NAME}"\
+        f" ADD {TABLE.CLUB_ID} varchar(255)"
+    
 
 async def save_role(user:TeamUser):
     async with aiomysql.create_pool(**db.db_config) as pool:

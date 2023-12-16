@@ -2,7 +2,7 @@ import json
 import boto3
 import firebase_admin
 from firebase_admin import credentials
-from firebase_admin import auth
+from firebase_admin import auth, messaging
 from exceptions import AuthError
 
 # Initialize the AWS Secrets Manager client
@@ -24,6 +24,18 @@ def lambda_handler(event, context):
     except ValueError as e:
         print("FIREBASE initalize error %s"%e)
     
+
+def send_push_notification(token, title, body):
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        token=token,
+    )
+
+    response = messaging.send(message)
+    print('Successfully sent message:', response)
 
         
 def validate_firebase_id_token(id_token):
