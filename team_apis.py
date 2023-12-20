@@ -77,7 +77,6 @@ async def retrieve_team_summary(event, context):
         team = await retrieve_team_by_id(team_id)
         team_response = await retrieveTeamResponse(team)
         teams.append(team_response.model_dump())
-        actions = list()
             
         
     except ValidationError as e:

@@ -37,7 +37,7 @@ async def new_user(event, context):
     return response
 
 def saveDeviceToken(event):
-    device_token = event["headers"]['Device']
+    device_token = event["headers"]['x-device-id']
     email = getToken(event)["email"]
     save_token(email=email,token=device_token)
 

@@ -56,6 +56,9 @@ def update_match_status(event,context):
 def submit_lineup(event,context):
     response = asyncio.run(match_detail_screen.submit_lineup(event,context))
     return response
+def start_match(event,context):
+    response = asyncio.run(match_detail_screen.start_match(event,context))
+    return response
 def submit_subs(event,context):
     response = asyncio.run(match_detail_screen.submit_substitutions(event,context))
     return response

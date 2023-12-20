@@ -125,6 +125,13 @@ functions:
           path: /teams/{team_id}/matches/{match_id}/players/submit_lineup
           method: post
           cors: true
+  start_match:
+    handler: handler.start_match
+    events:
+      - http:
+          path: /teams/{team_id}/matches/{match_id}/start
+          method: post
+          cors: true
   submit_subs:
     handler: handler.submit_subs
     events:

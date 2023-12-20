@@ -22,6 +22,8 @@ import logging
 import time
 import asyncio
 import datetime
+import notifications
+import team_data
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -38,7 +40,41 @@ def timeit(method):
 baseUrl = "/teams/%s/matches/%s"
 acceptable_roles = [Role.admin.value,Role.coach.value]
 
+#/teams/{team_id}/matches/{match_id}/players/submit_lineup
+async def start_match(event,context):
+    lambda_handler(event,context)
+    pathParameters = event["pathParameters"]
+    match_id = pathParameters["match_id"]
+    team_id = pathParameters["team_id"]
+    body =json.loads(event["body"])
+    players = body["players"]
+    minute = body["minute"]
+    new_players = [player_responses.PlayerResponse(**player_dict) for player_dict in players]
 
+    match = await retrieve_match_by_id(match_id)
+    try:
+    
+        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+             
+            
+            if(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.starting_lineup_confirmed):
+                    await match_planning_backend.start_match(match_id=match_id)
+            return await getMatch(event,context)
+        else:
+            response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+            return response
+    except exceptions.AuthError as e:
+        print(e)
+        response = api_helper.make_api_response(401,None,e)
+        return response
+    except ValidationError as e:
+        print(e)
+        response = api_helper.make_api_response(400,None,e)
+        return response
+    except Exception as e:
+        print(e)
+        response = api_helper.make_api_response(500,None,e)
+        return response
 
 #/teams/{team_id}/matches/{match_id}/players/submit_lineup
 async def submit_lineup(event,context):
@@ -57,15 +93,20 @@ async def submit_lineup(event,context):
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
              
             if(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan or matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.created):
-                
                     await matches_data.update_match_status(match_id,matches_state_machine.MatchState.plan.value),
                     await submit_planned_lineup(match_id=match_id,players=new_players,minute=minute)
             elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan_confirmed):
-                    
                     await submit_actual_lineup(match_id=match_id,players=new_players)
-                
             elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.started):
                 await submit_actual_lineup(match_id=match_id,players=new_players)
+            
+            users = await team_data.retrieve_users_by_team_id(team_id)
+            for user in users:
+                tokens = await notifications.getDeviceToken(user.email)
+        
+                for token in tokens:
+                    new_token = token["Token"]
+                    asyncio.create_task(match_planning_backend.sendMessagesOnMatchUpdates(new_token, "", "Match plan updated",match_id,team_id))
             return await getMatch(event,context)
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")

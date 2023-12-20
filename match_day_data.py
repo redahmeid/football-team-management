@@ -404,10 +404,10 @@ async def save_planned_lineup(match_id,minute,players:List[player_responses.Play
                     
                     #reset the plan
                     delete_query =f"update {PLANNED_LINEUP_TABLE.TABLE_NAME} set {PLANNED_LINEUP_TABLE.SOFT_DELETE}=True, {PLANNED_LINEUP_TABLE.SOFT_DELETE_TIME}={int(datetime.utcnow().timestamp())} where {PLANNED_LINEUP_TABLE.MATCH_ID}='{match_id}' and {PLANNED_LINEUP_TABLE.PLAYER_ID}='{player.info.id}' and {PLANNED_LINEUP_TABLE.MINUTE} >= {minute}"
-                    
+                    print(delete_query)
                     await cursor.execute(delete_query)
                     insert_query = f"insert INTO {PLANNED_LINEUP_TABLE.TABLE_NAME} ({PLANNED_LINEUP_TABLE.ID},{PLANNED_LINEUP_TABLE.MATCH_ID},{PLANNED_LINEUP_TABLE.PLAYER_ID}, {PLANNED_LINEUP_TABLE.MINUTE},{PLANNED_LINEUP_TABLE.POSITION},{PLANNED_LINEUP_TABLE.TIME}) VALUES ('{id}','{match_id}','{player.info.id}',{minute},'{player.selectionInfo.position}',{int(datetime.utcnow().timestamp())})"
-                    
+                    print(insert_query)
                     await cursor.execute(insert_query)
                 await conn.commit()
                 return True
@@ -419,7 +419,9 @@ async def save_actual_lineup(match_id,players:List[player_responses.PlayerRespon
                 for player in players:
                     
                     id = id_generator.generate_random_number(5)
-                    
+                    delete_query = f"delete from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} where {ACTUAL_LINEDUP_TABLE.TIME}={time_playing} and {ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player.info.id}"
+                    print(delete_query)
+                    await cursor.execute(delete_query)
                     insert_query = f"insert INTO {ACTUAL_LINEDUP_TABLE.TABLE_NAME} ({ACTUAL_LINEDUP_TABLE.ID},{ACTUAL_LINEDUP_TABLE.MATCH_ID},{ACTUAL_LINEDUP_TABLE.PLAYER_ID}, {ACTUAL_LINEDUP_TABLE.POSITION},{ACTUAL_LINEDUP_TABLE.TIME}) VALUES ('{id}','{match_id}','{player.info.id}','{player.selectionInfo.position}',{time_playing})"
                     print(insert_query)
                     await cursor.execute(insert_query)

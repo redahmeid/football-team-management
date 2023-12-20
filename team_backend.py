@@ -31,10 +31,15 @@ async def addSingleUser(email,team_id):
 
 async def retrieveTeamResponse(team):
     
-    emails = await retrieve_users_by_team_id(team.id)
-    players = await retrieve_players_by_team(team.id)
+    emails,players,team_seasons,matches = await asyncio.gather(
+        
+        retrieve_users_by_team_id(team.id),
+        retrieve_players_by_team(team.id),
+        team_season_data.retrieve_seasons_by_team_id(team.team_id),
+        list_matches_by_team_backend(team.id),
+    )
+    
     logger.info(f"PLAYERS {players}")
-    team_seasons = await team_season_data.retrieve_seasons_by_team_id(team.team_id)
     seasons = []
     logger.info(f"TEAM SEASONS {team_seasons}")
     for team_season in team_seasons:
@@ -45,7 +50,6 @@ async def retrieveTeamResponse(team):
     team.seasons = seasons
     team.squad = players[0]["players"]
     team.coaches = emails
-    matches = await list_matches_by_team_backend(team.id)
     team.fixtures = matches
     return team
 

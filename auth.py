@@ -112,6 +112,14 @@ async def check_permissions(event,team_id,acceptable_roles):
     except Exception as e:
         return False
 
-        
+def getEmailFromToken(event,context):
+    print("GET EMAIL FROM TOKEN")
+    id_token = event["headers"]['Authorization'].split('Bearer ')[1]
+    if(validate_firebase_id_token(id_token)):
+        print("GET EMAIL FROM TOKEN SUCESS")
+        return auth.verify_id_token(id_token)["email"]
+    else:
+        print("GET EMAIL FROM TOKEN ERROR")
+        raise AuthError
     
 
