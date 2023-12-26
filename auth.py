@@ -82,6 +82,10 @@ async def saveDeviceToken(event,context)  :
         traceback.print_exception(*sys.exc_info()) 
         logger.error("e")
 
+def getDeviceToken(event):
+    id_token = event["headers"]['x-device-id']
+    return id_token
+
 def getToken(event):
     id_token = event["headers"]['Authorization'].split('Bearer ')[1]
     if(validate_firebase_id_token(id_token)):

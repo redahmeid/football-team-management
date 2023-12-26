@@ -162,25 +162,7 @@ async def getDeviceToken(email):
                 logger.info("Succesfully saved the token")
                 return row
 
-@timeit
-async def getDeviceTokenByMatchId(match_id):
-    async with aiomysql.create_pool(**db.db_config) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-    
-        
-                id = id_generator.generate_random_number(5)
-            
-                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}'"
 
-                print(insert_query)
-                await cursor.execute(insert_query)
-                    
-                row = await cursor.fetchall()
-
-
-                logger.info("Succesfully saved the token")
-                return row
             
 async def send_push_notification(token, title, body,action,link):
     message = messaging.Message(
@@ -199,6 +181,8 @@ async def send_push_notification(token, title, body,action,link):
         response = messaging.send(message)
     except firebase_admin._messaging_utils.UnregisteredError as e:
         print(f"Token is invalid or unregistered: {e}")
+    except Exception as e:
+        print(f"Exception is {e}")
     await save_message(token,body)
     
     

@@ -201,7 +201,12 @@ plugins:
   - serverless-prune-plugin
 custom:
   pythonRequirements:
-    dockerizePip: non-linux
+    dockerizePip: true
+    zip: true
+    slim: true
+    noDeploy:
+     - boto3
+     - botocore
     
 
 package:

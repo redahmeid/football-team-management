@@ -94,19 +94,12 @@ async def submit_lineup(event,context):
              
             if(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan or matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.created):
                     await matches_data.update_match_status(match_id,matches_state_machine.MatchState.plan.value),
-                    await submit_planned_lineup(match_id=match_id,players=new_players,minute=minute)
+                    await submit_planned_lineup(match_id=match_id,players=new_players,minute=minute,team_id=team_id)
             elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan_confirmed):
                     await submit_actual_lineup(match_id=match_id,players=new_players)
             elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.started):
                 await submit_actual_lineup(match_id=match_id,players=new_players)
             
-            users = await team_data.retrieve_users_by_team_id(team_id)
-            for user in users:
-                tokens = await notifications.getDeviceToken(user.email)
-        
-                for token in tokens:
-                    new_token = token["Token"]
-                    asyncio.create_task(match_planning_backend.sendMessagesOnMatchUpdates(new_token, "", "Match plan updated",match_id,team_id))
             return await getMatch(event,context)
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")

@@ -38,13 +38,12 @@ class TABLE:
 #         "PRIMARY KEY (ID),"\
 #         "FOREIGN KEY(Club_ID) references Clubs(ID))"
 
-async def save_team(team:Team):
+async def save_team(team:Team,id):
     print("IN SAVE TEAM ")
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 # Data to be inserted
-                id = id_generator.generate_random_number(5)
                 # Define the SQL query to insert data into a table
                 insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.NAME},{TABLE.AGE_GROUP}, {TABLE.LIVE}) VALUES ({id},'{team.name}','{team.age_group}',True)"
 

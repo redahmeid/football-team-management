@@ -1,4 +1,9 @@
 
+try:
+  import unzip_requirements
+except ImportError:
+  pass
+
 import team_apis
 import player_apis
 import matches_apis

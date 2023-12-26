@@ -115,7 +115,7 @@ async def getMatchConfirmedPlanReadyToStart(team_id,match:response_classes.Match
 
 async def getMatchPlanningResponse(team_id,match):
     selected_players = await retrieveAllPlannedLineups(match_id=match.id)
-    
+    print(selected_players)
     url = response_classes.getMatchUrl(team_id,match.id)
     submit_first_subs = response_classes.Link(link=f'{url}/players/submit_lineup',method="post")
     confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
@@ -184,6 +184,8 @@ async def getSubs(current_lineup, next_lineup):
 
     plannedSubsOff = [player for player in next_lineup if player not in current_lineup and player.selectionInfo.position]
 
+    plannedSubsOn.sort(key=lambda x: x.selectionInfo.position)
+    plannedSubsOff.sort(key=lambda x: x.selectionInfo.position)
     # Ensure that lengths are the same, or handle cases where they're not
     min_length = min(len(plannedSubsOff), len(plannedSubsOn))
 
@@ -311,7 +313,7 @@ async def how_long_played(match_id):
     else:
         return 0
  
-async def getAdmins(match_id):
+async def getStakeholders(match_id):
     matches = await matches_data.retrieve_match_by_id(match_id)
 
     match = matches[0]
@@ -334,39 +336,43 @@ async def setGoalsFor(team_id,match_id, goal_scorer,assister,type):
     await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type)
     await matches_data.increment_goals_scored(match_id=match_id,goals=1)
     scored_by = f"Assisted by {assister['info']['name']} - {type}"
-    tokens = await notifications.getDeviceTokenByMatchId(match_id)
-    
-    for token in tokens:
-        new_token = token["Token"]
-        asyncio.create_task(sendMessagesOnMatchUpdates(new_token, scored_by, f"{int(time_playing)}' {goal_scorer['info']['name']} scores",match_id,team_id))
+    users = await getStakeholders(match_id)
+    for user in users:
+        tokens = await notifications.getDeviceToken(user.email)
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnMatchUpdates(new_token, scored_by, f"{int(time_playing)}' {goal_scorer['info']['name']} scores",match_id,team_id))
             
 async def updateStatus(match_id,status):
     matches = await matches_data.update_match_status(match_id,status)
     match = matches[0]
-    tokens = await notifications.getDeviceTokenByMatchId(match_id)
+            
     if(status==matches_state_machine.MatchState.plan_confirmed):
         message = f"{match.team.name} vs {match.opposition} match day plans confirmed"
     if(status==matches_state_machine.MatchState.started):
         message = f"{match.team.name} vs {match.opposition} has started"
-        
     if(status==matches_state_machine.MatchState.paused):
         message = f"{match.team.name} vs {match.opposition} has paused"
     if(status==matches_state_machine.MatchState.ended):
         message = f"{match.team.name} vs {match.opposition} has ended"
-    for token in tokens:
-        new_token = token["Token"]
-        asyncio.create_task(sendMessagesOnMatchUpdates(new_token, message, "Status updated",match_id,match.team.id))
+    for user in await getStakeholders(match_id):
+        tokens = await notifications.getDeviceToken(user.email)
+
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnMatchUpdates(new_token, message, "Status updated",match_id,match.team.id))
 
 
 
 async def subs_due(match_id):
     matches = retrieve_match_by_id(match_id)
     match = matches[0]
-    tokens = await notifications.getDeviceTokenByMatchId(match_id)
     
-    for token in tokens:
-        new_token = token["Token"]
-        asyncio.create_task(sendMessagesOnMatchUpdates(new_token,"", f"Subs due for {match.name} vs {match.opposition}",match_id,match.team.id))
+    for user in await getStakeholders(match_id):
+        tokens = await notifications.getDeviceToken(user)
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnMatchUpdates(new_token,"", f"Subs due for {match.name} vs {match.opposition}",match_id,match.team.id))
 
 
 
@@ -378,11 +384,12 @@ async def setGoalsAgainst(match_id,team_id, opposition):
     await save_opposition_goal(match_id,time_playing)
     await matches_data.increment_goals_conceded(match_id=match_id,goals=1)
     scored_by = f"{int(time_playing)}' Goal scored by {opposition}"
-    tokens = await notifications.getDeviceTokenByMatchId(match_id)
-    
-    for token in tokens:
-        new_token = token["Token"]
-        asyncio.create_task(sendMessagesOnMatchUpdates(new_token, scored_by, scored_by,match_id,team_id))
+    users = await getStakeholders(match_id)
+    for user in users:
+        tokens = await notifications.getDeviceToken(user.email)
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnMatchUpdates(new_token, scored_by, scored_by,match_id,team_id))
             
 async def updateMatchPeriod(match_id,status):
     periods = await retrieve_periods_by_match(match_id)
@@ -397,7 +404,7 @@ async def updateMatchPeriod(match_id,status):
 async def sendStatusUpdate(match_id,status):
     matches = await retrieve_match_by_id(match_id)
     match = matches[0]
-    tokens = await notifications.getDeviceTokenByMatchId(match_id)
+    tokens = await notifications.getDeviceToken(match_id)
     if(status==matches_state_machine.MatchState.plan_confirmed.value):
         message = f"{match.team.name} vs {match.opposition} match day plans confirmed"
     elif(status==matches_state_machine.MatchState.started.value):
@@ -412,13 +419,23 @@ async def sendStatusUpdate(match_id,status):
         message = f"{match.team.name} vs {match.opposition} - substitutions"
     else:
         message = f"{match.team.name} vs {match.opposition} status update"
-    for token in tokens:
-        new_token = token["Token"]
-        await sendMessagesOnMatchUpdates(new_token, message, "Status updated",match_id,match.team.id)
+    for user in await getStakeholders(match_id):
+        tokens = await notifications.getDeviceToken(user.email)
 
-async def submit_planned_lineup(match_id,players:List[player_responses.PlayerResponse],minute):
+        for token in tokens:
+            new_token = token["Token"]
+            sendMessagesOnMatchUpdates(new_token, "" ,message,match_id,match.team.id)
+
+async def submit_planned_lineup(match_id,players:List[player_responses.PlayerResponse],minute,team_id):
    
-    await match_day_data.save_planned_lineup(match_id=match_id,minute=minute,players=players)
+    committed = await match_day_data.save_planned_lineup(match_id=match_id,minute=minute,players=players)
+    if(committed):
+        for user in await getStakeholders(match_id):
+            tokens = await notifications.getDeviceToken(user.email)
+
+            for token in tokens:
+                new_token = token["Token"]
+                asyncio.create_task(sendMessagesOnMatchUpdates(new_token, "", "Match plan updated",match_id,team_id))
     
            
       
@@ -464,7 +481,14 @@ async def create_match_backend(match,team_id) -> response_classes.MatchResponse:
     self = response_classes.Link(link=self_url,method="get")
     links = {"self":self}
     match_response = response_classes.MatchResponse(match=result[0],links=links)
+    message = f"{match_response.match.team.name} vs {match_response.match.opposition} created"
+    subject = f"New match for ${match_response.match.team.name}"
     
+    for user in await getStakeholders(match_response.match.id):
+        tokens = await notifications.getDeviceToken(user.email)
+        for token in tokens:
+            new_token = token["Token"]
+            asyncio.create_task(sendMessagesOnMatchUpdates(new_token, message, subject,match_response.match.id,team_id))
     return match_response
 
 async def list_matches_by_team_backend(team_id):

@@ -16,6 +16,7 @@ from secrets_util import lambda_handler
 from match_planning_backend import list_matches_by_team_backend,create_match_backend
 
 async def create_fixtures(event, context):
+    lambda_handler(event,context)
     body =json.loads(event["body"])
     print(body)
     team_id = event["pathParameters"]["team_id"]
