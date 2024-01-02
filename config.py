@@ -24,8 +24,7 @@ class AppConfig:
         self.password = os.environ["dbpassword"]
         self.database = os.environ["dbdatabase"]  
         self.admin_db = os.environ["dbadmin_db"]
-        self.supabase_url = os.environ["supabase_url"]
-        self.supabase_key = os.environ["supabase_key"]
+        self.email_token = os.environ["email_token"]
 
 
 

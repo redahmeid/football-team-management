@@ -15,11 +15,11 @@ from roles import Role
 import team_season_data
 from team_backend import retrieveTeamResponse
 import team_season_data
-from supabase import create_client, Client
+# from supabase import create_client, Client
 from config import app_config
 from team_backend import addSingleUser
 import id_generator
-supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
+# supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
 async def create_team(event, context):
     lambda_handler(event,context)
     
@@ -34,7 +34,7 @@ async def create_team(event, context):
         new_team = TeamValidator.validate_python(team)
         id = id_generator.generate_random_number(5)
         team_id = id_generator.generate_random_number(5)
-        data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
+        # data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
         save_response = await save_team(new_team,team_id)
         team_season_data.save_team_season(id,body["season"],body["age_group"])
         set_custom_claims(getEmailFromToken(event,context))
@@ -51,6 +51,7 @@ async def create_team(event, context):
 
     print(response)
     return response
+
 async def addUserToTeam(event,context):
     lambda_handler(event,context)
     acceptable_roles = [Role.admin.value]

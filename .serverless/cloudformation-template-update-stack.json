@@ -83,6 +83,12 @@
         "LogGroupName": "/aws/lambda/football-team-management-prod-create_team_players"
       }
     },
+    "ContactUnderscoreusLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/football-team-management-prod-contact_us"
+      }
+    },
     "CreateUnderscoreteamLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -173,6 +179,12 @@
         "LogGroupName": "/aws/lambda/football-team-management-prod-start_match"
       }
     },
+    "SetUnderscorecaptainLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/football-team-management-prod-set_captain"
+      }
+    },
     "SubmitUnderscoresubsLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -195,6 +207,12 @@
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
         "LogGroupName": "/aws/lambda/football-team-management-prod-save_notifications"
+      }
+    },
+    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/football-team-management-prod-save_notifications_by_match"
       }
     },
     "SubsUnderscoredueLogGroup": {
@@ -327,6 +345,12 @@
                     },
                     {
                       "Fn::GetAtt": [
+                        "ContactUnderscoreusLogGroup",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
                         "CreateUnderscoreteamLogGroup",
                         "Arn"
                       ]
@@ -417,6 +441,12 @@
                     },
                     {
                       "Fn::GetAtt": [
+                        "SetUnderscorecaptainLogGroup",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
                         "SubmitUnderscoresubsLogGroup",
                         "Arn"
                       ]
@@ -441,6 +471,12 @@
                     },
                     {
                       "Fn::GetAtt": [
+                        "SaveUnderscorenotificationsUnderscorebyUnderscorematchLogGroup",
+                        "Arn"
+                      ]
+                    },
+                    {
+                      "Fn::GetAtt": [
                         "SubsUnderscoredueLogGroup",
                         "Arn"
                       ]
@@ -460,7 +496,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_check_online.handler",
         "Runtime": "python3.8",
@@ -490,7 +526,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_team_players.handler",
         "Runtime": "python3.8",
@@ -513,6 +549,36 @@
         "CreateUnderscoreteamUnderscoreplayersLogGroup"
       ]
     },
+    "ContactUnderscoreusLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
+        },
+        "Handler": "s_contact_us.handler",
+        "Runtime": "python3.8",
+        "FunctionName": "football-team-management-prod-contact_us",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "ENVIRONMENT": "prod"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ContactUnderscoreusLogGroup"
+      ]
+    },
     "CreateUnderscoreteamLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -520,7 +586,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_team.handler",
         "Runtime": "python3.8",
@@ -550,7 +616,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_team_fixtures.handler",
         "Runtime": "python3.8",
@@ -580,7 +646,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_user.handler",
         "Runtime": "python3.8",
@@ -610,7 +676,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_retrieve_team_squad.handler",
         "Runtime": "python3.8",
@@ -640,7 +706,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_user_homepage_bff.handler",
         "Runtime": "python3.8",
@@ -670,7 +736,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_add_user_to_team.handler",
         "Runtime": "python3.8",
@@ -700,7 +766,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_retrieve_matches_by_team.handler",
         "Runtime": "python3.8",
@@ -730,7 +796,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_retrieve_team_summary.handler",
         "Runtime": "python3.8",
@@ -760,7 +826,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_delete_player.handler",
         "Runtime": "python3.8",
@@ -790,7 +856,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_retrieve_next_match_by_team.handler",
         "Runtime": "python3.8",
@@ -820,7 +886,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_team_screen_bff.handler",
         "Runtime": "python3.8",
@@ -850,7 +916,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_match_day_bff.handler",
         "Runtime": "python3.8",
@@ -880,7 +946,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_getMatchById.handler",
         "Runtime": "python3.8",
@@ -910,7 +976,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_submit_lineup.handler",
         "Runtime": "python3.8",
@@ -940,7 +1006,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_start_match.handler",
         "Runtime": "python3.8",
@@ -963,6 +1029,36 @@
         "StartUnderscorematchLogGroup"
       ]
     },
+    "SetUnderscorecaptainLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
+        },
+        "Handler": "s_set_captain.handler",
+        "Runtime": "python3.8",
+        "FunctionName": "football-team-management-prod-set_captain",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "ENVIRONMENT": "prod"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "SetUnderscorecaptainLogGroup"
+      ]
+    },
     "SubmitUnderscoresubsLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -970,7 +1066,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_submit_subs.handler",
         "Runtime": "python3.8",
@@ -1000,7 +1096,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_update_match_status.handler",
         "Runtime": "python3.8",
@@ -1030,7 +1126,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_create_jwt.handler",
         "Runtime": "python3.8",
@@ -1060,7 +1156,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_save_notifications.handler",
         "Runtime": "python3.8",
@@ -1083,6 +1179,36 @@
         "SaveUnderscorenotificationsLogGroup"
       ]
     },
+    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
+        },
+        "Handler": "s_save_notifications_by_match.handler",
+        "Runtime": "python3.8",
+        "FunctionName": "football-team-management-prod-save_notifications_by_match",
+        "MemorySize": 1024,
+        "Timeout": 6,
+        "Environment": {
+          "Variables": {
+            "ENVIRONMENT": "prod"
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "SaveUnderscorenotificationsUnderscorebyUnderscorematchLogGroup"
+      ]
+    },
     "SubsUnderscoredueLambdaFunction": {
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -1090,7 +1216,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/football-team-management.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/football-team-management.zip"
         },
         "Handler": "s_subs_due.handler",
         "Runtime": "python3.8",
@@ -1113,224 +1239,254 @@
         "SubsUnderscoredueLogGroup"
       ]
     },
-    "CheckUnderscoreonlineLambdaVersionQqif6eUbq4owAPJC13s3Cs2SRWSXsC52RW5bTXwme4": {
+    "CheckUnderscoreonlineLambdaVersionH2KtHEGMInAvaHSFYD5sd1id975KQlRYR0forKgowkQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CheckUnderscoreonlineLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscoreteamUnderscoreplayersLambdaVersionU6XYUvfvH3RfCVlyMAgjXYO3qpDcwszpRTV9Qc6Ng": {
+    "CreateUnderscoreteamUnderscoreplayersLambdaVersion1TjfgFJRNWVnAN7SNVP3ug206SwQDAX9W4L2tlIiUs": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscoreteamLambdaVersion4K2LMSllhLdsW3WRKS5hPGdm5gYtRirjxTK53t9a90": {
+    "ContactUnderscoreusLambdaVersionBPFM1ikOA3w2gkTVo6FdXp5vAg8mCtT4jv8wMDGcx0": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ContactUnderscoreusLambdaFunction"
+        },
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
+      }
+    },
+    "CreateUnderscoreteamLambdaVersion8z1yDsiHSNcoUJPQ6gqeIbsyxQVoWe5OSSEvOYXDQ": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscoreteamLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscoreteamUnderscorefixturesLambdaVersionnX1cRfzaHKZeSCeqW6zKjxcsQ5VT6coazve7dNQ": {
+    "CreateUnderscoreteamUnderscorefixturesLambdaVersionZWZUL394cnhPow6U0ATPWZaq546oZarmkn5C4DVpU8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscoreuserLambdaVersionWwWP3yyR0aYesmyEChyJ8lrOKSyRza5MWNnZNyCeFo": {
+    "CreateUnderscoreuserLambdaVersionMhRYGBXBZGrz6uf2RAGcrRe8C3obrv6SkcJPQCsFaI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscoreuserLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "RetrieveUnderscoreteamUnderscoresquadLambdaVersionfZCOW3wAUaCWO7iUNUH5xaJ9N8DSWQAZ7HkgjCKs": {
+    "RetrieveUnderscoreteamUnderscoresquadLambdaVersionl11tkigPXCGFtF7rep2Sq4J1eotzWyrZpv9WXVo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "UserUnderscorehomepageUnderscorebffLambdaVersionDXoMerhfqS9I8uHfscSh0nMZA0EYyluHM42cTCOL4k": {
+    "UserUnderscorehomepageUnderscorebffLambdaVersioneZWku7UnnGhdWyYrhWBUkhaBGc0fJyNNOnKo5QsR9K0": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "UserUnderscorehomepageUnderscorebffLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersioniHFNEjFm7ZOG6667vMGLDDleyHglhDotnPt6R7po": {
+    "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersionClMadWXOAstlzNXQl7MoxfkX2xNuNhHEtCtYhyuKWjY": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersion5dzrQixMNKx7ORh7XZAKqR52APkAb4KVrGZZYLCr7JQ": {
+    "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersionHhMhWmrFyzSCTs3KPZt01SR8HvuPiTzQXT08lqtpE4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionM6Qw9c0tlLXfpoZxTn8cpKXgkwtERNRPVxEEUISBY3c": {
+    "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionXweo8SOoVjKECa0b3nmjWQct3k8vYX4XU6FcJuXugso": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "DeleteUnderscoreplayerLambdaVersionT51fU15EjFTCRms5QU4ZZkVS9mQGfBwjDs9YDgEHlI": {
+    "DeleteUnderscoreplayerLambdaVersionR7c0f4QRQpFaNyJciDze3YQhsdwrozShF0AhjHyPMo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "DeleteUnderscoreplayerLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionzXiaHk6kJ4MGMqAXMdPYribtbupf5tLI5VEevcJzMls": {
+    "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionGaWGiU8DsBmvrMf4SwHkNlRGv0raAfCFiI40hDSIF3w": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionoIVqdqCcediMlG9yUQNYA0q3bVGgX5CeyoOhXTPDU1g": {
+    "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionsZXQ7h9Azy01aNxtavVfjniKbUGq6IvUQeWM4y79gog": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersion3EkPw4OZ1CMDUHbrAa1lPNLrmAhKKuAlv8KwpG9FMM": {
+    "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionbU0sLHhSJ7kfoKGQcw008JOwz0QDK7SmImm6NEgpFs": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "GetMatchByIdLambdaVersionOdcGJLdDhAvD9xYbpqF8GHdy2WSdb8R5y1bARRqG4": {
+    "GetMatchByIdLambdaVersionxvtxWfVCrXJMvZFE2HJFRuGZ8XiYtRg3AyRPQ0pM4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "GetMatchByIdLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "SubmitUnderscorelineupLambdaVersiondA3FKoS9Mev7FLh1mh1pMfmeF1DmVPC4rAlF5h104": {
+    "SubmitUnderscorelineupLambdaVersionIIip7YDdG5x0qHXx5UJh3j7ryki6HupqopuV5Crho8": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SubmitUnderscorelineupLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "StartUnderscorematchLambdaVersionFCAe3BkIm9fyEuRp2DqNq4MHhyox78R9RtQaqDBd8": {
+    "StartUnderscorematchLambdaVersionmATgb5RZ0VkT0DV9T8UwMwfeG558ICORJthPvBvgQI": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "StartUnderscorematchLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "SubmitUnderscoresubsLambdaVersion7B907KtoTKjaGjInGNdKNGYjWHVl4EvMaBRLjYwCYI": {
+    "SetUnderscorecaptainLambdaVersionGgqlQdVizSsdNyTmwe0nD1x7Tso2yr8kQvKUO6CI": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "SetUnderscorecaptainLambdaFunction"
+        },
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
+      }
+    },
+    "SubmitUnderscoresubsLambdaVersionLR4LkufbpcD4IhnuJKzkSyVjRlMyRsoifNDbug2K0w": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SubmitUnderscoresubsLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "UpdateUnderscorematchUnderscorestatusLambdaVersionLaM0OnKWY9BEEHJxsHHheJxcGnQteERzavbne1Q2pY": {
+    "UpdateUnderscorematchUnderscorestatusLambdaVersionhqfDH3mwIXYQj7vLkTS1vXGHAvfR9EWuVXcMgoUs": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "UpdateUnderscorematchUnderscorestatusLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "CreateUnderscorejwtLambdaVersionxspEBWFroe6CY18NNW9WkTMQnYi8k44ChEAWn5SJBc": {
+    "CreateUnderscorejwtLambdaVersionDep6gTzsEexbXKAy8Lp9B3jDCD7wsv6AhAGn3r4TQE": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "CreateUnderscorejwtLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "SaveUnderscorenotificationsLambdaVersionwSry9Q8RiM3fkCSIQHPHbkALtawPEMbh6aytTyZjicA": {
+    "SaveUnderscorenotificationsLambdaVersion8I2MCyIQxMV5fikCHqAeBQmuIuOAWOnJeVfL6PIX3k": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SaveUnderscorenotificationsLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
-    "SubsUnderscoredueLambdaVersionIVjCJSzJv1zCjq6Hh9c5bAI0FGiy9mT87K3YgJI3Wn8": {
+    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaVersion81x40uEM2cdwRtIqDe3YsfVgldS2TRDpg5FxXOcVOPE": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunction"
+        },
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
+      }
+    },
+    "SubsUnderscoredueLambdaVersionyGvxCc5MTb6QcF1QC6eFgikTTIdAKVcoael7keUPoo": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "SubsUnderscoredueLambdaFunction"
         },
-        "CodeSha256": "9Ufz2sASriRBBCjnsJFzAUprHlGqELD45SQCuOo24WE="
+        "CodeSha256": "Wh82wNoxVKwxJMqvzLHzP/s+4GzI7sWX0GrClLvK0MM="
       }
     },
     "ApiGatewayRestApi": {
@@ -1456,6 +1612,18 @@
         }
       }
     },
+    "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVarCaptain": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Ref": "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVar"
+        },
+        "PathPart": "captain",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
     "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVarStatusVar": {
       "Type": "AWS::ApiGateway::Resource",
       "Properties": {
@@ -1487,6 +1655,21 @@
           "Ref": "ApiGatewayResourceTeamsTeamidVar"
         },
         "PathPart": "next_match",
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayResourceContactus": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ApiGatewayRestApi",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "contact_us",
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         }
@@ -1682,11 +1865,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,HEAD'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -1730,17 +1913,62 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
         },
         "ResourceId": {
           "Ref": "ApiGatewayResourceTeamsTeamidVarPlayers"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodContactusOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceContactus"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -1775,11 +2003,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -1820,11 +2048,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -1865,11 +2093,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -1910,11 +2138,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -1955,11 +2183,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2000,11 +2228,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,DELETE'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2045,11 +2273,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2090,11 +2318,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2135,11 +2363,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2180,11 +2408,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2225,11 +2453,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2270,17 +2498,62 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
         },
         "ResourceId": {
           "Ref": "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVarStart"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarCaptainOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVarCaptain"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -2315,11 +2588,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2360,11 +2633,11 @@
               "StatusCode": "200",
               "ResponseParameters": {
                 "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,X-Amz-User-Agent,X-Amzn-Trace-Id'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
                 "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
               },
               "ResponseTemplates": {
-                "application/json": ""
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
               }
             }
           ]
@@ -2422,51 +2695,6 @@
         }
       }
     },
-    "ApiGatewayMethodNotificationsTokenMatchidVarOptions": {
-      "Type": "AWS::ApiGateway::Method",
-      "Properties": {
-        "AuthorizationType": "NONE",
-        "HttpMethod": "OPTIONS",
-        "MethodResponses": [
-          {
-            "StatusCode": "200",
-            "ResponseParameters": {
-              "method.response.header.Access-Control-Allow-Origin": true,
-              "method.response.header.Access-Control-Allow-Headers": true,
-              "method.response.header.Access-Control-Allow-Methods": true
-            },
-            "ResponseModels": {}
-          }
-        ],
-        "RequestParameters": {},
-        "Integration": {
-          "Type": "MOCK",
-          "RequestTemplates": {
-            "application/json": "{statusCode:200}"
-          },
-          "ContentHandling": "CONVERT_TO_TEXT",
-          "IntegrationResponses": [
-            {
-              "StatusCode": "200",
-              "ResponseParameters": {
-                "method.response.header.Access-Control-Allow-Origin": "'*'",
-                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
-                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
-              },
-              "ResponseTemplates": {
-                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
-              }
-            }
-          ]
-        },
-        "ResourceId": {
-          "Ref": "ApiGatewayResourceNotificationsTokenMatchidVar"
-        },
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        }
-      }
-    },
     "ApiGatewayMethodNotificationsTokenOptions": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
@@ -2506,6 +2734,51 @@
         },
         "ResourceId": {
           "Ref": "ApiGatewayResourceNotificationsToken"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        }
+      }
+    },
+    "ApiGatewayMethodNotificationsTokenMatchidVarOptions": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "AuthorizationType": "NONE",
+        "HttpMethod": "OPTIONS",
+        "MethodResponses": [
+          {
+            "StatusCode": "200",
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Origin": true,
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true
+            },
+            "ResponseModels": {}
+          }
+        ],
+        "RequestParameters": {},
+        "Integration": {
+          "Type": "MOCK",
+          "RequestTemplates": {
+            "application/json": "{statusCode:200}"
+          },
+          "ContentHandling": "CONVERT_TO_TEXT",
+          "IntegrationResponses": [
+            {
+              "StatusCode": "200",
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,x-device-id,x-api-key,authorization'",
+                "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,POST'"
+              },
+              "ResponseTemplates": {
+                "application/json": "#set($origin = $input.params(\"Origin\"))\n#if($origin == \"\") #set($origin = $input.params(\"origin\")) #end\n#if($origin.matches(\".+\")) #set($context.responseOverride.header.Access-Control-Allow-Origin = $origin) #end"
+              }
+            }
+          ]
+        },
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceNotificationsTokenMatchidVar"
         },
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
@@ -2605,6 +2878,52 @@
       },
       "DependsOn": [
         "CreateUnderscoreteamUnderscoreplayersLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayMethodContactusPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceContactus"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ContactUnderscoreusLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "ContactUnderscoreusLambdaPermissionApiGateway"
       ]
     },
     "ApiGatewayMethodTeamsPost": {
@@ -3297,6 +3616,52 @@
         "StartUnderscorematchLambdaPermissionApiGateway"
       ]
     },
+    "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarCaptainPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceTeamsTeamidVarMatchesMatchidVarCaptain"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "SetUnderscorecaptainLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "SetUnderscorecaptainLambdaPermissionApiGateway"
+      ]
+    },
     "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupSubsPost": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
@@ -3435,52 +3800,6 @@
         "CreateUnderscorejwtLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayMethodNotificationsTokenMatchidVarPost": {
-      "Type": "AWS::ApiGateway::Method",
-      "Properties": {
-        "HttpMethod": "POST",
-        "RequestParameters": {},
-        "ResourceId": {
-          "Ref": "ApiGatewayResourceNotificationsTokenMatchidVar"
-        },
-        "RestApiId": {
-          "Ref": "ApiGatewayRestApi"
-        },
-        "ApiKeyRequired": false,
-        "AuthorizationType": "NONE",
-        "Integration": {
-          "IntegrationHttpMethod": "POST",
-          "Type": "AWS_PROXY",
-          "Uri": {
-            "Fn::Join": [
-              "",
-              [
-                "arn:",
-                {
-                  "Ref": "AWS::Partition"
-                },
-                ":apigateway:",
-                {
-                  "Ref": "AWS::Region"
-                },
-                ":lambda:path/2015-03-31/functions/",
-                {
-                  "Fn::GetAtt": [
-                    "SaveUnderscorenotificationsLambdaFunction",
-                    "Arn"
-                  ]
-                },
-                "/invocations"
-              ]
-            ]
-          }
-        },
-        "MethodResponses": []
-      },
-      "DependsOn": [
-        "SaveUnderscorenotificationsLambdaPermissionApiGateway"
-      ]
-    },
     "ApiGatewayMethodNotificationsTokenPost": {
       "Type": "AWS::ApiGateway::Method",
       "Properties": {
@@ -3527,7 +3846,53 @@
         "SaveUnderscorenotificationsLambdaPermissionApiGateway"
       ]
     },
-    "ApiGatewayDeployment1703594248788": {
+    "ApiGatewayMethodNotificationsTokenMatchidVarPost": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "POST",
+        "RequestParameters": {},
+        "ResourceId": {
+          "Ref": "ApiGatewayResourceNotificationsTokenMatchidVar"
+        },
+        "RestApiId": {
+          "Ref": "ApiGatewayRestApi"
+        },
+        "ApiKeyRequired": false,
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        },
+        "MethodResponses": []
+      },
+      "DependsOn": [
+        "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaPermissionApiGateway"
+      ]
+    },
+    "ApiGatewayDeployment1704224273920": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -3538,6 +3903,7 @@
       "DependsOn": [
         "ApiGatewayMethodOptions",
         "ApiGatewayMethodTeamsTeamidVarPlayersOptions",
+        "ApiGatewayMethodContactusOptions",
         "ApiGatewayMethodTeamsOptions",
         "ApiGatewayMethodTeamsTeamidVarMatchesOptions",
         "ApiGatewayMethodUsersOptions",
@@ -3550,13 +3916,15 @@
         "ApiGatewayMethodMatchesMatchidVarOptions",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupOptions",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarStartOptions",
+        "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarCaptainOptions",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupSubsOptions",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarStatusVarOptions",
         "ApiGatewayMethodAuthTokenOptions",
-        "ApiGatewayMethodNotificationsTokenMatchidVarOptions",
         "ApiGatewayMethodNotificationsTokenOptions",
+        "ApiGatewayMethodNotificationsTokenMatchidVarOptions",
         "ApiGatewayMethodHead",
         "ApiGatewayMethodTeamsTeamidVarPlayersPost",
+        "ApiGatewayMethodContactusPost",
         "ApiGatewayMethodTeamsPost",
         "ApiGatewayMethodTeamsTeamidVarMatchesPost",
         "ApiGatewayMethodUsersPost",
@@ -3572,11 +3940,12 @@
         "ApiGatewayMethodMatchesMatchidVarGet",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupPost",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarStartPost",
+        "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarCaptainPost",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarPlayersSubmitlineupSubsPost",
         "ApiGatewayMethodTeamsTeamidVarMatchesMatchidVarStatusVarPost",
         "ApiGatewayMethodAuthTokenPost",
-        "ApiGatewayMethodNotificationsTokenMatchidVarPost",
-        "ApiGatewayMethodNotificationsTokenPost"
+        "ApiGatewayMethodNotificationsTokenPost",
+        "ApiGatewayMethodNotificationsTokenMatchidVarPost"
       ]
     },
     "CheckUnderscoreonlineLambdaPermissionApiGateway": {
@@ -3622,6 +3991,43 @@
         "FunctionName": {
           "Fn::GetAtt": [
             "CreateUnderscoreteamUnderscoreplayersLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
+    "ContactUnderscoreusLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ContactUnderscoreusLambdaFunction",
             "Arn"
           ]
         },
@@ -4208,6 +4614,43 @@
         }
       }
     },
+    "SetUnderscorecaptainLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SetUnderscorecaptainLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
     "SubmitUnderscoresubsLambdaPermissionApiGateway": {
       "Type": "AWS::Lambda::Permission",
       "Properties": {
@@ -4356,6 +4799,43 @@
         }
       }
     },
+    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaPermissionApiGateway": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      }
+    },
     "ApiGatewayLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
@@ -4465,7 +4945,7 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/football-team-management/prod/1703594331293-2023-12-26T12:38:51.293Z/custom-resources.zip"
+          "S3Key": "serverless/football-team-management/prod/1704224298870-2024-01-02T19:38:18.870Z/custom-resources.zip"
         },
         "FunctionName": "football-team-management-prod-custom-resource-apigw-cw-role",
         "Handler": "api-gateway-cloud-watch-role/handler.handler",
@@ -4507,7 +4987,7 @@
     "CheckUnderscoreonlineLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CheckUnderscoreonlineLambdaVersionQqif6eUbq4owAPJC13s3Cs2SRWSXsC52RW5bTXwme4"
+        "Ref": "CheckUnderscoreonlineLambdaVersionH2KtHEGMInAvaHSFYD5sd1id975KQlRYR0forKgowkQ"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CheckUnderscoreonlineLambdaFunctionQualifiedArn"
@@ -4516,16 +4996,25 @@
     "CreateUnderscoreteamUnderscoreplayersLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaVersionU6XYUvfvH3RfCVlyMAgjXYO3qpDcwszpRTV9Qc6Ng"
+        "Ref": "CreateUnderscoreteamUnderscoreplayersLambdaVersion1TjfgFJRNWVnAN7SNVP3ug206SwQDAX9W4L2tlIiUs"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscoreteamUnderscoreplayersLambdaFunctionQualifiedArn"
       }
     },
+    "ContactUnderscoreusLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "ContactUnderscoreusLambdaVersionBPFM1ikOA3w2gkTVo6FdXp5vAg8mCtT4jv8wMDGcx0"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-prod-ContactUnderscoreusLambdaFunctionQualifiedArn"
+      }
+    },
     "CreateUnderscoreteamLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscoreteamLambdaVersion4K2LMSllhLdsW3WRKS5hPGdm5gYtRirjxTK53t9a90"
+        "Ref": "CreateUnderscoreteamLambdaVersion8z1yDsiHSNcoUJPQ6gqeIbsyxQVoWe5OSSEvOYXDQ"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4534,7 +5023,7 @@
     "CreateUnderscoreteamUnderscorefixturesLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaVersionnX1cRfzaHKZeSCeqW6zKjxcsQ5VT6coazve7dNQ"
+        "Ref": "CreateUnderscoreteamUnderscorefixturesLambdaVersionZWZUL394cnhPow6U0ATPWZaq546oZarmkn5C4DVpU8"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscoreteamUnderscorefixturesLambdaFunctionQualifiedArn"
@@ -4543,7 +5032,7 @@
     "CreateUnderscoreuserLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscoreuserLambdaVersionWwWP3yyR0aYesmyEChyJ8lrOKSyRza5MWNnZNyCeFo"
+        "Ref": "CreateUnderscoreuserLambdaVersionMhRYGBXBZGrz6uf2RAGcrRe8C3obrv6SkcJPQCsFaI"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscoreuserLambdaFunctionQualifiedArn"
@@ -4552,7 +5041,7 @@
     "RetrieveUnderscoreteamUnderscoresquadLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionfZCOW3wAUaCWO7iUNUH5xaJ9N8DSWQAZ7HkgjCKs"
+        "Ref": "RetrieveUnderscoreteamUnderscoresquadLambdaVersionl11tkigPXCGFtF7rep2Sq4J1eotzWyrZpv9WXVo"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-RetrieveUnderscoreteamUnderscoresquadLambdaFunctionQualifiedArn"
@@ -4561,7 +5050,7 @@
     "UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "UserUnderscorehomepageUnderscorebffLambdaVersionDXoMerhfqS9I8uHfscSh0nMZA0EYyluHM42cTCOL4k"
+        "Ref": "UserUnderscorehomepageUnderscorebffLambdaVersioneZWku7UnnGhdWyYrhWBUkhaBGc0fJyNNOnKo5QsR9K0"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-UserUnderscorehomepageUnderscorebffLambdaFunctionQualifiedArn"
@@ -4570,7 +5059,7 @@
     "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersioniHFNEjFm7ZOG6667vMGLDDleyHglhDotnPt6R7po"
+        "Ref": "AddUnderscoreuserUnderscoretoUnderscoreteamLambdaVersionClMadWXOAstlzNXQl7MoxfkX2xNuNhHEtCtYhyuKWjY"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-AddUnderscoreuserUnderscoretoUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4579,7 +5068,7 @@
     "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersion5dzrQixMNKx7ORh7XZAKqR52APkAb4KVrGZZYLCr7JQ"
+        "Ref": "RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaVersionHhMhWmrFyzSCTs3KPZt01SR8HvuPiTzQXT08lqtpE4"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-RetrieveUnderscorematchesUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4588,7 +5077,7 @@
     "RetrieveUnderscoreteamUnderscoresummaryLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionM6Qw9c0tlLXfpoZxTn8cpKXgkwtERNRPVxEEUISBY3c"
+        "Ref": "RetrieveUnderscoreteamUnderscoresummaryLambdaVersionXweo8SOoVjKECa0b3nmjWQct3k8vYX4XU6FcJuXugso"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-RetrieveUnderscoreteamUnderscoresummaryLambdaFunctionQualifiedArn"
@@ -4597,7 +5086,7 @@
     "DeleteUnderscoreplayerLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "DeleteUnderscoreplayerLambdaVersionT51fU15EjFTCRms5QU4ZZkVS9mQGfBwjDs9YDgEHlI"
+        "Ref": "DeleteUnderscoreplayerLambdaVersionR7c0f4QRQpFaNyJciDze3YQhsdwrozShF0AhjHyPMo"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-DeleteUnderscoreplayerLambdaFunctionQualifiedArn"
@@ -4606,7 +5095,7 @@
     "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionzXiaHk6kJ4MGMqAXMdPYribtbupf5tLI5VEevcJzMls"
+        "Ref": "RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaVersionGaWGiU8DsBmvrMf4SwHkNlRGv0raAfCFiI40hDSIF3w"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-RetrieveUnderscorenextUnderscorematchUnderscorebyUnderscoreteamLambdaFunctionQualifiedArn"
@@ -4615,7 +5104,7 @@
     "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionoIVqdqCcediMlG9yUQNYA0q3bVGgX5CeyoOhXTPDU1g"
+        "Ref": "CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaVersionsZXQ7h9Azy01aNxtavVfjniKbUGq6IvUQeWM4y79gog"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscoreteamUnderscorescreenUnderscorebffLambdaFunctionQualifiedArn"
@@ -4624,7 +5113,7 @@
     "CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersion3EkPw4OZ1CMDUHbrAa1lPNLrmAhKKuAlv8KwpG9FMM"
+        "Ref": "CreateUnderscorematchUnderscoredayUnderscorebffLambdaVersionbU0sLHhSJ7kfoKGQcw008JOwz0QDK7SmImm6NEgpFs"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscorematchUnderscoredayUnderscorebffLambdaFunctionQualifiedArn"
@@ -4633,7 +5122,7 @@
     "GetMatchByIdLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "GetMatchByIdLambdaVersionOdcGJLdDhAvD9xYbpqF8GHdy2WSdb8R5y1bARRqG4"
+        "Ref": "GetMatchByIdLambdaVersionxvtxWfVCrXJMvZFE2HJFRuGZ8XiYtRg3AyRPQ0pM4"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-GetMatchByIdLambdaFunctionQualifiedArn"
@@ -4642,7 +5131,7 @@
     "SubmitUnderscorelineupLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SubmitUnderscorelineupLambdaVersiondA3FKoS9Mev7FLh1mh1pMfmeF1DmVPC4rAlF5h104"
+        "Ref": "SubmitUnderscorelineupLambdaVersionIIip7YDdG5x0qHXx5UJh3j7ryki6HupqopuV5Crho8"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-SubmitUnderscorelineupLambdaFunctionQualifiedArn"
@@ -4651,16 +5140,25 @@
     "StartUnderscorematchLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "StartUnderscorematchLambdaVersionFCAe3BkIm9fyEuRp2DqNq4MHhyox78R9RtQaqDBd8"
+        "Ref": "StartUnderscorematchLambdaVersionmATgb5RZ0VkT0DV9T8UwMwfeG558ICORJthPvBvgQI"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-StartUnderscorematchLambdaFunctionQualifiedArn"
       }
     },
+    "SetUnderscorecaptainLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "SetUnderscorecaptainLambdaVersionGgqlQdVizSsdNyTmwe0nD1x7Tso2yr8kQvKUO6CI"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-prod-SetUnderscorecaptainLambdaFunctionQualifiedArn"
+      }
+    },
     "SubmitUnderscoresubsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SubmitUnderscoresubsLambdaVersion7B907KtoTKjaGjInGNdKNGYjWHVl4EvMaBRLjYwCYI"
+        "Ref": "SubmitUnderscoresubsLambdaVersionLR4LkufbpcD4IhnuJKzkSyVjRlMyRsoifNDbug2K0w"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-SubmitUnderscoresubsLambdaFunctionQualifiedArn"
@@ -4669,7 +5167,7 @@
     "UpdateUnderscorematchUnderscorestatusLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "UpdateUnderscorematchUnderscorestatusLambdaVersionLaM0OnKWY9BEEHJxsHHheJxcGnQteERzavbne1Q2pY"
+        "Ref": "UpdateUnderscorematchUnderscorestatusLambdaVersionhqfDH3mwIXYQj7vLkTS1vXGHAvfR9EWuVXcMgoUs"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-UpdateUnderscorematchUnderscorestatusLambdaFunctionQualifiedArn"
@@ -4678,7 +5176,7 @@
     "CreateUnderscorejwtLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "CreateUnderscorejwtLambdaVersionxspEBWFroe6CY18NNW9WkTMQnYi8k44ChEAWn5SJBc"
+        "Ref": "CreateUnderscorejwtLambdaVersionDep6gTzsEexbXKAy8Lp9B3jDCD7wsv6AhAGn3r4TQE"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-CreateUnderscorejwtLambdaFunctionQualifiedArn"
@@ -4687,16 +5185,25 @@
     "SaveUnderscorenotificationsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SaveUnderscorenotificationsLambdaVersionwSry9Q8RiM3fkCSIQHPHbkALtawPEMbh6aytTyZjicA"
+        "Ref": "SaveUnderscorenotificationsLambdaVersion8I2MCyIQxMV5fikCHqAeBQmuIuOAWOnJeVfL6PIX3k"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-SaveUnderscorenotificationsLambdaFunctionQualifiedArn"
       }
     },
+    "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaVersion81x40uEM2cdwRtIqDe3YsfVgldS2TRDpg5FxXOcVOPE"
+      },
+      "Export": {
+        "Name": "sls-football-team-management-prod-SaveUnderscorenotificationsUnderscorebyUnderscorematchLambdaFunctionQualifiedArn"
+      }
+    },
     "SubsUnderscoredueLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "SubsUnderscoredueLambdaVersionIVjCJSzJv1zCjq6Hh9c5bAI0FGiy9mT87K3YgJI3Wn8"
+        "Ref": "SubsUnderscoredueLambdaVersionyGvxCc5MTb6QcF1QC6eFgikTTIdAKVcoael7keUPoo"
       },
       "Export": {
         "Name": "sls-football-team-management-prod-SubsUnderscoredueLambdaFunctionQualifiedArn"

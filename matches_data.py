@@ -63,6 +63,7 @@ class TABLE:
     STATUS = "Status"
     GOALS_FOR = "Goals_For"
     GOALS_AGAINST = "Goals_Against"
+    CAPTAIN = "Captain"
     LENGTH = "Length"
     TYPE="Type"
     TIME_STARTED = "Time_Started"
@@ -78,13 +79,14 @@ class TABLE:
         f"{TABLE.STATUS} varchar(255),"\
         f"{TABLE.GOALS_FOR} int,"\
         f"{TABLE.GOALS_AGAINST} int,"\
+        f"{TABLE.CAPTAIN} varchar(255),"\
         f"{TABLE.LENGTH} int,"\
         f"{TABLE.TYPE} varchar(255),"\
         f"{TABLE.TIME_STARTED} int,"\
         f"PRIMARY KEY ({TABLE.ID}))"
     def alterTable():
         return f"ALTER TABLE {TABLE.TABLE_NAME}"\
-        f" ADD {TABLE.TYPE} varchar(255)"
+        f" ADD {TABLE.CAPTAIN} varchar(255)"
    
         
 
@@ -108,6 +110,25 @@ async def save_team_fixture(match:response_classes.MatchInfo,team_id):
                 end_time = datetime.utcnow().timestamp()-start_time
                 logger.info(f"Save team fixtures took {end_time} to finish")
                 return id
+
+@timeit
+async def set_captain(match:response_classes.MatchInfo,player_id):
+    start_time = datetime.utcnow().timestamp()
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                
+                # Define the SQL query to insert data into a table
+                insert_query = f"Update {TABLE.TABLE_NAME} set {TABLE.CAPTAIN}={player_id} where {TABLE.ID}={match.id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return match.id
 
 @timeit
 async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchInfo]:
@@ -237,7 +258,9 @@ async def convertDataToMatchInfo(data):
         how_long_ago_in_minutes = int((datetime.utcnow().timestamp()-data[TABLE.TIME_STARTED])/60)  
     else:
         how_long_ago_in_minutes = 0
-    return response_classes.MatchInfo(id=data[TABLE.ID],type=data[TABLE.TYPE], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
+    
+
+    return response_classes.MatchInfo(id=data[TABLE.ID],type=data[TABLE.TYPE],captain=data[TABLE.CAPTAIN], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
 
 
 

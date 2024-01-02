@@ -16,7 +16,7 @@ import matches_state_machine
 import player_responses
 import response_classes
 import match_planning_backend
-from match_planning_backend import submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
+from match_planning_backend import  submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
 from datetime import date
 import logging
 import time
@@ -117,6 +117,38 @@ async def submit_lineup(event,context):
         response = api_helper.make_api_response(500,None,e)
         return response
 
+async def set_captain(event,context):
+    lambda_handler(event,context)
+    pathParameters = event["pathParameters"]
+    match_id = pathParameters["match_id"]
+    team_id = pathParameters["team_id"]
+    body =json.loads(event["body"])
+    player_id = body["player_id"]
+
+    match = await retrieve_match_by_id(match_id)
+    try:
+    
+        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+             
+            await matches_data.set_captain(match[0],player_id)
+            
+            return await getMatch(event,context)
+        else:
+            response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+            return response
+    except exceptions.AuthError as e:
+        print(e)
+        response = api_helper.make_api_response(401,None,e)
+        return response
+    except ValidationError as e:
+        print(e)
+        response = api_helper.make_api_response(400,None,e)
+        return response
+    except Exception as e:
+        print(e)
+        response = api_helper.make_api_response(500,None,e)
+        return response
+
 async def submit_substitutions(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
@@ -154,7 +186,7 @@ async def getMatchAsGuest(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
-
+    matches = []
     try:
         matchList = await retrieve_match_by_id(match_id)
         if(len(matchList)==0):
@@ -163,7 +195,8 @@ async def getMatchAsGuest(event,context):
             match = matchList[0]
             response = await match_planning_backend.getMatchGuest(match)
         print(response)
-        return response
+        matches.append(response)
+        return api_helper.make_api_response(200,matches,None)
     except exceptions.AuthError as e:
         traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(401,None,e)
@@ -202,8 +235,10 @@ async def getMatch(event,context):
             return response
         else:
             response = await getMatchGuest(match)
+            matches = []
+            matches.append(response)
             print(response)
-            return response
+            return api_helper.make_api_response(200,matches,None)
     except exceptions.AuthError as e:
         traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(401,None,e)
@@ -280,6 +315,7 @@ async def update_match_status(event,context):
                  await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
              else:
                 await match_planning_backend.updateStatus(match_id=match_id,status=matches_state_machine.MatchState(status))
+                
              return await getMatch(event,context)    
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")

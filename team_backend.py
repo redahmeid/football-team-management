@@ -12,22 +12,35 @@ import logging
 from match_planning_backend import list_matches_by_team_backend
 logger = logging.getLogger(__name__)
 import functools
+import team_data
+from email_sender import send_email,send_email_with_template
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 from team_response_creator import convertTeamSeasonDataToTeamResponse,convertTeamSeasonDataToTeamSeaonOnlyResponse
 
 async def addSingleUser(email,team_id):
     user_id = await retrieve_user_id_by_email(email)
     print(user_id)
+    user = TeamUser(email=email,team_id=team_id,role=Role.coach)
+    team = await team_data.retrieve_team_by_id(team_id)
     if(user_id):
-        user = TeamUser(email=email,team_id=team_id,role=Role.coach)
+        
         await save_role(user)
-        return user
+        template_data = {
+            "team": team.name,
+        }
+        template_id = 'd-d953ef3608354d49bde38c7d7e3843fa'
+        await send_email_with_template(email,template_id,template_data)
     else:
         user_id = await save_user("",email,"")
-        user = TeamUser(email=email,team_id=team_id,role=Role.coach)
         await save_role(user)
-
-        return user
+        template_data = {
+            "team": team.name,
+        }
+        template_id = 'd-9ba5fab4e96a4a56819aeba57916356f'
+        await send_email_with_template(email,template_id,template_data)
+        
+    
+    return user
 
 async def retrieveTeamResponse(team):
     

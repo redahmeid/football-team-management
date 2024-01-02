@@ -57,6 +57,7 @@ def validate_firebase_id_token(id_token):
 def getEmailFromToken(event,context):
     print("GET EMAIL FROM TOKEN")
     id_token = event["headers"]['Authorization'].split('Bearer ')[1]
+    print(f"ID TOKEN = {id_token}")
     if(validate_firebase_id_token(id_token)):
         print("GET EMAIL FROM TOKEN SUCESS")
         return auth.verify_id_token(id_token)["email"]

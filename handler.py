@@ -14,7 +14,11 @@ import user_homepage
 import create_team_screen
 import auth
 import api_helper
+import email_sender
 
+def contact_us(event,context):
+    response = asyncio.run(email_sender.contact_us(event,context))
+    return response
 def check_online(event,context):
     return api_helper.make_api_response(200,{})
 def create_team(event, context):
@@ -35,6 +39,9 @@ def create_team_players(event, context):
 def set_device_token(event,context):
     response = asyncio.run(auth.saveDeviceToken(event,context))
     return response
+def set_device_token_by_match(event,context):
+    response = asyncio.run(auth.saveDeviceTokenByMatch(event,context))
+    return response
 def set_tokens(event,context):
     response = asyncio.run(auth.set_custom_claims(event,context))
     return response
@@ -52,6 +59,10 @@ def getMatch(event,context):
     return response
 def getMatchAsGuest(event,context):
     response = asyncio.run(match_detail_screen.getMatchAsGuest(event,context))
+    print(response)
+    return response
+def set_captain(event,context):
+    response = asyncio.run(match_detail_screen.set_captain(event,context))
     print(response)
     return response
 

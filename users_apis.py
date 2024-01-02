@@ -11,6 +11,8 @@ from matches_data import retrieve_next_match_by_team
 from auth import getToken
 from secrets_util import lambda_handler
 from notifications import save_token
+import asyncio
+from email_sender import send_email,send_email_with_template
 
 async def new_user(event, context):
     lambda_handler(event,context)
@@ -18,11 +20,13 @@ async def new_user(event, context):
         body =json.loads(event["body"])
         print(body)
         email = getToken(event)["email"]
-        saveDeviceToken(event)
+        await saveDeviceToken(event)
         user = await retrieve_user_id_by_email(email)
         
         if(not user):
             await save_user(id,email,body["name"])
+            template_id="d-f25c6f27e6d14af58f8a3457ecfebee2"
+            await send_email_with_template(email,template_id,{})
         else:
             await update_user(user,body["name"])
         
@@ -36,10 +40,10 @@ async def new_user(event, context):
     print(response)
     return response
 
-def saveDeviceToken(event):
+async def saveDeviceToken(event):
     device_token = event["headers"]['x-device-id']
     email = getToken(event)["email"]
-    save_token(email=email,token=device_token)
+    await save_token(email=email,token=device_token)
 
 
 # "(ID varchar(255),"\

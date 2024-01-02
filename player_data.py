@@ -134,16 +134,17 @@ async def delete_player(player_id:str):
                 
 
 async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
+    
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from Players inner join {PLAYER_SEASON_TABLE.TABLE_NAME} on {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.PLAYER_ID}={TABLE.TABLE_NAME}.{TABLE.ID} and {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}={id} and live <> 'false' or live IS NULL" 
-
+                insert_query = f"select * from Players inner join {PLAYER_SEASON_TABLE.TABLE_NAME} on {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.PLAYER_ID}={TABLE.TABLE_NAME}.{TABLE.ID} and {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}='{id}' and live <> 'false' or live IS NULL" 
+                print(insert_query)
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query)
                 results = await cursor.fetchall()
-               
+            
                 # club = Club(id=id,name=row)
                 print(results)
                 players = []

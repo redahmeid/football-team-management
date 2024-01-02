@@ -102,7 +102,7 @@ class MESSAGES_TABLE:
     
 
 @timeit
-async def save_token(email,token,match_id):
+async def save_token(email,token):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -110,8 +110,31 @@ async def save_token(email,token,match_id):
         
                 id = id_generator.generate_random_number(5)
             
-                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{email}','{match_id}','{token}',{int(datetime.utcnow().timestamp())})"
+                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())})"
                 
+                try:
+                    await cursor.execute(insert_query)
+                    await conn.commit()
+                    print("Succesfully saved the token")
+                    return True
+                except Exception as e:
+                    print(e)
+                    print("Token already exists")
+                    return False
+                    
+                    # Commit the transaction
+
+@timeit
+async def save_token_by_match(match_id,token):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+    
+        
+                id = id_generator.generate_random_number(5)
+            
+                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{match_id}','{token}',{int(datetime.utcnow().timestamp())})"
+                print(insert_query)
                 try:
                     await cursor.execute(insert_query)
                     await conn.commit()
@@ -142,7 +165,6 @@ async def save_message(notification_id,message):
                 logger.info("Message successfulll saved")
                 return True
 
-@timeit
 async def getDeviceToken(email):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -161,10 +183,31 @@ async def getDeviceToken(email):
 
                 logger.info("Succesfully saved the token")
                 return row
+            
+@timeit
+async def getDeviceTokenByMatchOnly(match_id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+    
+        
+                id = id_generator.generate_random_number(5)
+            
+                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.EMAIL} IS NULL"
+
+                print(insert_query)
+                await cursor.execute(insert_query)
+                    
+                row = await cursor.fetchall()
+
+
+                logger.info("Succesfully saved the token")
+                return row
 
 
             
 async def send_push_notification(token, title, body,action,link):
+    print(f"Sent to {token}")
     message = messaging.Message(
         
         notification=messaging.Notification(

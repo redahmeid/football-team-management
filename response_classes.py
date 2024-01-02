@@ -99,15 +99,22 @@ class MatchInfo(BaseModel):
     homeOrAway:HomeOrAway
     date:datetime.date
     type:Optional[MatchType]=None
+    captain:Optional[str]=None
 
 class MatchPeriod(BaseModel):
     status:str
     time:int
 
 class PlayerMatchStat(BaseModel):
-    player: player_responses.PlayerInfo
+    player: Optional[player_responses.PlayerInfo]=None
     position: Optional[str]=""
-    time: int
+    secondary_player: Optional[player_responses.PlayerInfo]=None
+    player_off: Optional[player_responses.PlayerResponse]=None
+    player_on: Optional[player_responses.PlayerResponse]=None
+    time: Optional[int]=0
+    minute:Optional[int]=0
+    type:Optional[str]=""
+    detail:Optional[str]=""
 class MatchResponse(BaseModel):
     match:MatchInfo
     squad:Optional[List]=None
@@ -117,6 +124,7 @@ class PlannedMatchResponse(BaseModel):
     match:MatchInfo
     planned_lineups:Optional[List]=None
     links:Optional[Dict[str,Link]]=None
+    captain:Optional[player_responses.PlayerResponse]=None
 
 class ActualMatchResponse(BaseModel):
     match:MatchInfo
@@ -131,6 +139,8 @@ class ActualMatchResponse(BaseModel):
     assisters:Optional[List]=None
     scorers:Optional[List]=None
     opposition:Optional[List]=None
+    report:Optional[List]=None
     links:Optional[Dict[str,Link]]=None
+    captain:Optional[player_responses.PlayerResponse]=None
 
 

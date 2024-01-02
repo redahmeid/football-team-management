@@ -12,7 +12,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
 from exceptions import AuthError
-from notifications import save_token
+from notifications import save_token,save_token_by_match
 import traceback
 import logging
 logger = logging.getLogger(__name__)
@@ -77,6 +77,29 @@ async def saveDeviceToken(event,context)  :
         except AuthError as e:
             email =""
         await save_token(email=email,match_id=match_id,token=device_token)
+        print("Token saved")
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
+        logger.error("e")
+
+async def saveDeviceTokenByMatch(event,context)  :
+    lambda_handler(event,context)
+    try:
+        headers = event["headers"]
+        pathParameters = event.get("pathParameters")
+
+        # Check if pathParameters is not None and 'match_id' exists as a key
+        if pathParameters and "match_id" in pathParameters:
+            match_id = pathParameters["match_id"]
+            # Proceed with your logic using match_id
+        else:
+            match_id=""
+
+        print(headers)
+        device_token = event["headers"]['x-device-id']
+        print(f"DEVICE TOKEN {device_token}")
+        
+        await save_token_by_match(match_id=match_id,token=device_token)
         print("Token saved")
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 

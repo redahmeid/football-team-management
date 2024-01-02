@@ -18,91 +18,210 @@ functions:
       - http:
           path: /
           method: head
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   create_team_players:
     handler: handler.create_team_players
     events:
       - http:
           path: /teams/{team_id}/players
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
+  contact_us:
+    handler: handler.contact_us
+    events:
+      - http:
+          path: /contact_us
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   create_team:
     handler: handler.create_team
     events:
       - http:
           path: /teams
           method: post
-          cors : true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   create_team_fixtures:
     handler: handler.create_team_fixtures
     events:
       - http:
           path: /teams/{team_id}/matches
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   create_user:
     handler: handler.create_user
     events:
       - http:
           path: /users
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   retrieve_team_squad:
     handler: handler.list_players_by_team
     events:
       - http:
           path: /teams/{team_id}/players
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   user_homepage_bff:
     handler: handler.getUser
     events:
       - http:
           path: /users
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   add_user_to_team:
     handler: handler.add_users_to_team
     events:
       - http:
           path: /teams/{team_id}/users
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   retrieve_matches_by_team:
     handler: handler.list_matches_by_team
     events:
       - http:
           path: /teams/{team_id}/matches
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   retrieve_team_summary:
     handler: handler.retrieve_team_summary
     events:
       - http:
           path: /teams/{team_id}
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   delete_player:
     handler: handler.delete_player
     events:
       - http:
           path: /players/{player_id}
           method: delete
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   retrieve_next_match_by_team:
     handler: handler.retrieve_next_match_by_team
     events:
       - http:
           path: /teams/{team_id}/next_match
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   create_team_screen_bff:
     handler: handler.submit_team
     events:
       - http:
           path: /bff/create_team_screen
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   
   create_match_day_bff:
     handler: handler.getMatch
@@ -110,42 +229,106 @@ functions:
       - http:
           path: /teams/{team_id}/matches/{match_id}
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   getMatchById:
     handler: handler.getMatchAsGuest
     events:
       - http:
           path: /matches/{match_id}
           method: get
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   submit_lineup:
     handler: handler.submit_lineup
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/players/submit_lineup
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   start_match:
     handler: handler.start_match
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/start
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
+  set_captain:
+    handler: handler.set_captain
+    events:
+      - http:
+          path: /teams/{team_id}/matches/{match_id}/captain
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
+
   submit_subs:
     handler: handler.submit_subs
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/players/submit_lineup/subs
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   update_match_status:
     handler: handler.update_match_status
     events:
       - http:
           path: /teams/{team_id}/matches/{match_id}/{status}
           method: post
-          cors: true
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
 
   create_jwt:
     handler: handler.set_tokens
@@ -166,18 +349,6 @@ functions:
     handler: handler.set_device_token
     events:
       - http:
-          path: /notifications/token/{match_id}
-          method: post
-          cors:
-            origins:
-              - '*'
-            headers:
-              - Content-Type
-              - x-device-id
-              - x-api-key
-              - authorization
-            allowCredentials: false
-      - http:
           path: /notifications/token
           method: post
           cors:
@@ -189,7 +360,21 @@ functions:
               - x-api-key
               - authorization
             allowCredentials: false
-  
+  save_notifications_by_match:
+    handler: handler.set_device_token_by_match
+    events:
+      - http:
+          path: /notifications/token/{match_id}
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+            allowCredentials: false
   subs_due:
     handler: handler.subs_due
  

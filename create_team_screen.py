@@ -18,8 +18,8 @@ import team_data
 import asyncio
 import id_generator
 
-from supabase import create_client, Client
-supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
+# from supabase import create_client, Client
+# supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
 def enter_screen(event, context):
     lambda_handler(event,context)
     
@@ -51,7 +51,7 @@ async def submit_team(event, context):
         team = Team(age_group=body["age_group"],name=body["name"])
         id = id_generator.generate_random_number(5)
         team_id = id_generator.generate_random_number(5)
-        data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
+        # data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
         save_response = await save_team(team,team_id)
         
 

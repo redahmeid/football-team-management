@@ -26,5 +26,8 @@ async def setupHomepage(email):
     logger.info("END")
     return teams_list
 
+
+
+
 if __name__ == "__main__":
     asyncio.run(setupHomepage("r.hmeid+dev@gmail.com"))
