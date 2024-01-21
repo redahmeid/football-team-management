@@ -15,6 +15,9 @@ import create_team_screen
 import auth
 import api_helper
 import email_sender
+import accounts
+import caching_data
+import notifications
 
 def contact_us(event,context):
     response = asyncio.run(email_sender.contact_us(event,context))
@@ -22,7 +25,7 @@ def contact_us(event,context):
 def check_online(event,context):
     return api_helper.make_api_response(200,{})
 def create_team(event, context):
-    response = asyncio.run(team_apis.create_team(event,context))
+    response = asyncio.run(team_apis.submit_team(event,context))
     return response
 def subs_due(event, context):
     response = asyncio.run(match_detail_screen.subs_due(event,context))
@@ -53,8 +56,28 @@ def list_players_by_team(event, context):
     response = asyncio.run(player_apis.list_players_by_team(event,context))
     return response
 
+def get_match_planned_lineups(event,context):
+    response = asyncio.run(matches_apis.retrieve_match_planned_lineups(event,context))
+    return response
+
+def get_match_actual_lineups(event,context):
+    response = asyncio.run(matches_apis.retrieve_match_actual_lineups(event,context))
+    return response
+
+def retrieve_score(event,context):
+    response = asyncio.run(match_detail_screen.retrieveScore(event,context))
+    return response
+
+def time_played(event,context):
+    response = asyncio.run(matches_apis.time_played(event,context))
+    return response
+
+def get_match_current_lineup(event,context):
+    response = asyncio.run(matches_apis.retrieve_match_current_lineup(event,context))
+    return response
+
 def getMatch(event,context):
-    response = asyncio.run(match_detail_screen.getMatch(event,context))
+    response = asyncio.run(matches_apis.retrieve_match_by_id(event,context))
     print(response)
     return response
 def getMatchAsGuest(event,context):
@@ -65,6 +88,15 @@ def set_captain(event,context):
     response = asyncio.run(match_detail_screen.set_captain(event,context))
     print(response)
     return response
+def delete_user(event,context):
+    response = asyncio.run(accounts.delete_account(event,context))
+    print(response)
+    return response
+
+def cacher(event,context):
+    asyncio.run(caching_data.handler(event,context))
+def sendNotification(event,context):
+    asyncio.run(notifications.backgroundSendMatchUpdateNotification(event,context))   
 
 def update_match_status(event,context):
     response = asyncio.run(match_detail_screen.update_match_status(event,context))
@@ -87,9 +119,7 @@ def retrieve_team_summary(event,context):
 def delete_player(event,context):
     response = player_apis.delete_player_from_team(event,context)
     return response
-def retrieve_club_summary(event,context):
-    response = club_apis.retrieve_club_summary(event,context)
-    return response
+
 def retrieve_next_match_by_team(event,context):
     response = asyncio.run(matches_apis.next_match_by_team(event,context))
     return response
@@ -97,7 +127,7 @@ def create_user(event,context):
     response = asyncio.run(users_apis.new_user(event,context))
     return response
 def submit_team(event,context):
-    response = asyncio.run(create_team_screen.submit_team(event,context))
+    response = asyncio.run(team_apis.submit_team(event,context))
     return response
 def getUser(event,context):
     response = asyncio.run(user_homepage.enter_screen(event,context))

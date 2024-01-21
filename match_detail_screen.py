@@ -5,10 +5,11 @@ import exceptions
 from typing import List
 from player_data import retrieve_players_by_team
 import sys
+from cache_trigger import updateTeamCache,updateMatchCache, updateMatchPlanCache,updateMatchCurrentLineupCache, updateMatchActualCache,updateUserCache
 from matches_data import retrieve_match_by_id
 import matches_data
 from match_day_data import retrieve_periods_by_match,retrieveNextPlanned,retrieveAllPlannedLineups,save_actual_lineup,save_planned_lineup,retrieveCurrentActual, save_assists_for,save_goals_for,save_opposition_goal
-from secrets_util import lambda_handler
+from secrets_util import lambda_handler,getEmailFromToken
 import api_helper
 from auth import check_permissions
 from roles import Role
@@ -18,12 +19,19 @@ import response_classes
 import match_planning_backend
 from match_planning_backend import  submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
 from datetime import date
+import user_homepage_backend
+
 import logging
 import time
 import asyncio
 import datetime
 import notifications
-import team_data
+import matches_backend
+from caching_data import Paths
+import team_backend
+import enum
+from config import app_config
+from etag_manager import setEtag,isEtaggged,deleteEtag
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -45,7 +53,6 @@ async def start_match(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
-    team_id = pathParameters["team_id"]
     body =json.loads(event["body"])
     players = body["players"]
     minute = body["minute"]
@@ -54,12 +61,12 @@ async def start_match(event,context):
     match = await retrieve_match_by_id(match_id)
     try:
     
-        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+        if(await check_permissions(event=event,team_id=match[0].team.id,acceptable_roles=acceptable_roles)):  
              
             
             if(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.starting_lineup_confirmed):
                     await match_planning_backend.start_match(match_id=match_id)
-            return await getMatch(event,context)
+            return  api_helper.make_api_response(201,{"link":f"/matches/{match_id}?refresh=time_played"})
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -81,26 +88,79 @@ async def submit_lineup(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
-    team_id = pathParameters["team_id"]
     body =json.loads(event["body"])
     players = body["players"]
     minute = body["minute"]
     new_players = [player_responses.PlayerResponse(**player_dict) for player_dict in players]
-
+   
     match = await retrieve_match_by_id(match_id)
     try:
     
-        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+        if(await check_permissions(event=event,team_id=match[0].team.id,acceptable_roles=acceptable_roles)):  
              
             if(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan or matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.created):
-                    await matches_data.update_match_status(match_id,matches_state_machine.MatchState.plan.value),
-                    await submit_planned_lineup(match_id=match_id,players=new_players,minute=minute,team_id=team_id)
+                await matches_data.update_match_status(match_id,matches_state_machine.MatchState.plan.value),
+                await submit_planned_lineup(match_id=match_id,players=new_players,minute=minute)
+                await deleteEtag(match_id,"planned_lineups")
+                await deleteEtag(match_id,"current_lineups")
+                await deleteEtag(match_id,"matches")
+                await updateMatchCache(match_id)
+                await updateMatchPlanCache(match_id)
+                await updateMatchCurrentLineupCache(match_id)
+                await updateTeamCache(match[0].team.id)
+                
+                await updateUserCache(getEmailFromToken(event,context))
+                data = {
+                    "link":f"/matches/{match_id}/planned_lineups",
+                    "match_link":f"/matches/{match_id}",
+                    "team_id":f"{match[0].team.id}",
+                    "match_id":f"{match_id}",
+                    "action":"new_plan",
+                    "silent":"True"
+                }
+                await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'admins',data)
+                return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/planned_lineups"})
             elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.plan_confirmed):
-                    await submit_actual_lineup(match_id=match_id,players=new_players)
-            elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.started):
                 await submit_actual_lineup(match_id=match_id,players=new_players)
+                await deleteEtag(match_id,"actual_lineups")
+                await deleteEtag(match_id,"current_lineups")
+                await deleteEtag(match_id,"matches")
+                await updateMatchCache(match_id)
+                await updateMatchActualCache(match_id)
+                await updateMatchCurrentLineupCache(match_id)
+                await updateTeamCache(match[0].team.id)
+                await updateUserCache(getEmailFromToken(event,context))
+                data = {
+                    "link":f"/matches/{match_id}/actual_lineups",
+                    "match_link":f"/matches/{match_id}",
+                    "team_id":f"{match[0].team.id}",
+                    "match_id":f"{match_id}",
+                    "action":"actual_lineups"
+                }
+                await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'match',data)
+                return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/actual_lineups"})
+            elif(matches_state_machine.MatchState(match[0].status)==matches_state_machine.MatchState.started):
+                await submit_actual_lineup(match_id=match_id,players=new_players) 
+                await deleteEtag(match_id,"actual_lineups")
+                await deleteEtag(match_id,"current_lineups")
+                await deleteEtag(match_id,"matches")
+                await updateMatchCache(match_id)
+                await updateMatchActualCache(match_id)
+                await updateMatchCurrentLineupCache(match_id)
+                await updateTeamCache(match[0].team.id)
+                await updateUserCache(getEmailFromToken(event,context))
+                data = {
+                    "link":f"/matches/{match_id}/actual_lineups",
+                    "match_link":f"/matches/{match_id}",
+                    "team_id":f"{match[0].team.id}",
+                    "match_id":f"{match_id}",
+                    "action":"actual_lineups"
+                }
+                await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'match',data)
+                return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/actual_lineups"})
             
-            return await getMatch(event,context)
+            await updateMatchPlanCache(match_id)
+            await updateUserCache(getEmailFromToken(event,context))
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -121,18 +181,17 @@ async def set_captain(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
-    team_id = pathParameters["team_id"]
     body =json.loads(event["body"])
     player_id = body["player_id"]
 
     match = await retrieve_match_by_id(match_id)
     try:
     
-        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+        if(await check_permissions(event=event,team_id=match[0].team.id,acceptable_roles=acceptable_roles)):  
              
             await matches_data.set_captain(match[0],player_id)
             
-            return await getMatch(event,context)
+            return api_helper.make_api_response(201,{"link":f"/matches/{match_id}?refresh=time_played"})
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -153,7 +212,6 @@ async def submit_substitutions(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
-    team_id = pathParameters["team_id"]
     body =json.loads(event["body"])
     players = body["players"]
     minute = body["minute"]
@@ -162,10 +220,11 @@ async def submit_substitutions(event,context):
     match = await retrieve_match_by_id(match_id)
     try:
     
-        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+        if(await check_permissions(event=event,team_id=match[0].team.id,acceptable_roles=acceptable_roles)):  
             
             await submit_subs(match=match[0],players=new_players)
-            return await match_planning_backend.getMatchStarted(team_id,match[0])
+            match_response = await match_planning_backend.getMatchStarted(match[0].team.id,match[0])
+            return api_helper.make_api_response(201,{"link":f"/matches/{match_id}?refresh=time_played"})
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response
@@ -181,7 +240,36 @@ async def submit_substitutions(event,context):
         print(e)
         response = api_helper.make_api_response(500,None,e)
         return response
+
+async def retrieveScore(event,context):
+    lambda_handler(event,context)
+    pathParameters = event["pathParameters"]
+    match_id = pathParameters["match_id"]
     
+
+    object = await matches_backend.getMatchFromDB(match_id)
+    match = object["result"]
+    try:
+    
+        
+        response = {"goals_for":match.match.goals,"goals_against":match.match.conceded}
+        return api_helper.make_api_response(200,response)
+    except exceptions.AuthError as e:
+        print(e)
+        response = api_helper.make_api_response(401,None,e)
+        return response
+    except ValidationError as e:
+        print(e)
+        response = api_helper.make_api_response(400,None,e)
+        return response
+    except Exception as e:
+        print(e)
+        response = api_helper.make_api_response(500,None,e)
+        return response
+
+
+
+
 async def getMatchAsGuest(event,context):
     lambda_handler(event,context)
     pathParameters = event["pathParameters"]
@@ -193,7 +281,7 @@ async def getMatchAsGuest(event,context):
             response = api_helper.make_api_response(404,None,e)
         else:
             match = matchList[0]
-            response = await match_planning_backend.getMatchGuest(match)
+            response = await match_planning_backend.getMatch(match.team.id, match)
         print(response)
         matches.append(response)
         return api_helper.make_api_response(200,matches,None)
@@ -231,10 +319,11 @@ async def getMatch(event,context):
                 response = await getMatchConfirmedPlanReadyToStart(team_id,match)
             elif(match.status==matches_state_machine.MatchState.started or match.status==matches_state_machine.MatchState.ended or match.status==matches_state_machine.MatchState.paused or match.status==matches_state_machine.MatchState.restarted):
                 response =  await getMatchStarted(team_id,match)
-            logging.info(response)
+            else:
+                response =  await getMatchStarted(team_id,match)
             return response
         else:
-            response = await getMatchGuest(match)
+            response = await match_planning_backend.getMatch(match.team.id, match)
             matches = []
             matches.append(response)
             print(response)
@@ -295,10 +384,12 @@ async def subs_due(event,context):
 async def update_match_status(event,context):
     lambda_handler(event,context)    
     pathParameters = event["pathParameters"]
-    team_id = pathParameters["team_id"]
     status = pathParameters["status"]
     match_id = pathParameters["match_id"]
+    
     try:
+        match = await retrieve_match_by_id(match_id)
+        team_id = match[0].team.id
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
              if(status=="score_for"):
                 body =json.loads(event["body"])
@@ -307,6 +398,7 @@ async def update_match_status(event,context):
                 
                 type = body.get('type')
                 await setGoalsFor(team_id,match_id,goal_scorer,assister,type)
+                
              elif(status=="score_against"):
                 await setGoalsAgainst(match_id,team_id,"opposition")
              elif(status=="paused" or status=="restarted" or status=="started"):
@@ -315,8 +407,13 @@ async def update_match_status(event,context):
                  await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
              else:
                 await match_planning_backend.updateStatus(match_id=match_id,status=matches_state_machine.MatchState(status))
-                
-             return await getMatch(event,context)    
+                print(f"UPDATE STATUS TASK CREATION START {match_id}")
+             
+             
+             
+              # asyncio.create_task(matches_backend.getMatchFromDB(match_id))
+             print(f"UPDATE STATUS TASK CREATION END {match_id}")
+             return api_helper.make_api_response(201,{"link":f"/matches/{match_id}"})   
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response

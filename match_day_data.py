@@ -16,6 +16,13 @@ import logging
 import time
 import functools
 import aiomysql
+import uuid
+
+
+
+
+
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def timeit(func):
@@ -263,7 +270,7 @@ async def save_goals_for(match_id,player_id,time_playing,type,assister_id):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 
         
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"insert INTO {GOALS_TABLE.TABLE_NAME} ({GOALS_TABLE.ID},{GOALS_TABLE.MATCH_ID},{GOALS_TABLE.PLAYER_ID}, {GOALS_TABLE.TIME},{GOALS_TABLE.TYPE},{GOALS_TABLE.ASSISTER_ID}) VALUES ('{id}','{match_id}','{player_id}',{time_playing},'{type}','{assister_id}')"
                 await cursor.execute(insert_query)
@@ -279,7 +286,7 @@ async def save_assists_for(match_id,player_id,time_playing):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 
                     
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"insert INTO {ASSISTS_TABLE.TABLE_NAME} ({ASSISTS_TABLE.ID},{ASSISTS_TABLE.MATCH_ID},{ASSISTS_TABLE.PLAYER_ID}, {ASSISTS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player_id}',{time_playing})"
                 
@@ -297,7 +304,7 @@ async def save_subs(match_id,players,time_playing):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 for player in players:
                     
-                    id = id_generator.generate_random_number(5)
+                    id = uuid.uuid4()
                 
                     insert_query = f"insert INTO {SUBS_TABLE.TABLE_NAME} ({SUBS_TABLE.ID},{SUBS_TABLE.MATCH_ID},{SUBS_TABLE.PLAYER_ID},{SUBS_TABLE.POSITION}, {SUBS_TABLE.TIME}) VALUES ('{id}','{match_id}','{player.info.id}','{player.selectionInfo.position}',{time_playing})"
                     
@@ -315,7 +322,7 @@ async def update_period(match_id,status):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 
                     
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"insert INTO {PERIODS_TABLE.TABLE_NAME} ({PERIODS_TABLE.ID},{PERIODS_TABLE.MATCH_ID},{PERIODS_TABLE.STATUS}, {PERIODS_TABLE.TIME}) VALUES ('{id}','{match_id}','{status}',{int(datetime.utcnow().timestamp())})"
                 print(insert_query)
@@ -336,7 +343,7 @@ async def retrieve_player_goals(match:response_classes.MatchInfo):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor: 
 #    select * from Goals inner join Players_Seasons ps1 on Goals.Player_ID=ps1.ID inner join Players_Seasons ps2 on Goals.Assister_ID=ps2.ID inner join Players p1 on p1.ID=ps1.Player_ID inner join Players p2 on p2.ID=ps2.Player_ID and Match_ID=15221 order by Time asc
-                insert_query = f"select * from {GOALS_TABLE.TABLE_NAME} inner join {player_data.PLAYER_SEASON_TABLE.TABLE_NAME} ps1 on {GOALS_TABLE.TABLE_NAME}.{GOALS_TABLE.PLAYER_ID}=ps1.{player_data.PLAYER_SEASON_TABLE.ID} inner join {player_data.PLAYER_SEASON_TABLE.TABLE_NAME} ps2 on {GOALS_TABLE.TABLE_NAME}.{GOALS_TABLE.ASSISTER_ID}=ps2.{player_data.PLAYER_SEASON_TABLE.ID} inner join {player_data.TABLE.TABLE_NAME} p1 on p1.{player_data.TABLE.ID}=ps1.{player_data.PLAYER_SEASON_TABLE.PLAYER_ID} inner join {player_data.TABLE.TABLE_NAME} p2 on p2.{player_data.TABLE.ID}=ps2.{player_data.PLAYER_SEASON_TABLE.PLAYER_ID} and {GOALS_TABLE.MATCH_ID}={match.id} order by {GOALS_TABLE.TIME} asc"
+                insert_query = f"SELECT * FROM {GOALS_TABLE.TABLE_NAME} INNER JOIN {player_data.PLAYER_SEASON_TABLE.TABLE_NAME} ps1 on {GOALS_TABLE.TABLE_NAME}.{GOALS_TABLE.PLAYER_ID}=ps1.{player_data.PLAYER_SEASON_TABLE.ID} INNER JOIN {player_data.TABLE.TABLE_NAME} p1 ON p1.{player_data.TABLE.ID} = ps1.{player_data.PLAYER_SEASON_TABLE.PLAYER_ID}  LEFT JOIN {player_data.PLAYER_SEASON_TABLE.TABLE_NAME}  ps2 ON {GOALS_TABLE.TABLE_NAME}.{GOALS_TABLE.ASSISTER_ID} = ps2.{player_data.PLAYER_SEASON_TABLE.ID} LEFT JOIN {player_data.TABLE.TABLE_NAME} p2 ON p2.{player_data.TABLE.ID} = ps2.{player_data.PLAYER_SEASON_TABLE.PLAYER_ID} WHERE {GOALS_TABLE.MATCH_ID}={match.id} ORDER BY {GOALS_TABLE.TIME} ASC;"
                 print(insert_query)
                 await cursor.execute(insert_query)
                 results = await cursor.fetchall()
@@ -367,7 +374,7 @@ async def save_opposition_goal(match_id,time_playing):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
         
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"insert INTO {OPPOSITION_GOALS_TABLE.TABLE_NAME} ({OPPOSITION_GOALS_TABLE.ID},{OPPOSITION_GOALS_TABLE.MATCH_ID}, {OPPOSITION_GOALS_TABLE.TIME}) VALUES ('{id}','{match_id}',{time_playing})"
                 
@@ -381,7 +388,7 @@ async def save_planned_lineup(match_id,minute,players:List[player_responses.Play
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 for player in players:
                     
-                    id = id_generator.generate_random_number(5)
+                    id = uuid.uuid4()
                     
                     #reset the plan
                     delete_query =f"update {PLANNED_LINEUP_TABLE.TABLE_NAME} set {PLANNED_LINEUP_TABLE.SOFT_DELETE}=True, {PLANNED_LINEUP_TABLE.SOFT_DELETE_TIME}={int(datetime.utcnow().timestamp())} where {PLANNED_LINEUP_TABLE.MATCH_ID}='{match_id}' and {PLANNED_LINEUP_TABLE.PLAYER_ID}='{player.info.id}' and {PLANNED_LINEUP_TABLE.MINUTE} >= {minute}"
@@ -399,7 +406,7 @@ async def save_actual_lineup(match_id,players:List[player_responses.PlayerRespon
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 for player in players:
                     
-                    id = id_generator.generate_random_number(5)
+                    id = uuid.uuid4()
                     delete_query = f"delete from {ACTUAL_LINEDUP_TABLE.TABLE_NAME} where {ACTUAL_LINEDUP_TABLE.TIME}={time_playing} and {ACTUAL_LINEDUP_TABLE.PLAYER_ID}={player.info.id}"
                     print(delete_query)
                     await cursor.execute(delete_query)
@@ -416,7 +423,7 @@ async def retrieveAllPlannedLineups(match_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
-                # Perform a non-blocking query
+                
                 insert_query = f"select * from {PLANNED_LINEUP_TABLE.TABLE_NAME} inner join {player_data.PLAYER_SEASON_TABLE.TABLE_NAME} on {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.PLAYER_ID}={player_data.PLAYER_SEASON_TABLE.TABLE_NAME}.{player_data.PLAYER_SEASON_TABLE.ID} inner join {player_data.TABLE.TABLE_NAME} on {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.ID}={player_data.PLAYER_SEASON_TABLE.TABLE_NAME}.{player_data.PLAYER_SEASON_TABLE.PLAYER_ID} and {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MATCH_ID}={match_id} and ({PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} IS NULL or {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.SOFT_DELETE} != True) order by {PLANNED_LINEUP_TABLE.TABLE_NAME}.{PLANNED_LINEUP_TABLE.MINUTE} asc, {player_data.TABLE.TABLE_NAME}.{player_data.TABLE.NAME}"
                 print(insert_query)
                 await cursor.execute(insert_query)
@@ -598,11 +605,15 @@ async def retrieveAllActualLineups(match,how_log_ago) -> List[List[player_respon
                     if(i==0): minute = player.selectionInfo.minuteOn
                     i+=1
                     if(minute!=player.selectionInfo.minuteOn):
-                        lineups.append(players)
+                        lineups.append({"status":minute,"players":players})
                         minute=player.selectionInfo.minuteOn
                         players = []
                     players.append(player)
-                lineups.append(players)
+                    if(i+1==len(results)):
+                        lineups.append({"status":minute,"players":players})
+    
+    
+    
                 return lineups   
 
 
@@ -612,13 +623,13 @@ async def retrieveAllActualLineups(match,how_log_ago) -> List[List[player_respon
 
 def convertToPlannedStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[PLANNED_LINEUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
-    selection_info = player_responses.SelectionInfo(id=data[f'{PLANNED_LINEUP_TABLE.ID}'],position=data[PLANNED_LINEUP_TABLE.POSITION],minuteOn=data[PLANNED_LINEUP_TABLE.MINUTE])
+    selection_info = player_responses.SelectionInfo(id=data[f'{PLANNED_LINEUP_TABLE.ID}'],position=data[PLANNED_LINEUP_TABLE.POSITION],minuteOn=round(data[PLANNED_LINEUP_TABLE.MINUTE]))
     playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info)
     return playerResponse
 
 def convertToActualStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[ACTUAL_LINEDUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
-    selection_info = player_responses.SelectionInfo(id=data[f'{ACTUAL_LINEDUP_TABLE.ID}'],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=data[ACTUAL_LINEDUP_TABLE.TIME])
+    selection_info = player_responses.SelectionInfo(id=data[f'{ACTUAL_LINEDUP_TABLE.ID}'],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=round(data[ACTUAL_LINEDUP_TABLE.TIME]))
     playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info)
     return playerResponse
 
@@ -629,8 +640,11 @@ def convertToOppositionPlayerMatchStats(data,match:response_classes.MatchInfo):
 
 def convertToGoalPlayerMatchStats(data,match:response_classes.MatchInfo):
     player_info = player_responses.PlayerInfo(id=data[GOALS_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
-    assister_info = player_responses.PlayerInfo(id=data[GOALS_TABLE.ASSISTER_ID],name=data[f"p2.{player_data.TABLE.NAME}"])
-    return response_classes.PlayerMatchStat(player=player_info,time=int(data[GOALS_TABLE.TIME]),minute=int(data[GOALS_TABLE.TIME]),secondary_player=assister_info,type="Scored",detail=data[GOALS_TABLE.TYPE])
+    if(data[GOALS_TABLE.ASSISTER_ID]):
+        assister_info = player_responses.PlayerInfo(id=data[GOALS_TABLE.ASSISTER_ID],name=data[f"p2.{player_data.TABLE.NAME}"])
+    else:
+        assister_info = player_responses.PlayerInfo()
+    return response_classes.PlayerMatchStat(player=player_info,time=round(data[GOALS_TABLE.TIME]),minute=round(data[GOALS_TABLE.TIME]),secondary_player=assister_info,type="Scored",detail=data[GOALS_TABLE.TYPE])
 
 
 

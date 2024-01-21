@@ -9,12 +9,26 @@ import response_classes
 from player_data import save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
 from roles_data import retrieve_role_by_user_id_and_team_id
 from users_data import retrieve_user_id_by_email
+from etag_manager import deleteEtag
 from roles import Role
 from auth import check_permissions
 from firebase_admin import credentials
 from firebase_admin import messaging
+import notifications
 import player_backend
+from etag_manager import isEtaggged,deleteEtag,setEtag
+import functools
+import time
+import asyncio
+import hashlib
+import json
+import firebase_admin
+from firebase_admin import credentials, firestore
+from timeit import timeit
+
+@timeit    
 async def create_players(event, context):
+    lambda_handler(event,context)
     body =json.loads(event["body"])
     
     team_id = event["pathParameters"]["team_id"]
@@ -25,11 +39,19 @@ async def create_players(event, context):
     for player in players:
         result = await player_backend.create_players(player,team_id)
         created_players.append(result)
+    await player_backend.updatePlayerCache(team_id)
+    data = {
+        "link":f"/teams/{team_id}",
+        "team_id":team_id,
+        "action":"new_players",
+        "silent":"True"
+    }
+    await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),"New players","New players",'team',data)
     response = api_helper.make_api_response(200,created_players)
     return response
 
 
-
+@timeit
 async def list_players_by_team(event, context):
     lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
@@ -37,9 +59,18 @@ async def list_players_by_team(event, context):
     if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
         players = []
         try:
-            players = await retrieve_players_by_team(team_id)
-            response = api_helper.make_api_response(200,players)
-  
+            headers = event['headers']
+            etag = headers.get('etag',None)
+            if(etag):
+                print("ETAG EXISTS")
+                isEtag = await isEtaggged(team_id,'players',etag)
+                if(isEtag):
+                    response = api_helper.make_api_response_etag(304,result={},etag=etag)
+                    return response 
+                else:
+                    return await player_backend.getPlayersFromDB(team_id)
+            else:
+                return await player_backend.getPlayersFromDB(team_id)
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
@@ -48,10 +79,8 @@ async def list_players_by_team(event, context):
     else:
         response = api_helper.make_api_response(403,None,"You do not have permission to view the players")
         return response
-    
-    
-    
-    return response
+
+
 
 
 def delete_player_from_team(event, context):

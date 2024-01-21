@@ -26,7 +26,7 @@ if __name__ == "__main__":
     asyncio.run(create_database.create_database())
     asyncio.run(users_data.save_user('12345','r.hmeid+dev@gmail.com','Reda Hmeid'))
     team = Team(age_group='u12',name="MUFCJ Reds")
-    id = asyncio.run(team_data.save_team(team))
+    id = asyncio.run(team_data.save_team(team,123))
     asyncio.run(team_season_data.retrieve_seasons_by_team_id(id))
     season_id = asyncio.run(team_season_data.save_team_season(id,"23/24",'u12'))
     asyncio.run(team_season_data.retrieve_seasons_by_team_id(id))

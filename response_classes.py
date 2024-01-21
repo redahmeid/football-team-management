@@ -13,6 +13,7 @@ from enum import Enum
 class Link(BaseModel):
     link:str
     method:str
+    meta_data:Optional[str]=""
 
 class Admin(BaseModel):
     name:Optional[str]=""
@@ -45,7 +46,7 @@ class TeamResponse(BaseModel):
     coaches:Optional[List]=[]
     season:Optional[str]=''
     season_id:Optional[str]=''
-    seasons:Optional[List]=[]
+    seasons:Optional[List]=None
     live:Optional[bool]=True
     self:Optional[Link]=None 
     nextMatch:Optional[Link]=None        #save_response["next_match"] = {"ID":match["ID"],"opposition":match["Opposition"],"date":match["Date"].isoformat(),"homeOrAway":match["HomeOrAway"], "club_name":match["c.Name"], "team_name":match["Name"], "age_group":match["AgeGroup"]}
@@ -68,10 +69,10 @@ class ClubResponse(BaseModel):
 
 
 class MATCH_CONSTS:
-    baseUrl = "/teams/{}/matches/{}"
+    baseUrl = "/matches/{}"
 
 def getMatchUrl(team_id,match_id):
-    return MATCH_CONSTS.baseUrl.format(team_id,match_id)
+    return MATCH_CONSTS.baseUrl.format(match_id)
 
 
 class HomeOrAway(str, Enum):
@@ -91,6 +92,8 @@ class MatchType(str, Enum):
 class MatchInfo(BaseModel):
     id:str
     team:Optional[TeamResponse]=None
+    team_link:Optional[Link]=None
+    self:Optional[Link]=None
     status:MatchState
     goals:Optional[int]=0
     conceded:Optional[int]=0
@@ -126,6 +129,13 @@ class PlannedMatchResponse(BaseModel):
     links:Optional[Dict[str,Link]]=None
     captain:Optional[player_responses.PlayerResponse]=None
 
+
+class Lineups(BaseModel):
+    lineups:Optional[List]=[]
+    subs:Optional[List]=[]
+
+
+
 class ActualMatchResponse(BaseModel):
     match:MatchInfo
     started_at:Optional[int]=0
@@ -135,12 +145,18 @@ class ActualMatchResponse(BaseModel):
     last_planned:Optional[List]=None
     next_players:Optional[List]=None
     planned_subs:Optional[List]=None
+    planned_position_changes:Optional[List]=[]
+    planned_lineups:Optional[List]=[]
+    actual_lineups:Optional[List]=[]
     actual_subs:Optional[List]=None
+    actual_position_changes:Optional[List]=[]
     assisters:Optional[List]=None
     scorers:Optional[List]=None
     opposition:Optional[List]=None
     report:Optional[List]=None
     links:Optional[Dict[str,Link]]=None
     captain:Optional[player_responses.PlayerResponse]=None
+    links:Optional[Dict[str,Link]]=None
+
 
 

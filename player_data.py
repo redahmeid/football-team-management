@@ -6,7 +6,30 @@ import player_responses
 from typing import List, Dict
 import sys
 import aiomysql
+import functools
+import time
 import asyncio
+def timeit(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
 # # "CREATE TABLE Players" \
 #         "(ID varchar(255),"\
 #         "Name varchar(255) NOT NULL,"\
@@ -79,7 +102,7 @@ async def save_player_season(player_id,team_season_id):
                 await conn.commit()
                 
                 return id
-
+@timeit
 async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:

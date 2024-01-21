@@ -26,6 +26,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   create_team_players:
     handler: handler.create_team_players
@@ -41,6 +42,23 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
+            allowCredentials: false
+  delete_user:
+    handler: handler.delete_user
+    events:
+      - http:
+          path: /users
+          method: delete
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
             allowCredentials: false
   contact_us:
     handler: handler.contact_us
@@ -56,6 +74,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   create_team:
     handler: handler.create_team
@@ -71,6 +90,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   create_team_fixtures:
     handler: handler.create_team_fixtures
@@ -86,6 +106,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   create_user:
     handler: handler.create_user
@@ -101,6 +122,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   retrieve_team_squad:
     handler: handler.list_players_by_team
@@ -116,6 +138,55 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
+            allowCredentials: false
+  retrieve_match_planned_lineups:
+    handler: handler.get_match_planned_lineups
+    events:
+      - http:
+          path: /matches/{match_id}/planned_lineups
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  retrieve_match_actual_lineups:
+    handler: handler.get_match_actual_lineups
+    events:
+      - http:
+          path: /matches/{match_id}/actual_lineups
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  retrieve_match_current_lineup:
+    handler: handler.get_match_current_lineup
+    events:
+      - http:
+          path: /matches/{match_id}/current_lineup
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
             allowCredentials: false
   user_homepage_bff:
     handler: handler.getUser
@@ -131,6 +202,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   add_user_to_team:
     handler: handler.add_users_to_team
@@ -146,6 +218,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   retrieve_matches_by_team:
     handler: handler.list_matches_by_team
@@ -161,6 +234,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   retrieve_team_summary:
     handler: handler.retrieve_team_summary
@@ -176,6 +250,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   delete_player:
     handler: handler.delete_player
@@ -191,6 +266,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   retrieve_next_match_by_team:
     handler: handler.retrieve_next_match_by_team
@@ -206,12 +282,13 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
-  create_team_screen_bff:
+  create_new_team:
     handler: handler.submit_team
     events:
       - http:
-          path: /bff/create_team_screen
+          path: /teams
           method: post
           cors:
             origins:
@@ -221,6 +298,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   
   create_match_day_bff:
@@ -237,9 +315,11 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
-  getMatchById:
-    handler: handler.getMatchAsGuest
+  
+  get_match:
+    handler: handler.getMatch
     events:
       - http:
           path: /matches/{match_id}
@@ -252,12 +332,27 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
+      - http:
+          path: /matches/{match_id}/time_played
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  
   submit_lineup:
     handler: handler.submit_lineup
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/players/submit_lineup
+          path: /matches/{match_id}/submit_plan
           method: post
           cors:
             origins:
@@ -267,27 +362,14 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
-  start_match:
-    handler: handler.start_match
-    events:
-      - http:
-          path: /teams/{team_id}/matches/{match_id}/start
-          method: post
-          cors:
-            origins:
-              - '*'
-            headers:
-              - Content-Type
-              - x-device-id
-              - x-api-key
-              - authorization
-            allowCredentials: false
+  
   set_captain:
     handler: handler.set_captain
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/captain
+          path: /matches/{match_id}/captain
           method: post
           cors:
             origins:
@@ -297,13 +379,14 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
 
   submit_subs:
     handler: handler.submit_subs
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/players/submit_lineup/subs
+          path: /matches/{match_id}/players/submit_lineup/subs
           method: post
           cors:
             origins:
@@ -313,12 +396,13 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   update_match_status:
     handler: handler.update_match_status
     events:
       - http:
-          path: /teams/{team_id}/matches/{match_id}/{status}
+          path: /matches/{match_id}/{status}
           method: post
           cors:
             origins:
@@ -328,8 +412,41 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
-
+  start_match:
+    handler: handler.start_match
+    events:
+      - http:
+          path: /matches/{match_id}/start
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+ 
+  retrieve_score:
+    handler: handler.retrieve_score
+    events:
+      - http:
+          path: /matches/{match_id}/score
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
   create_jwt:
     handler: handler.set_tokens
     events:
@@ -344,6 +461,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - Etag
             allowCredentials: false
   save_notifications:
     handler: handler.set_device_token
@@ -359,6 +477,7 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   save_notifications_by_match:
     handler: handler.set_device_token_by_match
@@ -374,9 +493,14 @@ functions:
               - x-device-id
               - x-api-key
               - authorization
+              - ETag
             allowCredentials: false
   subs_due:
     handler: handler.subs_due
+  cache_handler:
+    handler: handler.cacher
+  send_notification:
+    handler: handler.sendNotification
  
   
 
@@ -384,6 +508,9 @@ plugins:
   - serverless-dotenv-plugin
   - serverless-python-requirements
   - serverless-prune-plugin
+
+  # - serverless-domain-manager
+
 custom:
   pythonRequirements:
     dockerizePip: true
@@ -392,6 +519,16 @@ custom:
     noDeploy:
      - boto3
      - botocore
+  # customDomain:
+  #   domainName: sandbox.api.thefootballcoachapp.com  # Replace with your domain name
+  #   certificateName: my-certificate  # Replace with your certificate name
+  #   stage: devnew  # Optional stage to create the domain name for
+  #   createRoute53Record: true 
+  # customDomain:
+  #   domainName: api.thefootballcoachapp.com  # Replace with your domain name
+  #   certificateName: my-certificate  # Replace with your certificate name
+  #   stage: prodnew  # Optional stage to create the domain name for
+  #   createRoute53Record: true 
     
 
 package:

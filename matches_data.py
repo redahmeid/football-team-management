@@ -98,7 +98,7 @@ async def save_team_fixture(match:response_classes.MatchInfo,team_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
-                id = id_generator.generate_random_number(5)
+                id = id_generator.generate_random_number(7)
                 # Define the SQL query to insert data into a table
                 insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against,Type) VALUES ('{id}','{match.opposition}','{match.homeOrAway.value}','{match.date}','{match.length}','{team_id}','{match.status.value}',0,0,'{match.type.value}')"
                 print(insert_query)

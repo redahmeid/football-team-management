@@ -1,7 +1,7 @@
 import json
 from pydantic import TypeAdapter, ValidationError
 from exceptions import AuthError
-from classes import Team
+
 import response_classes
 import api_helper
 import response_errors
@@ -9,48 +9,36 @@ from team_data import save_team,retrieve_team_by_id
 from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
 from player_data import retrieve_players_by_team
-from matches_apis import list_matches_by_team_backend
 from auth import check_permissions
 from roles import Role
 import team_season_data
-from team_backend import retrieveTeamResponse
+from team_backend import retrieveTeamResponse,getTeamFromDB
 import team_season_data
-# from supabase import create_client, Client
-from config import app_config
 from team_backend import addSingleUser
 import id_generator
-# supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
-async def create_team(event, context):
-    lambda_handler(event,context)
-    
+from etag_manager import isEtaggged,deleteEtag,setEtag
+import json
+import team_backend
+import functools
+import time
+import asyncio
+from classes import User,Team,TeamUser
+import response_classes
+from config import app_config
+import exceptions
+from users_data import retrieve_user_id_by_email
+from team_data import save_team,retrieve_team_by_id
+from secrets_util import getEmailFromToken, lambda_handler
+import api_helper
+from etag_manager import deleteEtag
+from roles_data import save_role
+import roles
+from auth import set_custom_claims
+import team_season_data
+import notifications
 
-    body =json.loads(event["body"])
-    
-    TeamValidator = TypeAdapter(Team)
-    teams = []
-    try:
-        
-        team = Team(name=body["name"],age_group=body["age_group"])
-        new_team = TeamValidator.validate_python(team)
-        id = id_generator.generate_random_number(5)
-        team_id = id_generator.generate_random_number(5)
-        # data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
-        save_response = await save_team(new_team,team_id)
-        team_season_data.save_team_season(id,body["season"],body["age_group"])
-        set_custom_claims(getEmailFromToken(event,context))
-        print("CREATE TEAM: %s"%(save_response))
-        teams.append(retrieve_team_by_id(save_response))
-        response = api_helper.make_api_response(200,teams)
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None)
-    except ValueError as e:
-        response = api_helper.make_api_response(400,None)
-    except AuthError as e:
-        response = api_helper.make_api_response(401,None,e)
-
-    print(response)
-    return response
+import user_homepage_backend
+from timeit import timeit
 
 async def addUserToTeam(event,context):
     lambda_handler(event,context)
@@ -63,27 +51,90 @@ async def addUserToTeam(event,context):
         for email in emails:
             result = await addSingleUser(email,team_id)
             results.append(result.model_dump())
+        team = await team_backend.getTeamFromDB(team_id)
+        await team_backend.updateTeamCache(team_id)
+        data = {
+            "link":f"/teams/{team_id}",
+            "team_id":f"{team_id}",
+            "action":"new_users",
+            "silent":"False"
+        }
+        await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),f"Welcome your new coaches",f"New coach added to {team.name}",'team',data)
         response = api_helper.make_api_response(200,results)
     else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
     return response
 
+@timeit
+async def submit_team(event, context):
+    lambda_handler(event,context)
+    body =json.loads(event["body"])
+    teams = []
+    try:
+        email = getEmailFromToken(event,context)
+       
+        
+        team = Team(age_group=body["age_group"],name=body["name"])
+        id = id_generator.generate_random_number(7)
+        team_id = id_generator.generate_random_number(7)
+        # data, count = supabase.table('teams').insert({"id": id, "name": body["name"],"age_group":body["age_group"],"season":body["season"],"team_id":team_id}).execute()
+        save_response = await save_team(team,team_id)
+        
+        
+        team_season_id = await team_season_data.save_team_season(team_id,body["season"],body["age_group"])
+        teamUser = TeamUser(email=email,team_id=str(team_season_id),role=roles.Role.admin)
+        role_id = await save_role(teamUser)
+        await set_custom_claims(event=event,context=context)
+        # get the user
+        save_response = await retrieve_team_by_id(team_season_id)
+        teams.append(save_response.model_dump())
+        await user_homepage_backend.updateUserCache(email)
+        message = f"{team.name} has been created"
+        subject = 'New team added'
+        data = {
+            "link":f"/teams/{save_response.id}",
+            "team_id":f"{save_response.id}",
+            "action":"new_team",
+            "silent":"True"
+        }
+        await notifications.sendNotificationUpdatesLink(email,message,subject,'team',data)
+        
+        response = api_helper.make_api_response(200,teams)
+    except exceptions.AuthError as e:
+        print(e)
+        response = api_helper.make_api_response(401,None,e)
+    except Exception as e:
+        print(e)
+        response = api_helper.make_api_response(400,None,e)
+    return response
 
-
-
+@timeit
 async def retrieve_team_summary(event, context):
-   
+    lambda_handler(event,context)
     
     team_id = event["pathParameters"]["team_id"]
+    headers = event['headers']
+    etag = headers.get('etag',None)
+    print(f"USER HEADERS {headers}")
     
     teams = []
 
     try:
-        team = await retrieve_team_by_id(team_id)
-        team_response = await retrieveTeamResponse(team)
-        teams.append(team_response.model_dump())
-            
-        
+        if(etag):
+            print("ETAG EXISTS")
+            isEtag = await isEtaggged(team_id,'teams',etag)
+            if(isEtag):
+                return api_helper.make_api_response_etag(304,result={},etag=etag)
+                
+                
+            else:
+                response = await getTeamFromDB(team_id)
+                
+        else:
+            response = await getTeamFromDB(team_id)
+
+        print(f"RETRIEVE TEAM SUMMARY RESPONSE {response}")    
+        return api_helper.make_api_response_etag(200,[response.model_dump()],etag)    
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
         print(errors)
@@ -95,20 +146,11 @@ async def retrieve_team_summary(event, context):
         return response
         
     
-    response = api_helper.make_api_response(200,teams)
-    return response
-
-
-    
 
 
 
-# "(ID varchar(255),"\
-#         "Name varchar(255) NOT NULL,"\
-#         "AgeGroup varchar(255) NOT NULL,"\
-#         "Email varchar(255) NOT NULL,"\
-#         "Club_ID varchar(255) NOT NULL,"\
-#         "live VARCHAR(255),"\
+
+@timeit
 def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     print("convertTeamDataToTeamResponse: %s"%(team))
     id = team["ts.ID"]

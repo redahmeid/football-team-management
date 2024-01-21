@@ -1,15 +1,18 @@
 from classes import Match, PlayerMatch
 import response_classes
 from config import app_config
-import id_generator
-from firebase_admin import auth,messaging
+from firebase_admin import credentials, firestore
+# Initialize the AWS Secrets Manager client
 
+from firebase_admin import auth,messaging
+import boto3
 import db
 import player_responses
 import player_data
 from typing import List, Dict
 import matches_state_machine
 from datetime import datetime
+import team_data
 import matches_data
 import sys
 import asyncio
@@ -17,9 +20,13 @@ import logging
 import time
 import functools
 import aiomysql
+import json
 import firebase_admin
 logger = logging.getLogger(__name__)
 import functools
+import uuid
+from etag_manager import setEtag
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
 def timeit(func):
@@ -67,14 +74,18 @@ class TABLE:
     TIME="Time"
 
     def createTable():
-        return f"CREATE TABLE if not exists {TABLE.TABLE_NAME}" \
+        sql = f"CREATE TABLE if not exists {TABLE.TABLE_NAME}" \
         f"({TABLE.ID} varchar(255),"\
         f"{TABLE.EMAIL} varchar(255),"\
         f"{TABLE.MATCH_ID} varchar(255),"\
         f"{TABLE.TOKEN} varchar(255),"\
         f"{TABLE.TIME} int,"\
         f"CONSTRAINT UQ_MATCH UNIQUE ({TABLE.MATCH_ID},{TABLE.TOKEN}),"\
+        f"CONSTRAINT UQ_EMAIL UNIQUE ({TABLE.EMAIL},{TABLE.TOKEN}),"\
         f"PRIMARY KEY ({TABLE.ID}))"
+
+        print(sql)
+        return sql
     def removeMatchID():
         return f"ALTER TABLE {TABLE.TABLE_NAME}"\
         f" DROP column {TABLE.MATCH_ID}"
@@ -108,8 +119,14 @@ async def save_token(email,token):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
     
         
-                id = id_generator.generate_random_number(5)
-            
+                id = uuid.uuid4()
+                select_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.TOKEN}='{token}'"
+                await cursor.execute(select_query)
+                row = await cursor.fetchall()
+
+                if(len(row)>0):
+                    return
+                
                 insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())})"
                 
                 try:
@@ -124,6 +141,37 @@ async def save_token(email,token):
                     
                     # Commit the transaction
 
+
+@timeit
+async def delete_token(email,token):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+    
+        
+                id = uuid.uuid4()
+                select_query = f"delete  from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.TOKEN}='{token}'"
+                await cursor.execute(select_query)
+                row = await cursor.fetchall()
+
+                if(len(row)>0):
+                    return
+                
+                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())})"
+                
+                try:
+                    await cursor.execute(insert_query)
+                    await conn.commit()
+                    print("Succesfully saved the token")
+                    return True
+                except Exception as e:
+                    print(e)
+                    print("Token already exists")
+                    return False
+                    
+                    # Commit the transaction
+                
+
 @timeit
 async def save_token_by_match(match_id,token):
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -131,7 +179,7 @@ async def save_token_by_match(match_id,token):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
     
         
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{match_id}','{token}',{int(datetime.utcnow().timestamp())})"
                 print(insert_query)
@@ -150,20 +198,7 @@ async def save_token_by_match(match_id,token):
 
 @timeit
 async def save_message(notification_id,message):
-    async with aiomysql.create_pool(**db.db_config) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-    
-        
-                id = id_generator.generate_random_number(5)
-            
-                insert_query = f"insert INTO {MESSAGES_TABLE.TABLE_NAME} ({MESSAGES_TABLE.ID},{MESSAGES_TABLE.MESSAGE},{MESSAGES_TABLE.NOTIFICATION_ID}, {MESSAGES_TABLE.TIME}) VALUES ('{id}','{message}','{notification_id}',{int(datetime.utcnow().timestamp())})"
-                await cursor.execute(insert_query)
-                    
-                    # Commit the transaction
-                await conn.commit()
-                logger.info("Message successfulll saved")
-                return True
+    await setEtag(notification_id,'notifications',message)
 
 async def getDeviceToken(email):
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -171,7 +206,7 @@ async def getDeviceToken(email):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
     
         
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}'"
 
@@ -191,7 +226,7 @@ async def getDeviceTokenByMatchOnly(match_id):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
     
         
-                id = id_generator.generate_random_number(5)
+                id = uuid.uuid4()
             
                 insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.EMAIL} IS NULL"
 
@@ -205,8 +240,118 @@ async def getDeviceTokenByMatchOnly(match_id):
                 return row
 
 
-            
-async def send_push_notification(token, title, body,action,link):
+@timeit
+async def sendNotificationUpdatesLink(match_id,message,subject,type,data):
+    secretsmanager = boto3.client('secretsmanager')
+    event = {
+        "type":type,
+        "id":match_id,
+        "message":message,
+        "subject":subject,
+        "data":data
+    }
+    lambda_client = boto3.client('lambda')
+    lambda_client.invoke(
+    FunctionName=app_config.send_notifications,  # Name of the target Lambda
+    InvocationType='Event',
+    Payload=json.dumps(event)  # Asynchronous invocation
+    ) 
+
+@timeit
+async def sendNotificationUpdates(match_id,message,subject,type):
+    secretsmanager = boto3.client('secretsmanager')
+    event = {
+        "type":type,
+        "id":match_id,
+        "message":message,
+        "subject":subject,
+    }
+    lambda_client = boto3.client('lambda')
+    lambda_client.invoke(
+    FunctionName=app_config.send_notifications,  # Name of the target Lambda
+    InvocationType='Event',
+    Payload=json.dumps(event)  # Asynchronous invocation
+    ) 
+
+@timeit
+async def backgroundSendMatchUpdateNotification(event,context):
+    secretsmanager = boto3.client('secretsmanager')
+    try:
+        # Retrieve the serviceAccountKey.json from Secrets Manager
+        secret_name = "dev/firebase"  # Replace with your secret name
+        secret = secretsmanager.get_secret_value(SecretId=secret_name)
+        secret_dict = json.loads(secret['SecretString'])
+        
+        # Initialize Firebase Admin SDK with the retrieved credentials
+        firebase_cred = credentials.Certificate(secret_dict)
+        
+        app = firebase_admin.initialize_app(credential=firebase_cred)
+        print("FIREBASE APP initialized: %s"%app)
+    except Exception as e:
+        print(e)
+
+
+    id = event["id"]
+    message = event["message"]
+    subject = event["subject"]
+    type = event["type"]
+    data = event.get("data",None)
+    if(data is None):
+        data = {
+            "id":id
+        }
+    silent = data.get("silent",False)
+    if(type=='match'):
+        for user in await getStakeholders(id):
+            tokens = await getDeviceToken(user.email)
+            for token in tokens:
+                new_token = token["Token"]
+                if(silent=="True"):
+                    await send_push_message(new_token,subject,message,data)
+                else:
+                    await send_push_notification(new_token,subject,message,data)
+        
+        tokens = await getDeviceTokenByMatchOnly(id)
+
+        for token in tokens:
+            new_token = token["Token"]
+            if(silent=="True"):
+                await send_push_message(new_token,subject,message,data)
+            else:
+                await send_push_notification(new_token,subject,message,data)
+    elif(type=='team'):
+        tokens = await getDeviceToken(id)
+        for token in tokens:
+            new_token = token["Token"]
+            if(silent=="True"):
+                await send_push_message(new_token,subject,message,data)
+            else:
+                await send_push_notification(new_token,subject,message,data)
+    if(type=='admins'):
+        for user in await getStakeholders(id):
+            tokens = await getDeviceToken(user.email)
+            for token in tokens:
+                new_token = token["Token"]
+                if(silent=="True"):
+                    await send_push_message(new_token,subject,message,data)
+                else:
+                    await send_push_notification(new_token,subject,message,data)
+        
+        
+
+        
+async def getStakeholders(match_id):
+    matches = await matches_data.retrieve_match_by_id(match_id)
+
+    match = matches[0]
+    print(f"MATCH {match}")
+    team_id = match.team.id
+    print(f"TEAM ID {team_id}")
+    admins = await team_data.retrieve_users_by_team_id(team_id)
+    return admins
+       
+async def send_push_notification(token, title, body,data):
+    secretsmanager = boto3.client('secretsmanager')
     print(f"Sent to {token}")
     message = messaging.Message(
         
@@ -215,10 +360,7 @@ async def send_push_notification(token, title, body,action,link):
             body=body,
         ),
         token=token,
-        data={
-            "action": action,
-            "link":link
-        }
+        data = data
     )
     try:
         response = messaging.send(message)
@@ -227,6 +369,22 @@ async def send_push_notification(token, title, body,action,link):
     except Exception as e:
         print(f"Exception is {e}")
     await save_message(token,body)
+
+async def send_push_message(token, title, body,data):
+    secretsmanager = boto3.client('secretsmanager')
+    print(f"Sent to {token}")
+    message = messaging.Message(
+        token=token,
+        data = data
+    )
+    try:
+        messaging.send(message)
+        await save_message(token,body)
+    except firebase_admin._messaging_utils.UnregisteredError as e:
+        print(f"Token is invalid or unregistered: {e}")
+    except Exception as e:
+        print(f"Exception is {e}")
+    
     
     
 

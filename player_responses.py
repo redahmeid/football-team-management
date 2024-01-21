@@ -8,8 +8,8 @@ class Link(BaseModel):
     method:str
 
 class PlayerInfo(BaseModel):
-    id:str
-    name:Optional[str]=None
+    id:Optional[str]=""
+    name:Optional[str]=""
 
 class SelectionInfo(BaseModel):
     id:Optional[str]=None

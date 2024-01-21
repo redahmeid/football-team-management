@@ -10,6 +10,10 @@ def load_dotenv_path():
         return 'prod.env'
     elif env == 'dev':
         return 'dev.env'
+    elif env == 'devnew':
+        return 'devnew.env'
+    elif env == 'prodnew':
+        return 'prodnew.env'
     else:
         return 'test.env'
 # Load the appropriate .env file
@@ -25,6 +29,8 @@ class AppConfig:
         self.database = os.environ["dbdatabase"]  
         self.admin_db = os.environ["dbadmin_db"]
         self.email_token = os.environ["email_token"]
+        self.cache_handler = os.environ["cache_handler"]
+        self.send_notifications = os.environ["send_notifications"]
 
 
 

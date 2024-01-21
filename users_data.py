@@ -77,3 +77,24 @@ async def retrieve_user_id_by_email(email:str):
                     else:
                         return None
 
+async def delete_user(email:str):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+            async with pool.acquire() as conn:
+                async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                    # Define the SQL query to insert data into a table
+                    insert_query = "delete from Users where Email=%s" 
+                    print(insert_query)
+                    # Execute the SQL query to insert data
+                    await cursor.execute(insert_query,email)
+                    row = await cursor.fetchone()
+                    # Commit the transaction
+                    
+                    # club = Club(id=id,name=row)
+                    print("USER is ")
+                    print(row)
+                    if(row):
+                       return row["ID"]  
+                    else:
+                        return None
+

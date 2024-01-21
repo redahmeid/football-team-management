@@ -80,5 +80,21 @@ async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
                 print(data)
                 return data
 
+async def delete_roles_by_email(user_id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = "delete from Roles where Email=%s"
+
+                data_to_insert = (user_id)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query, data_to_insert)
+                data = await cursor.fetchall()
+                print(data)
+                return data
+
 if __name__ == "__main__":
   asyncio.run(retrieve_role_by_user_id_and_team_id("r.hmeid@gmail.com","15344"))

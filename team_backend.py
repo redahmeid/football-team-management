@@ -3,20 +3,27 @@ import asyncio
 from roles import Role
 from users_data import retrieve_user_id_by_email,save_user
 from roles_data import save_role
-from classes import TeamUser,Team
+from classes import TeamUser
 import sys
 import team_season_data
-from team_data import retrieve_teams_by_user_id,retrieve_users_by_team_id
+from team_data import retrieve_users_by_team_id
 from player_data import retrieve_players_by_team
 import logging
 from match_planning_backend import list_matches_by_team_backend
 logger = logging.getLogger(__name__)
-import functools
+import json
 import team_data
+from timeit import timeit
 from email_sender import send_email,send_email_with_template
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 from team_response_creator import convertTeamSeasonDataToTeamResponse,convertTeamSeasonDataToTeamSeaonOnlyResponse
+from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 
+
+import asyncio
+import response_classes
+
+@timeit
 async def addSingleUser(email,team_id):
     user_id = await retrieve_user_id_by_email(email)
     print(user_id)
@@ -29,7 +36,7 @@ async def addSingleUser(email,team_id):
             "team": team.name,
         }
         template_id = 'd-d953ef3608354d49bde38c7d7e3843fa'
-        await send_email_with_template(email,template_id,template_data)
+        # await send_email_with_template(email,template_id,template_data)
     else:
         user_id = await save_user("",email,"")
         await save_role(user)
@@ -37,12 +44,12 @@ async def addSingleUser(email,team_id):
             "team": team.name,
         }
         template_id = 'd-9ba5fab4e96a4a56819aeba57916356f'
-        await send_email_with_template(email,template_id,template_data)
+        # await send_email_with_template(email,template_id,template_data)
         
     
     return user
-
-async def retrieveTeamResponse(team):
+@timeit
+async def retrieveTeamResponse(team) -> response_classes.TeamResponse:
     
     emails,players,team_seasons,matches = await asyncio.gather(
         
@@ -65,6 +72,30 @@ async def retrieveTeamResponse(team):
     team.coaches = emails
     team.fixtures = matches
     return team
+
+@timeit
+async def getTeamFromDB(team_id):
+    cached_object = await getLatestObject(team_id,'teams')
+    teams = []
+    if(cached_object):
+       etag = cached_object["etag"]
+       team_response = json.loads(cached_object["object"])
+       team_object = response_classes.TeamResponse(**team_response)
+    else:
+        team = await team_data.retrieve_team_by_id(team_id)
+        team_object = await retrieveTeamResponse(team)
+        team_response = team_object.model_dump()
+        
+        etag = await setEtag(team_id,'teams',team_response)
+    
+    
+    
+    # get the user
+    
+    return team_object
+
+
+
 
 async def main():
     print("main 1")

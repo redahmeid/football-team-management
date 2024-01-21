@@ -17,6 +17,7 @@ import traceback
 import logging
 logger = logging.getLogger(__name__)
 import functools
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Initialize the AWS Secrets Manager client
@@ -76,7 +77,7 @@ async def saveDeviceToken(event,context)  :
             email = getToken(event)["email"]
         except AuthError as e:
             email =""
-        await save_token(email=email,match_id=match_id,token=device_token)
+        await save_token(email=email,token=device_token)
         print("Token saved")
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 

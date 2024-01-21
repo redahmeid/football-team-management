@@ -11,9 +11,33 @@ import team_season_data
 from typing import List
 import logging
 logger = logging.getLogger(__name__)
-import functools
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
+import functools
+import time
+import asyncio
+def timeit(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = await func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
+        return result
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
 class TABLE:
     ID = "ID"
     NAME="Name"
@@ -69,8 +93,6 @@ async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamRe
                 await cursor.execute(insert_query_2)
                 rows = await cursor.fetchall()
 
-                # club = Club(id=id,name=row)
-                logger.info(rows) 
                 teams = [] 
                 for row in rows:
                     team = await retrieve_teams_by_user_id_convert_to_team_response(row)
@@ -78,7 +100,7 @@ async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamRe
                 return teams
             
 
-
+@timeit
 async def retrieve_users_by_team_id(team_id:str) -> List[response_classes.Admin]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
