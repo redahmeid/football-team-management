@@ -12,6 +12,8 @@ def load_dotenv_path():
         return 'dev.env'
     elif env == 'devnew':
         return 'devnew.env'
+    elif env == 'footydebug':
+        return 'footydebug.env'
     elif env == 'prodnew':
         return 'prodnew.env'
     else:
@@ -31,7 +33,7 @@ class AppConfig:
         self.email_token = os.environ["email_token"]
         self.cache_handler = os.environ["cache_handler"]
         self.send_notifications = os.environ["send_notifications"]
-
+        self.db_prefix = os.environ["db_prefix"]
 
 
 app_config = AppConfig()

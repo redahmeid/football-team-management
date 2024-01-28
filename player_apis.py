@@ -25,6 +25,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from timeit import timeit
+import cache_trigger
 
 @timeit    
 async def create_players(event, context):

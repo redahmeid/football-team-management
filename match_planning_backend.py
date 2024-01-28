@@ -10,7 +10,7 @@ import matches_state_machine
 import traceback
 import logging
 import time
-from cache_trigger import updateTeamCache, updateMatchCache
+from cache_trigger import updateTeamCache, updateMatchCache, updateUserCache
 import datetime
 import asyncio
 logger = logging.getLogger(__name__)
@@ -575,6 +575,7 @@ async def updateStatus(match_id,status):
     }
     await updateMatchCache(match_id)
     await updateTeamCache(match.team.id)
+    
     await notifications.sendNotificationUpdatesLink(match_id,message,message,type,data)
     
     return matches

@@ -12,7 +12,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
 from exceptions import AuthError
-from notifications import save_token,save_token_by_match
+from notifications import save_token,save_token_by_match,turn_off_notifications
 import traceback
 import logging
 logger = logging.getLogger(__name__)
@@ -78,6 +78,21 @@ async def saveDeviceToken(event,context)  :
         except AuthError as e:
             email =""
         await save_token(email=email,token=device_token)
+        print("Token saved")
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
+        logger.error("e")
+
+async def turnOffNotifications(event,context)  :
+    lambda_handler(event,context)
+    try:
+        headers = event["headers"]
+        
+        print(headers)
+        device_token = event["headers"]['x-device-id']
+        print(f"DEVICE TOKEN {device_token}")
+       
+        await turn_off_notifications(token=device_token)
         print("Token saved")
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 

@@ -42,6 +42,12 @@ def create_team_players(event, context):
 def set_device_token(event,context):
     response = asyncio.run(auth.saveDeviceToken(event,context))
     return response
+def turn_off_notifications(event,context):
+    response = asyncio.run(auth.turnOffNotifications(event,context))
+    return response
+def turn_on_notifications(event,context):
+    response = asyncio.run(auth.turnOffNotifications(event,context))
+    return response
 def set_device_token_by_match(event,context):
     response = asyncio.run(auth.saveDeviceTokenByMatch(event,context))
     return response

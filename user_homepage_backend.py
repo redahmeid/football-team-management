@@ -30,7 +30,9 @@ async def setupHomepage(email):
     logger.info("START")
     teams_list = []
     teams = await retrieve_teams_by_user_id(email)
+    
     for team in teams:
+        team = await team_backend.getTeamFromDB(team.id)
         teams_list.append(team.model_dump())
         await updateTeamCache(team.id)
     

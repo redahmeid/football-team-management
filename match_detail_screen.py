@@ -183,14 +183,22 @@ async def set_captain(event,context):
     match_id = pathParameters["match_id"]
     body =json.loads(event["body"])
     player_id = body["player_id"]
+    path = event.get('rawPath') or event.get('path')
+
+   
+
 
     match = await retrieve_match_by_id(match_id)
     try:
     
         if(await check_permissions(event=event,team_id=match[0].team.id,acceptable_roles=acceptable_roles)):  
-             
-            await matches_data.set_captain(match[0],player_id)
-            
+            if "captain" in path:
+                await matches_data.set_captain(match[0],player_id)
+            elif "potm" in path:
+                await matches_data.set_potm(match[0],player_id)
+            else:
+                response = api_helper.make_api_response(400,"Enter captain or potm")
+                return response
             return api_helper.make_api_response(201,{"link":f"/matches/{match_id}?refresh=time_played"})
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
@@ -207,6 +215,8 @@ async def set_captain(event,context):
         print(e)
         response = api_helper.make_api_response(500,None,e)
         return response
+
+
 
 async def submit_substitutions(event,context):
     lambda_handler(event,context)
@@ -410,6 +420,7 @@ async def update_match_status(event,context):
                 print(f"UPDATE STATUS TASK CREATION START {match_id}")
              
              
+             updateUserCache(getEmailFromToken(event,context))
              
               # asyncio.create_task(matches_backend.getMatchFromDB(match_id))
              print(f"UPDATE STATUS TASK CREATION END {match_id}")
@@ -419,14 +430,17 @@ async def update_match_status(event,context):
             return response
     except exceptions.AuthError as e:
         print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(401,None,e)
         return response
     except ValidationError as e:
         print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(400,None,e)
         return response
     except Exception as e:
         print(e)
+        traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(500,None,e)
         return response
 

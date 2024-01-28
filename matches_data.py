@@ -64,6 +64,7 @@ class TABLE:
     GOALS_FOR = "Goals_For"
     GOALS_AGAINST = "Goals_Against"
     CAPTAIN = "Captain"
+    POTM = "POTM"
     LENGTH = "Length"
     TYPE="Type"
     TIME_STARTED = "Time_Started"
@@ -80,13 +81,14 @@ class TABLE:
         f"{TABLE.GOALS_FOR} int,"\
         f"{TABLE.GOALS_AGAINST} int,"\
         f"{TABLE.CAPTAIN} varchar(255),"\
+        f"{TABLE.POTM} varchar(255),"\
         f"{TABLE.LENGTH} int,"\
         f"{TABLE.TYPE} varchar(255),"\
         f"{TABLE.TIME_STARTED} int,"\
         f"PRIMARY KEY ({TABLE.ID}))"
     def alterTable():
         return f"ALTER TABLE {TABLE.TABLE_NAME}"\
-        f" ADD {TABLE.CAPTAIN} varchar(255)"
+        f" ADD {TABLE.POTM} varchar(255)"
    
         
 
@@ -121,6 +123,25 @@ async def set_captain(match:response_classes.MatchInfo,player_id):
                 
                 # Define the SQL query to insert data into a table
                 insert_query = f"Update {TABLE.TABLE_NAME} set {TABLE.CAPTAIN}={player_id} where {TABLE.ID}={match.id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                
+                return match.id
+
+@timeit
+async def set_potm(match:response_classes.MatchInfo,player_id):
+    start_time = datetime.utcnow().timestamp()
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                
+                # Define the SQL query to insert data into a table
+                insert_query = f"Update {TABLE.TABLE_NAME} set {TABLE.POTM}={player_id} where {TABLE.ID}={match.id}"
                 print(insert_query)
                 # Data to be inserted
                 

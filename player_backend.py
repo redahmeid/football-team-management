@@ -3,7 +3,6 @@ from pydantic import TypeAdapter
 from classes import Player
 from config import app_config
 import api_helper
-import team_backend
 from player_data import save_player_season,save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
 from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 import functools
@@ -16,6 +15,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from timeit import timeit
+import cache_trigger
 
 @timeit
 async def create_players(name, team_id):
@@ -27,7 +27,7 @@ async def create_players(name, team_id):
             new_player = PlayerValidator.validate_python(request_player)
             id = await save_player(new_player)
             player_season_id = await save_player_season(id,team_id)
-            await team_backend.updateTeamCache(team_id)
+            await cache_trigger.updateTeamCache(team_id)
             await updatePlayerCache(team_id)
             result = await retrieve_player(player_season_id)
             return result[0]

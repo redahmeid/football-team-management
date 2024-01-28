@@ -7,35 +7,15 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import api_helper
 import datetime
-
-def timeit(func):
-    @functools.wraps(func)
-    async def async_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = await func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
-
-    @functools.wraps(func)
-    def sync_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
-
-    if asyncio.iscoroutinefunction(func):
-        return async_wrapper
-    else:
-        return sync_wrapper
+from config import app_config
+from timeit import timeit
 
 
 @timeit
 async def isEtaggged(id,type,etag):
     db = firestore.client()
     print("ETAG EXISTS")
-    doc_ref = db.collection(type).document(id)
+    doc_ref = db.collection(f"{app_config.db_prefix}_{type}").document(id)
     doc = doc_ref.get()
     if doc.exists:
         etag_obj = doc.to_dict()
@@ -51,7 +31,7 @@ async def isEtaggged(id,type,etag):
 async def getLatestObject(id,type):
     db = firestore.client()
     print("ETAG EXISTS")
-    doc_ref = db.collection(type).document(id)
+    doc_ref = db.collection(f"{app_config.db_prefix}_{type}").document(id)
     doc = doc_ref.get()
     if doc.exists:
         etag_obj = doc.to_dict()     
@@ -64,7 +44,7 @@ async def getLatestObject(id,type):
 @timeit
 async def deleteEtag(id,type):
     db = firestore.client()
-    user = db.collection(type).document(id)
+    user = db.collection(f"{app_config.db_prefix}_{type}").document(id)
     doc = user.get()
 
     if doc.exists:
@@ -84,7 +64,7 @@ async def setEtag(id,type,object):
     # Generate the ETag
     etag = hash_object.hexdigest()
 
-    doc_ref = db.collection(type).document(id)
+    doc_ref = db.collection(f"{app_config.db_prefix}_{type}").document(id)
     doc_ref.set({"etag":etag,"object":json.dumps(object,default=str),"last_updated":firestore.firestore.SERVER_TIMESTAMP})
 
     return etag
@@ -99,7 +79,7 @@ async def setEtagList(id,type,object):
     # Generate the ETag
     etag = hash_object.hexdigest()
 
-    doc_ref = db.collection(type).document(id)
+    doc_ref = db.collection(f"{app_config.db_prefix}_{type}").document(id)
     doc_ref.set({"etag":etag,"object":json.dumps(object, default=lambda o: o.dict()),"last_updated":firestore.firestore.SERVER_TIMESTAMP})
 
     return etag

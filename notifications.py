@@ -29,27 +29,7 @@ from etag_manager import setEtag
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
-def timeit(func):
-    @functools.wraps(func)
-    async def async_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = await func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
-
-    @functools.wraps(func)
-    def sync_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
-
-    if asyncio.iscoroutinefunction(func):
-        return async_wrapper
-    else:
-        return sync_wrapper
+from timeit import timeit
 
 # "CREATE TABLE Match_Day_Lineup" \
 #         "(ID varchar(255),"\
@@ -71,6 +51,7 @@ class TABLE:
     MATCH_ID="Match_ID"
     PLAYER_ID="Player_ID"
     TEAM_ID="Team_ID"
+    NOTIFY="Notify"
     TIME="Time"
 
     def createTable():
@@ -79,6 +60,7 @@ class TABLE:
         f"{TABLE.EMAIL} varchar(255),"\
         f"{TABLE.MATCH_ID} varchar(255),"\
         f"{TABLE.TOKEN} varchar(255),"\
+        f"{TABLE.NOTIFY} bool,"\
         f"{TABLE.TIME} int,"\
         f"CONSTRAINT UQ_MATCH UNIQUE ({TABLE.MATCH_ID},{TABLE.TOKEN}),"\
         f"CONSTRAINT UQ_EMAIL UNIQUE ({TABLE.EMAIL},{TABLE.TOKEN}),"\
@@ -120,14 +102,11 @@ async def save_token(email,token):
     
         
                 id = uuid.uuid4()
-                select_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.TOKEN}='{token}'"
+                select_query = f"delete from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.TOKEN}='{token}'"
                 await cursor.execute(select_query)
-                row = await cursor.fetchall()
-
-                if(len(row)>0):
-                    return
                 
-                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())})"
+                
+                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())},True)"
                 
                 try:
                     await cursor.execute(insert_query)
@@ -140,6 +119,31 @@ async def save_token(email,token):
                     return False
                     
                     # Commit the transaction
+
+@timeit
+async def turn_off_notifications(token):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+    
+        
+                
+                
+                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.NOTIFY}=False where {TABLE.TOKEN}='{token}'"
+                
+                try:
+                    await cursor.execute(insert_query)
+                    await conn.commit()
+                    print("Succesfully saved the token")
+                    return True
+                except Exception as e:
+                    print(e)
+                    print("Token already exists")
+                    return False
+                    
+                    # Commit the transaction
+
+
 
 
 @timeit
@@ -180,7 +184,9 @@ async def save_token_by_match(match_id,token):
     
         
                 id = uuid.uuid4()
-            
+                select_query = f"delete from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.TOKEN}='{token}'"
+                await cursor.execute(select_query)
+
                 insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{match_id}','{token}',{int(datetime.utcnow().timestamp())})"
                 print(insert_query)
                 try:
@@ -208,7 +214,7 @@ async def getDeviceToken(email):
         
                 id = uuid.uuid4()
             
-                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}'"
+                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.NOTIFY}=True"
 
                 print(insert_query)
                 await cursor.execute(insert_query)
@@ -228,7 +234,7 @@ async def getDeviceTokenByMatchOnly(match_id):
         
                 id = uuid.uuid4()
             
-                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.EMAIL} IS NULL"
+                insert_query = f"select {TABLE.TOKEN} from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.EMAIL} IS NULL and {TABLE.NOTIFY}=True"
 
                 print(insert_query)
                 await cursor.execute(insert_query)

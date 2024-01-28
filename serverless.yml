@@ -381,6 +381,19 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+      - http:
+          path: /matches/{match_id}/potm
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
 
   submit_subs:
     handler: handler.submit_subs
@@ -469,6 +482,22 @@ functions:
       - http:
           path: /notifications/token
           method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  turn_off_notifications:
+    handler: handler.turn_off_notifications
+    events:
+      - http:
+          path: /notifications
+          method: delete
           cors:
             origins:
               - '*'

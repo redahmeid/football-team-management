@@ -36,6 +36,7 @@ import roles
 from auth import set_custom_claims
 import team_season_data
 import notifications
+import cache_trigger
 
 import user_homepage_backend
 from timeit import timeit
@@ -52,7 +53,7 @@ async def addUserToTeam(event,context):
             result = await addSingleUser(email,team_id)
             results.append(result.model_dump())
         team = await team_backend.getTeamFromDB(team_id)
-        await team_backend.updateTeamCache(team_id)
+        await cache_trigger.updateTeamCache(team_id)
         data = {
             "link":f"/teams/{team_id}",
             "team_id":f"{team_id}",
@@ -88,7 +89,7 @@ async def submit_team(event, context):
         # get the user
         save_response = await retrieve_team_by_id(team_season_id)
         teams.append(save_response.model_dump())
-        await user_homepage_backend.updateUserCache(email)
+        await cache_trigger.updateUserCache(email)
         message = f"{team.name} has been created"
         subject = 'New team added'
         data = {
