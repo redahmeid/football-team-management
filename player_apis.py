@@ -6,6 +6,7 @@ from config import app_config
 import api_helper
 import response_errors
 import response_classes
+import team_backend
 from player_data import save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
 from roles_data import retrieve_role_by_user_id_and_team_id
 from users_data import retrieve_user_id_by_email
@@ -40,7 +41,7 @@ async def create_players(event, context):
     for player in players:
         result = await player_backend.create_players(player,team_id)
         created_players.append(result)
-    await player_backend.updatePlayerCache(team_id)
+    await cache_trigger.updatePlayerCache(team_id)
     data = {
         "link":f"/teams/{team_id}",
         "team_id":team_id,
@@ -51,6 +52,35 @@ async def create_players(event, context):
     response = api_helper.make_api_response(200,created_players)
     return response
 
+@timeit
+async def addGuardiansToPlayer(event,context):
+    lambda_handler(event,context)
+    acceptable_roles = [Role.admin.value]
+    team_id = event["pathParameters"]["team_id"]
+    player_id = event["pathParameters"]["player_id"]
+    body =json.loads(event["body"])
+    
+    emails = body["emails"]
+
+    if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
+        results = []
+        for email in emails:
+           
+            result = await player_backend.addGuardian(email,player_id,team_id)
+            results.append(result.model_dump())
+        team = await team_backend.getTeamFromDB(team_id)
+        await cache_trigger.updateTeamCache(team_id)
+        data = {
+            "link":f"/teams/{team_id}",
+            "team_id":f"{team_id}",
+            "action":"new_users",
+            "silent":"False"
+        }
+        # await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),f"Welcome your new coaches",f"New coach added to {team.name}",'team',data)
+        response = api_helper.make_api_response(200,results)
+    else:
+            response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+    return response
 
 @timeit
 async def list_players_by_team(event, context):

@@ -4,7 +4,7 @@ import id_generator
 from firebase_admin import auth
 import db
 import response_classes
-
+import match_day_data
 import matches_state_machine
 from typing import List
 from datetime import datetime
@@ -90,8 +90,116 @@ class TABLE:
         return f"ALTER TABLE {TABLE.TABLE_NAME}"\
         f" ADD {TABLE.POTM} varchar(255)"
    
-        
+class PLAYER_RATINGS:
+    ID = "ID"
+    PLAYER_ID="Player_ID"
+    MATCH_ID="Match_ID"
+    RATING="Rating"
+    TECHNICAL="Technical"
+    PHYSICAL="Physical"
+    PSYCH="Psychological"
+    SOCIAL="Social"
+    COMMENTS="Comments"
+    POTM = "POTM"
+    TABLE_NAME="Player_Ratings"
 
+    def createTable():
+        return f"CREATE TABLE if not exists Player_Ratings" \
+        f"({PLAYER_RATINGS.ID} varchar(255),"\
+        f"{PLAYER_RATINGS.PLAYER_ID} varchar(255),"\
+        f"{PLAYER_RATINGS.MATCH_ID} varchar(255),"\
+        f"{PLAYER_RATINGS.RATING} varchar(255),"\
+        f"{PLAYER_RATINGS.TECHNICAL} varchar(255),"\
+        f"{PLAYER_RATINGS.PHYSICAL} varchar(255),"\
+        f"{PLAYER_RATINGS.PSYCH} varchar(255),"\
+        f"{PLAYER_RATINGS.SOCIAL} varchar(255),"\
+        f"{PLAYER_RATINGS.COMMENTS} varchar(255),"\
+        f"{PLAYER_RATINGS.POTM} varchar(255),"\
+        f"PRIMARY KEY ({TABLE.ID}))"
+
+@timeit
+async def create_player_ratings(match_id, players:List[dict]):
+    start_time = datetime.utcnow().timestamp()
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                for player in players:
+                    print(f"CREATE PLAYER RATING {player}")
+                    player_id = player["info"]["id"]
+                    technical = player["playerRating"]["technical"]
+                    physical = player["playerRating"]["physical"]
+                    psych = player["playerRating"]["psychological"]
+                    social = player["playerRating"]["social"]
+                    comments = player["playerRating"]["comments"]
+                    rating = (float(technical)+float(physical)+float(psych)+float(social))/4
+                    comments = comments.replace("'","''")
+                    isPOTM = player["playerRating"]["isPOTM"]
+                    # potm = player["player_rating"]["potm"]
+                    id = id_generator.generate_random_number(7)
+
+
+                    # Define the SQL query to insert data into a table
+                    delete_rating = f"delete from {PLAYER_RATINGS.TABLE_NAME} where {PLAYER_RATINGS.MATCH_ID}={match_id} and {PLAYER_RATINGS.PLAYER_ID}={player_id}"
+                    print(delete_rating)
+                    # Data to be inserted
+                    
+                    # Execute the SQL query to insert data
+                    await cursor.execute(delete_rating)
+                    await conn.commit()
+
+                    # Define the SQL query to insert data into a table
+                    insert_query = f"INSERT INTO {PLAYER_RATINGS.TABLE_NAME} ({PLAYER_RATINGS.ID},{PLAYER_RATINGS.PLAYER_ID},{PLAYER_RATINGS.MATCH_ID},{PLAYER_RATINGS.RATING},{PLAYER_RATINGS.TECHNICAL},{PLAYER_RATINGS.PHYSICAL},{PLAYER_RATINGS.PSYCH},{PLAYER_RATINGS.SOCIAL},{PLAYER_RATINGS.COMMENTS},{PLAYER_RATINGS.POTM}) VALUES ('{id}','{player_id}','{match_id}','{rating}','{technical}','{physical}','{psych}','{social}','{comments}','{isPOTM}')"
+                    print(insert_query)
+                    # Data to be inserted
+                    
+                    # Execute the SQL query to insert data
+                    await cursor.execute(insert_query)
+                    await conn.commit()
+                return id
+
+@timeit
+async def retrieve_player_ratings(match_id):
+    start_time = datetime.utcnow().timestamp()
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+               
+                # potm = player["player_rating"]["potm"]
+                id = id_generator.generate_random_number(7)
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from  {PLAYER_RATINGS.TABLE_NAME} where {PLAYER_RATINGS.MATCH_ID}={match_id}"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                rows = await cursor.fetchall()
+                return id
+
+@timeit
+async def save_team_from_cache(match:response_classes.MatchInfo,team_id):
+    start_time = datetime.utcnow().timestamp()
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                
+                # Define the SQL query to insert data into a table
+                insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against,Type) VALUES ('{match.id}','{match.opposition}','{match.homeOrAway.value}','{match.date}','{match.length}','{team_id}','{match.status.value}',0,0,'{match.type.value}')"
+                print(insert_query)
+                # Data to be inserted
+                
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                end_time = datetime.utcnow().timestamp()-start_time
+                logger.info(f"Save team fixtures took {end_time} to finish")
+                return id
+            
 
 @timeit
 async def save_team_fixture(match:response_classes.MatchInfo,team_id):
@@ -159,7 +267,7 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and {TABLE.STATUS} <> 'cancelled' order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
                 print(insert_query)
 
                 # Execute the SQL query to insert data
@@ -175,6 +283,84 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
                 
             
                 return matches
+@timeit
+async def wins_by_team(team_id:str) -> List[response_classes.MatchInfo]:
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"select count(*) as wins from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS}='ended' or {TABLE.STATUS}='rated') and {TABLE.GOALS_FOR}>{TABLE.GOALS_AGAINST} order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                row = await cursor.fetchone()
+                print(row)
+
+
+                
+            
+                return row["wins"]
+
+@timeit
+async def defeats_by_team(team_id:str) -> List[response_classes.MatchInfo]:
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"select count(*) as defeats from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS}='ended' or {TABLE.STATUS}='rated') and {TABLE.GOALS_FOR}<{TABLE.GOALS_AGAINST} order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                row = await cursor.fetchone()
+                print(row)
+
+                
+            
+                return row["defeats"]
+
+@timeit
+async def draws_by_team(team_id:str) -> List[response_classes.MatchInfo]:
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"select count(*) as draws from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS}='ended' or {TABLE.STATUS}='rated') and {TABLE.GOALS_FOR}={TABLE.GOALS_AGAINST} order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                row = await cursor.fetchone()
+                print(row)
+
+                
+            
+                return row["draws"]
+
+@timeit
+async def updateScore(match_id,goals_for,goals_against):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.GOALS_FOR}={goals_for}, {TABLE.GOALS_AGAINST}={goals_against} where {TABLE.ID}='{match_id}'" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                await conn.commit()
+                return ""
+
+
+
 @timeit
 async def update_match_status(match_id,status)  -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:

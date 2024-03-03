@@ -9,6 +9,9 @@ import team_season_data
 from team_data import retrieve_users_by_team_id
 from player_data import retrieve_players_by_team
 import logging
+import matches_data
+import player_data
+from cache_trigger import updateTeamCache, updateUserCache
 from match_planning_backend import list_matches_by_team_backend
 logger = logging.getLogger(__name__)
 import json
@@ -48,26 +51,41 @@ async def addSingleUser(email,team_id):
         
     
     return user
+
+
+
+
+
 @timeit
 async def retrieveTeamResponse(team) -> response_classes.TeamResponse:
     
-    emails,players,team_seasons,matches = await asyncio.gather(
+    emails,players,team_seasons,matches,wins,defeats,draws = await asyncio.gather(
         
         retrieve_users_by_team_id(team.id),
         retrieve_players_by_team(team.id),
         team_season_data.retrieve_seasons_by_team_id(team.team_id),
         list_matches_by_team_backend(team.id),
+        matches_data.wins_by_team(team.id),
+        matches_data.defeats_by_team(team.id),
+        matches_data.draws_by_team(team.id),
+        
     )
     
     logger.info(f"PLAYERS {players}")
     seasons = []
     logger.info(f"TEAM SEASONS {team_seasons}")
+    print(f"WINS FROM TEAM RESPONSE {wins}")
+    print(f"DEFEATS FROM TEAM RESPONSE {defeats}")
+    print(f"DRAWS FROM TEAM RESPONSE {draws}")
     for team_season in team_seasons:
         logger.info(team_season)
-        season = await convertTeamSeasonDataToTeamSeaonOnlyResponse(team_season,2)
+        season = await convertTeamSeasonDataToTeamSeaonOnlyResponse(team_season,wins,defeats,draws)
         seasons.append(season)
     logger.info(f"SEASONS {seasons}")
     team.seasons = seasons
+    team.wins = wins
+    team.defeats = defeats
+    team.draws = draws
     team.squad = players[0]["players"]
     team.coaches = emails
     team.fixtures = matches
@@ -88,14 +106,19 @@ async def getTeamFromDB(team_id):
         
         etag = await setEtag(team_id,'teams',team_response)
     
-    
+    print("RESPONSE FROM getTeamFromDB")
+    print(team_object)
     
     # get the user
     
     return team_object
 
 
-
+@timeit
+async def deleteTeam(team_id):
+    await team_season_data.delete_team_season(team_id)
+    await deleteEtag(team_id,'teams')
+    
 
 async def main():
     print("main 1")

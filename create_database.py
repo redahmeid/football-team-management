@@ -69,29 +69,35 @@ async def create_database():
     await create_tables(notifications.TABLE.createTable()),
     await create_tables(match_day_data.PERIODS_TABLE.createTable()),
     await create_tables(match_day_data.SUBS_TABLE.createTable()), 
-    await create_tables(team_season_data.TABLE.createTable()), 
+    print(team_season_data.TABLE.createTable()),
+    # await create_tables(team_season_data.TABLE.createTable()), 
+
     await create_tables(notifications.MESSAGES_TABLE.createTable()),
     try:
-        await create_tables(matches_data.TABLE.alterTable())
+        await create_tables(matches_data.PLAYER_RATINGS.createTable())
     except Exception as e:
         print(e)
-    try:
-        await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.alterTable())
-    except Exception as e:
-        print(e)
-    try:
-        await create_tables(users_data.TABLE.alterTable())
-    except Exception as e:
-        print(e)
-    try:
-        await create_tables(match_day_data.GOALS_TABLE.alterTable())
-    except Exception as e:
-        print(e)
+    # try:
+    #     await create_tables(matches_data.TABLE.alterTable())
+    # except Exception as e:
+    #     print(e)
+    # try:
+    #     await create_tables(match_day_data.ACTUAL_LINEDUP_TABLE.alterTable())
+    # except Exception as e:
+    #     print(e)
+    # try:
+    #     await create_tables(users_data.TABLE.alterTable())
+    # except Exception as e:
+    #     print(e)
+    # try:
+    #     await create_tables(match_day_data.GOALS_TABLE.alterTable())
+    # except Exception as e:
+    #     print(e)
     
-    try:
-        await create_tables(roles_data.TABLE.alterTable())
-    except Exception as e:
-        print(e)
+    # try:
+    #     await create_tables(roles_data.TABLE.alterTable())
+    # except Exception as e:
+    #     print(e)
     # try:
     #     await create_tables(notifications.TABLE.removeMatchID())
     # except Exception as e:

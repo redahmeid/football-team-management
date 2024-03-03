@@ -1,6 +1,7 @@
 import json
 import pydantic
 import sys
+import traceback
 from config import app_config
 import team_data
 import notifications
@@ -14,7 +15,7 @@ import match_planning_backend
 import asyncio
 import json
 import match_day_data
-from etag_manager import setEtag,isEtaggged,getLatestObject,deleteEtag,setEtagList
+from etag_manager import setEtag,isEtaggged,getLatestObject,deleteEtag,setEtagList,getAllObjects
 from timeit import timeit
 
 @timeit
@@ -113,6 +114,7 @@ async def getMatchFromDB(match_id) :
 
     else:
         match = await matches_data.retrieve_match_by_id(match_id)
+        
         object = await match_planning_backend.getMatchParent(match[0].team.id,match[0])
 
     actual_match = response_classes.ActualMatchResponse(**object)
@@ -149,6 +151,32 @@ async def getMatchFromDBRefresh(match_id,refresh) :
     return {"etag":etag,"result":actual_match.model_dump()}
 
 
+@timeit
+async def updateScore(match_id,goals_for,goals_against):
+    try:
+        await matches_data.updateScore(match_id,goals_for,goals_against)
+        
+        
+    except:
+        traceback.print_exception(*sys.exc_info()) 
+
+@timeit
+async def addPlayerRatings(match_id,players):
+    try:
+        await matches_data.create_player_ratings(match_id,players)
+        
+    except:
+        traceback.print_exception(*sys.exc_info()) 
+
+
+@timeit
+async def updateDBFromCache():
+    objs = await getAllObjects('matches')
+    for obj in objs:
+        response = json.loads(obj["object"])
+        actual_match = response_classes.ActualMatchResponse(**response)
+        if(actual_match.match.status=='created'):
+            await matches_data.save_team_fixture(actual_match.match,actual_match.match.team.id)
 
 @timeit
 async def getPlannedLineupsFromDB(match_id):
@@ -160,14 +188,11 @@ async def getPlannedLineupsFromDB(match_id):
     return {"etag":etag,"result":json.dumps(object, default=lambda o: o.dict())}
 
 
-async def main():
-    if(sys.argv[1]=="getPlanned"):
-        
-        await getPlannedLineupsFromDB(sys.argv[2] )
+
     
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(updateDBFromCache())
 
 
 

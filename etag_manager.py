@@ -39,6 +39,20 @@ async def getLatestObject(id,type):
     else:
         return None
    
+
+@timeit
+async def getAllObjects(type):
+    db = firestore.client()
+    print("ETAG EXISTS")
+    doc_ref = db.collection(f"{app_config.db_prefix}_{type}")
+    # Get all documents in the collection
+    docs = doc_ref.stream()
+    objects = []
+    # Iterate over the documents and print the data
+    for doc in docs:
+        objects.append( doc.to_dict())
+    return objects
+    
     
     
 @timeit

@@ -48,7 +48,7 @@ class ClubAdministrator(BaseModel):
 
 class TeamUser(BaseModel):
     email:str
-    team_id:str
+    team_id:Optional[str]=""
     role:roles.Role
 
 class Team(BaseModel):

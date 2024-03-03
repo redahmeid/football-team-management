@@ -63,6 +63,18 @@ async def updateUserCache(email):
     await invokeCacheHander(event)
 
 @timeit
+async def updatePlayerCache(team_id):
+    
+    await deleteEtag(team_id,'players')
+    event = {
+        "id":team_id,
+        "path":Paths.cachePlayers.value
+    }
+    await invokeCacheHander(event)
+
+
+
+@timeit
 async def  invokeCacheHander(event):
     lambda_client = boto3.client('lambda')
     lambda_client.invoke(

@@ -1,0 +1,13 @@
+# List all functions by name
+functionNames=$(aws lambda list-functions --query 'Functions[].[FunctionName]' --output text)
+
+for functionName in $functionNames; do
+    echo "Processing $functionName"
+    # List all non-latest versions of the function
+    versions=$(aws lambda list-versions-by-function --function-name "$functionName" --query 'Versions[?Version != `$LATEST`].[Version]' --output text)
+    for version in $versions; do
+        echo "Deleting version $version of $functionName"
+        aws lambda delete-function --function-name "$functionName" --qualifier "$version"
+    done
+done
+

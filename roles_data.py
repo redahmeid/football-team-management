@@ -1,8 +1,11 @@
 from classes import Club, Team, User, TeamUser
 from config import app_config
 import id_generator
+import roles
 import db
 import asyncio
+from player_responses import Guardian
+from timeit import timeit
 import aiomysql
 #  "CREATE TABLE if not exists Roles" \
 #         "(ID varchar(255),"\
@@ -51,6 +54,24 @@ async def save_role(user:TeamUser):
                 await conn.commit()
                 
                 return id
+
+async def save_guardian_role(user:Guardian):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                # Define the SQL query to insert data into a table
+                insert_query = "INSERT INTO Roles (ID,Email,Team_ID,Player_ID,Role,live) VALUES (%s,%s,%s,%s,%s,%s)"
+
+                # Data to be inserted
+                id = id_generator.generate_random_number(5)
+                data_to_insert = (id,user.email,user.team_id,user.player_id,roles.Role.parent.value,True)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query, data_to_insert)
+                await conn.commit()
+                
+                return id
+            
 async def delete_role(user:TeamUser):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -63,7 +84,7 @@ async def delete_role(user:TeamUser):
                 await conn.commit()
                 
                 return id
-
+@timeit
 async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -71,7 +92,7 @@ async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
 
                 # Define the SQL query to insert data into a table
                 insert_query = "select * from Roles where Email=%s and Team_ID=%s"
-
+                print(insert_query)
                 data_to_insert = (user_id,team_id)
 
                 # Execute the SQL query to insert data

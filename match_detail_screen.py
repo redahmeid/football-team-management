@@ -116,7 +116,7 @@ async def submit_lineup(event,context):
                     "team_id":f"{match[0].team.id}",
                     "match_id":f"{match_id}",
                     "action":"new_plan",
-                    "silent":"True"
+                    "silent": True
                 }
                 await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'admins',data)
                 return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/planned_lineups"})
@@ -135,7 +135,8 @@ async def submit_lineup(event,context):
                     "match_link":f"/matches/{match_id}",
                     "team_id":f"{match[0].team.id}",
                     "match_id":f"{match_id}",
-                    "action":"actual_lineups"
+                    "action":"actual_lineups",
+                    "silent": True
                 }
                 await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'match',data)
                 return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/actual_lineups"})
@@ -154,7 +155,8 @@ async def submit_lineup(event,context):
                     "match_link":f"/matches/{match_id}",
                     "team_id":f"{match[0].team.id}",
                     "match_id":f"{match_id}",
-                    "action":"actual_lineups"
+                    "action":"actual_lineups",
+                    "silent": True
                 }
                 await notifications.sendNotificationUpdatesLink(match_id,"Lineup created","Lineup created",'match',data)
                 return api_helper.make_api_response(201,{"link":f"/matches/{match_id}/actual_lineups"})
@@ -405,26 +407,29 @@ async def update_match_status(event,context):
                 body =json.loads(event["body"])
                 goal_scorer = body["scorer"]
                 assister = body.get('assister')
+                assist_type = body.get('assist_type',"")
                 
                 type = body.get('type')
-                await setGoalsFor(team_id,match_id,goal_scorer,assister,type)
+                await setGoalsFor(team_id,match_id,goal_scorer,assister,type,assist_type)
                 
              elif(status=="score_against"):
                 await setGoalsAgainst(match_id,team_id,"opposition")
              elif(status=="paused" or status=="restarted" or status=="started"):
                  
                  await updateMatchPeriod(match_id,status)
+                 
                  await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
              else:
                 await match_planning_backend.updateStatus(match_id=match_id,status=matches_state_machine.MatchState(status))
                 print(f"UPDATE STATUS TASK CREATION START {match_id}")
              
-             
-             updateUserCache(getEmailFromToken(event,context))
+             await updateTeamCache(team_id)
+             await updateUserCache(getEmailFromToken(event,context))
              
               # asyncio.create_task(matches_backend.getMatchFromDB(match_id))
              print(f"UPDATE STATUS TASK CREATION END {match_id}")
-             return api_helper.make_api_response(201,{"link":f"/matches/{match_id}"})   
+             match = await matches_backend.getMatchFromDB(match_id)
+             return api_helper.make_api_response_etag(200,match["result"],match["etag"])   
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response

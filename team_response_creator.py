@@ -29,11 +29,12 @@ def timeit(func):
     else:
         return sync_wrapper
 @timeit
-async def convertTeamSeasonDataToTeamResponse(team,order=0) -> response_classes.TeamResponse:
-    logger.info(f"{order} TEAM {team}")
+async def convertTeamSeasonDataToTeamResponse(team) -> response_classes.TeamResponse:
+    
     id = team[f"{team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}"]
     ageGroup = team[team_season_data.TABLE.TEAM_AGE_GROUP]
     season = team[team_season_data.TABLE.SEASON_NAME]
+    
     season_id = team[f"{team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}"]
     name = team["Name"]
     team_id = team[f"{team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}"]
@@ -46,11 +47,11 @@ async def convertTeamSeasonDataToTeamResponse(team,order=0) -> response_classes.
     nextMatch = response_classes.Link(link="%s/next_match"%(baseTeamUrl),method="get")
 
     response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id,name=name, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
-    logger.info(f"{order} Response {response}")
+    
     return response
 @timeit
-async def convertTeamSeasonDataToTeamSeaonOnlyResponse(team,order=0) -> response_classes.TeamResponse:
-    logger.info(f"{order} TEAM {team}")
+async def convertTeamSeasonDataToTeamSeaonOnlyResponse(team,wins,defeats,draws) -> response_classes.TeamResponse:
+    
     id = team[team_season_data.TABLE.ID]
     ageGroup = team[team_season_data.TABLE.TEAM_AGE_GROUP]
     season = team[team_season_data.TABLE.SEASON_NAME]
@@ -65,6 +66,7 @@ async def convertTeamSeasonDataToTeamSeaonOnlyResponse(team,order=0) -> response
     addFixtures = response_classes.Link(link="%s/matches"%(baseTeamUrl),method="post")
     nextMatch = response_classes.Link(link="%s/next_match"%(baseTeamUrl),method="get")
 
-    response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
-    logger.info(f"{order} Response {response}")
+    response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers,wins=wins,defeats=defeats,draws=draws)
+    print("RESPONSE FROM convertTeamSeasonDataToTeamSeaonOnlyResponse")
+    print(response)
     return response

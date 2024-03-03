@@ -16,6 +16,8 @@ def load_dotenv_path():
         return 'footydebug.env'
     elif env == 'prodnew':
         return 'prodnew.env'
+    elif env == 'prodv1':
+        return 'prodv1.env'
     else:
         return 'test.env'
 # Load the appropriate .env file

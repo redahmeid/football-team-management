@@ -7,8 +7,11 @@ import matches_data
 from matches_data import retrieve_match_by_id
 from typing import Dict, List
 import matches_state_machine
+import player_data
+from config import app_config
 import traceback
 import logging
+from firebase_admin import credentials, firestore
 import time
 from cache_trigger import updateTeamCache, updateMatchCache, updateUserCache
 import datetime
@@ -47,8 +50,10 @@ async def getMatchParent(team_id,match):
             response = await getMatchPlanning(team_id,match)
         elif(match.status==matches_state_machine.MatchState.plan_confirmed and match.date==date.today()):
             response = await getMatchConfirmedPlanReadyToStart(team_id,match)
-        elif(match.status==matches_state_machine.MatchState.started or match.status==matches_state_machine.MatchState.ended or match.status==matches_state_machine.MatchState.paused or match.status==matches_state_machine.MatchState.restarted or match.status==matches_state_machine.MatchState.starting_lineup_confirmed):
+        elif(match.status==matches_state_machine.MatchState.started or match.status==matches_state_machine.MatchState.paused or match.status==matches_state_machine.MatchState.restarted or match.status==matches_state_machine.MatchState.starting_lineup_confirmed):
             response =  await getMatchStarted(team_id,match)
+        elif(match.status==matches_state_machine.MatchState.ended or match.status==matches_state_machine.MatchState.rated):
+            response = await getMatchEnded(team_id,match)
         else:
             response =  await getMatchCreated(team_id,match)
         return response
@@ -72,8 +77,8 @@ async def getMatchCreatedResponse(team_id,match:response_classes.MatchInfo):
     playersList = await retrieve_players_by_team(team_id)  
     url = f"/matches/{match.id}/captain"
     submit_captain = response_classes.Link(link=url,method="post")
-    url = f"/teams/{match.team.id}/players"
-    link = response_classes.Link(link=url,method="get",meta_data=match.team.id)
+    url = f"/teams/{team_id}/players"
+    link = response_classes.Link(link=url,method="get",meta_data=team_id)
     
     url = response_classes.getMatchUrl(team_id,match.id)
     submit_first_subs = response_classes.Link(link=f'{url}/submit_plan',method="post")
@@ -335,15 +340,11 @@ async def getChangesDue(match):
         refresh_at = int((next_minute-time_playing)/2)
         if(len(last_planned)>0):
             last_minute = last_planned[0].selectionInfo.minuteOn
-            next_close = next_minute - time_playing
-            last_close = time_playing - last_minute
+            
 
-            if(next_close<last_close):
-                planned_subs = await getSubs(next_lineup,current_lineup)
-                planned_position_changes = await getPositionChanges(next_lineup,current_lineup)
-            else:
-                planned_subs = await getSubs(last_planned,current_lineup)
-                planned_position_changes = await getPositionChanges(next_lineup,current_lineup)
+            planned_subs = await getSubs(next_lineup,current_lineup)
+            planned_position_changes = await getPositionChanges(next_lineup,current_lineup)
+            
         else:
             planned_subs = await getSubs(next_lineup,current_lineup)
             planned_position_changes = await getPositionChanges(next_lineup,current_lineup)
@@ -353,6 +354,49 @@ async def getChangesDue(match):
         planned_position_changes = []
     
     return {"planned_subs":planned_subs,"planned_position_changes":planned_position_changes,"refresh_at":refresh_at}
+
+
+@timeit
+async def getMatchEnded(team_id,match:response_classes.MatchInfo):
+    try:
+        goals,opposition,all_actual_lineups,players = await asyncio.gather(
+            match_day_data.retrieve_player_goals(match),
+            match_day_data.retrieve_opposition_goals(match),
+            match_day_data.retrieveAllActualLineups(match,0),
+            player_data.retrieve_players_by_team(team_id)
+        )
+        lineup = []
+        subs = []
+        positionChanges = []
+        i=1
+        if(len(all_actual_lineups)==0):
+            lineup = players
+        else:
+            lineup = all_actual_lineups
+        for list in all_actual_lineups:
+                if(i<len(all_actual_lineups)):
+                    subs = subs + await getSubs(list["players"],all_actual_lineups[i]["players"])
+                    positionChanges = positionChanges + await getPositionChanges(list["players"],all_actual_lineups[i]["players"])
+                    i=i+1
+            
+        report = []
+
+        report = report+subs
+        
+        report = report+goals
+        
+        report = report+opposition
+        report = report+positionChanges
+        
+        report.sort(key=lambda x:x.minute)
+        
+        url = response_classes.getMatchUrl(team_id,match.id)
+        match_day_response = response_classes.ActualMatchResponse(match=match,started_at=0, actual_lineups=lineup, links=createMatchLinks(url,{}),scorers=goals,opposition=opposition,report=report,actual_position_changes=positionChanges).model_dump()
+            
+        return match_day_response
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
+
 @timeit
 async def getMatch(team_id,match:response_classes.MatchInfo):
     try:
@@ -463,6 +507,8 @@ async def getMatch(team_id,match:response_classes.MatchInfo):
         print(f"LAST LINEUP {last_planned}")
         print(f"CURRENT LINEUP {current_lineup}")
         print(f"GOALS {goals}")
+        print(f"PLANNED POSITIONS CHANGES {match.id} {planned_position_changes} on minute {time_playing}")
+        print(f"PLANNED SUBS {match.id} {planned_subs} on minute {time_playing}")
 
 
         url = response_classes.getMatchUrl(team_id,match.id)
@@ -528,18 +574,33 @@ async def how_long_played(match_id):
  
 
 
-
-async def setGoalsFor(team_id,match_id, goal_scorer,assister,type):
+@timeit
+async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):
     time_playing = await how_long_played(match_id)
     scored_by =""
     print(assister)
     if(assister is not None):
-        await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,assister["info"]["id"])
+        await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,assister["info"]["id"],assist_type)
         scored_by = f"Assisted by {assister['info']['name']} - {type}"
     else:   
-        await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,"")
+        await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,"","")
     await matches_data.increment_goals_scored(match_id=match_id,goals=1)
     
+
+    db = firestore.client()
+    
+    doc_ref = db.collection(f"{app_config.db_prefix}_player_stats").document(goal_scorer["info"]["id"])
+    goalsField = f"matches.{match_id}.goals"
+
+    data = {
+        goalsField: firestore.Increment(1)
+    }
+    doc_ref.set(
+       data, merge=True
+    )
+    
+
+
     message = f"{round(time_playing)}' {goal_scorer['info']['name']} scores"
     await updateMatchCache(match_id)
     await updateTeamCache(team_id)
@@ -553,9 +614,11 @@ async def setGoalsFor(team_id,match_id, goal_scorer,assister,type):
 
 async def updateStatus(match_id,status):
     matches = await matches_data.update_match_status(match_id,status)
-    
+    await deleteEtag(match_id,"matches")
     match = matches[0]
     type="match"
+    silent='False'
+    action = "status_updated"
     if(status==matches_state_machine.MatchState.plan_confirmed):
         message = f"{match.team.name} vs {match.opposition} match day plans confirmed"
         type="admins"
@@ -565,13 +628,25 @@ async def updateStatus(match_id,status):
         message = f"{match.team.name} vs {match.opposition} has paused"
     if(status==matches_state_machine.MatchState.ended):
         message = f"{match.team.name} vs {match.opposition} has ended"
+    if(status==matches_state_machine.MatchState.created):
+        message = f"{match.team.name} vs {match.opposition} start_again"
+        action = "start_again"
+        silent='True'
+    if(status==matches_state_machine.MatchState.plan):
+        message = f"{match.team.name} vs {match.opposition} in plan"
+        action = "plan"
+        silent='True'
+    if(status==matches_state_machine.MatchState.rated):
+        message = f"{match.team.name} vs {match.opposition} has been rated"
+        action = "rated"
     
     data = {
         "link":f"/matches/{match_id}",
         "team_id":match.team.id,
         "match_id":match_id,
-        "action":"status_updated",
-        "status":status
+        "action":action,
+        "status":status,
+        "silent":silent
     }
     await updateMatchCache(match_id)
     await updateTeamCache(match.team.id)
@@ -618,6 +693,7 @@ async def updateMatchPeriod(match_id,status):
     else:
         await match_day_data.update_period(match_id,status)
     await updateMatchCache(match_id)
+    
     await sendStatusUpdate(match_id,status)
 
 @timeit
@@ -632,8 +708,8 @@ async def sendStatusUpdate(match_id,status):
         message = f"{match.team.name} vs {match.opposition} has paused"
     elif(status==matches_state_machine.MatchState.restarted.value):
         message = f"{match.team.name} vs {match.opposition} has restarted"
-    elif(status==matches_state_machine.MatchState.restarted.value):
-        message = f"{match.team.name} vs {match.opposition} has restarted"
+    elif(status==matches_state_machine.MatchState.ended.value):
+        message = f"{match.team.name} vs {match.opposition} has ended"
     elif(status==matches_state_machine.MatchState.substitutions.value):
         message = f"{match.team.name} vs {match.opposition} - lineup changes made"
     else:
@@ -673,7 +749,8 @@ async def submit_subs(match,players:List[player_responses.PlayerResponse]):
     time_playing = await how_long_played(match.id)
     
     print("************** SUBS ON HERE ***************")
-    current_players = await match_day_data.retrieveCurrentActual(match=match,how_log_ago=time_playing)
+    all_actual = await match_day_data.retrieveAllActualLineups(match=match,how_log_ago=time_playing)
+    current_players = all_actual[0]
     print(current_players)
     print(players)
     difference = set(players).difference(current_players)
@@ -690,27 +767,29 @@ def createMatchLinks(url, links:Dict[str,response_classes.Link]):
     print(links)
     return links
 
-async def create_match_backend(match,team_id) -> response_classes.MatchResponse:
+async def create_match_backend(match,team_id) -> response_classes.PlannedMatchResponse:
     type = match.get("type",None)
     if(type):
         type = response_classes.MatchType(type)
 
     matchInfo = response_classes.MatchInfo(id="",opposition=match["opposition"],homeOrAway=match["homeOrAway"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created,type=type)
         
-    result = await retrieve_match_by_id(await save_team_fixture(matchInfo,team_id))
-    print("########################################RESULT FROM RETRIEVE MATCH BY ID ")
-    print(result)
-    self_url = response_classes.getMatchUrl(team_id,result[0].id)
+    match_id = await save_team_fixture(matchInfo,team_id)
+    matchInfo = await retrieve_match_by_id(match_id)
+    result = await getMatchCreated(team_id,matchInfo[0])
+    match_response = response_classes.PlannedMatchResponse(**result)
+    self_url = response_classes.getMatchUrl(team_id,match_response.match.id)
     self = response_classes.Link(link=self_url,method="get")
     links = {"self":self}
-    match_response = response_classes.MatchResponse(match=result[0],links=links)
+    
     message = f"{match_response.match.team.name} vs {match_response.match.opposition} created"
     subject = f"New match for {match_response.match.team.name}"
     data = {
         "link":self_url,
         "team_id":team_id,
-        "match_id":result[0].id,
-        "action":"new_match"
+        "match_id":match_response.match.id,
+        "action":"new_match",
+        "silent": 'True'
     }
     await notifications.sendNotificationUpdatesLink(match_response.match.id,message,subject,'match',data)
     return match_response
@@ -762,6 +841,8 @@ async def list_matches_by_team_backend(team_id):
             return response
    
     return matches
+
+
 
 async def main():
     if(sys.argv[1]=="getMatchParent"):

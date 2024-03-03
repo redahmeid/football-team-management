@@ -16,6 +16,7 @@ from team_backend import retrieveTeamResponse,getTeamFromDB
 import team_season_data
 from team_backend import addSingleUser
 import id_generator
+from cache_trigger import updateUserCache
 from etag_manager import isEtaggged,deleteEtag,setEtag
 import json
 import team_backend
@@ -30,7 +31,6 @@ from users_data import retrieve_user_id_by_email
 from team_data import save_team,retrieve_team_by_id
 from secrets_util import getEmailFromToken, lambda_handler
 import api_helper
-from etag_manager import deleteEtag
 from roles_data import save_role
 import roles
 from auth import set_custom_claims
@@ -65,6 +65,9 @@ async def addUserToTeam(event,context):
     else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
     return response
+
+
+
 
 @timeit
 async def submit_team(event, context):
@@ -146,7 +149,28 @@ async def retrieve_team_summary(event, context):
         response = api_helper.make_api_response(400,None)
         return response
         
+@timeit
+async def delete_team(event, context):
+    lambda_handler(event,context)
     
+    team_id = event["pathParameters"]["team_id"]
+    headers = event['headers']
+ 
+
+    try:
+        
+        await team_backend.deleteTeam(team_id)
+        await updateUserCache(getEmailFromToken(event,context))
+        return api_helper.make_api_response(201,[])    
+    except ValidationError as e:
+        errors = response_errors.validationErrorsList(e)
+        print(errors)
+        response = api_helper.make_api_response(400,None,errors)
+        return response
+    except ValueError as e:
+        print(e)
+        response = api_helper.make_api_response(400,None)
+        return response 
 
 
 

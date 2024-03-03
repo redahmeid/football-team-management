@@ -3,7 +3,7 @@ import response_classes
 from config import app_config
 from firebase_admin import credentials, firestore
 # Initialize the AWS Secrets Manager client
-
+import traceback
 from firebase_admin import auth,messaging
 import boto3
 import db
@@ -130,7 +130,7 @@ async def turn_off_notifications(token):
                 
                 
                 insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.NOTIFY}=False where {TABLE.TOKEN}='{token}'"
-                
+                print(insert_query)
                 try:
                     await cursor.execute(insert_query)
                     await conn.commit()
@@ -187,7 +187,7 @@ async def save_token_by_match(match_id,token):
                 select_query = f"delete from {TABLE.TABLE_NAME} where {TABLE.MATCH_ID}='{match_id}' and {TABLE.TOKEN}='{token}'"
                 await cursor.execute(select_query)
 
-                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME}) VALUES ('{id}','{match_id}','{token}',{int(datetime.utcnow().timestamp())})"
+                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.MATCH_ID},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY}) VALUES ('{id}','{match_id}','{token}',{int(datetime.utcnow().timestamp())},True)"
                 print(insert_query)
                 try:
                     await cursor.execute(insert_query)
@@ -306,7 +306,7 @@ async def backgroundSendMatchUpdateNotification(event,context):
         data = {
             "id":id
         }
-    silent = data.get("silent",False)
+    silent = data.get("silent",'False')
     if(type=='match'):
         for user in await getStakeholders(id):
             tokens = await getDeviceToken(user.email)
@@ -355,10 +355,11 @@ async def getStakeholders(match_id):
     print(f"TEAM ID {team_id}")
     admins = await team_data.retrieve_users_by_team_id(team_id)
     return admins
-       
+
+@timeit     
 async def send_push_notification(token, title, body,data):
     secretsmanager = boto3.client('secretsmanager')
-    print(f"Sent to {token}")
+    print(data)
     message = messaging.Message(
         
         notification=messaging.Notification(
@@ -368,13 +369,21 @@ async def send_push_notification(token, title, body,data):
         token=token,
         data = data
     )
+
+    print(f"MESSAGE {message}")
+    print(f"DATA {data}")
+    print(f"MESSAGE {message}")
+    print(f"BODY {body}")
     try:
         response = messaging.send(message)
+        print(f"Sent to {token}")
+        await save_message(token,body)
     except firebase_admin._messaging_utils.UnregisteredError as e:
         print(f"Token is invalid or unregistered: {e}")
     except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
         print(f"Exception is {e}")
-    await save_message(token,body)
+    
 
 async def send_push_message(token, title, body,data):
     secretsmanager = boto3.client('secretsmanager')
@@ -389,6 +398,7 @@ async def send_push_message(token, title, body,data):
     except firebase_admin._messaging_utils.UnregisteredError as e:
         print(f"Token is invalid or unregistered: {e}")
     except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
         print(f"Exception is {e}")
     
     

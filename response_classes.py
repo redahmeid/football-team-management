@@ -41,10 +41,15 @@ class TeamResponse(BaseModel):
     name:Optional[str]=""
     ageGroup:str
     team_id:Optional[str]=""
+    scorers:Optional[List]=[]
+    assisters:Optional[List]=[]
     fixtures:Optional[List] = []
     squad:Optional[List] = []
     coaches:Optional[List]=[]
     season:Optional[str]=''
+    wins:Optional[int]=0
+    defeats:Optional[int]=0
+    draws:Optional[int]=0
     season_id:Optional[str]=''
     seasons:Optional[List]=None
     live:Optional[bool]=True
@@ -117,6 +122,7 @@ class PlayerMatchStat(BaseModel):
     time: Optional[int]=0
     minute:Optional[int]=0
     type:Optional[str]=""
+    assist_type:Optional[str]=""
     detail:Optional[str]=""
 class MatchResponse(BaseModel):
     match:MatchInfo

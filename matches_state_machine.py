@@ -15,6 +15,7 @@ class MatchState(str, Enum):
     ended="ended"
     postponed="postponed"
     cancelled="cancelled"
+    rated="rated"
 
 state_change_map = {
     MatchState.created: [MatchState.plan],

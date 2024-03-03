@@ -35,6 +35,10 @@ def add_users_to_team(event,context):
     response = asyncio.run(team_apis.addUserToTeam(event,context))
     return response
 
+def add_guardians_to_player(event,context):
+    response = asyncio.run(player_apis.addGuardiansToPlayer(event,context))
+    return response
+
 def create_team_players(event, context):
     response = asyncio.run(player_apis.create_players(event,context))
     return response
@@ -60,6 +64,10 @@ def create_team_fixtures(event, context):
 
 def list_players_by_team(event, context):
     response = asyncio.run(player_apis.list_players_by_team(event,context))
+    return response
+
+def update_matches_from_cache(event,context):
+    response = asyncio.run(matches_apis.updateFromCache(event,context))
     return response
 
 def get_match_planned_lineups(event,context):
@@ -101,6 +109,9 @@ def delete_user(event,context):
 
 def cacher(event,context):
     asyncio.run(caching_data.handler(event,context))
+def edit_match(event,context):
+    response = asyncio.run(matches_apis.edit_match(event,context))
+    return response
 def sendNotification(event,context):
     asyncio.run(notifications.backgroundSendMatchUpdateNotification(event,context))   
 
@@ -121,6 +132,9 @@ def list_matches_by_team(event,context):
     return response
 def retrieve_team_summary(event,context):
     response = asyncio.run(team_apis.retrieve_team_summary(event,context))
+    return response
+def delete_team(event,context):
+    response = asyncio.run(team_apis.delete_team(event,context))
     return response
 def delete_player(event,context):
     response = player_apis.delete_player_from_team(event,context)

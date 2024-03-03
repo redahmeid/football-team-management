@@ -109,7 +109,26 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from Players inner join {PLAYER_SEASON_TABLE.TABLE_NAME} on {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.PLAYER_ID}={TABLE.TABLE_NAME}.{TABLE.ID} and {PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.TEAM_SEASON_ID} = {team_id} and live <> 'false' or live IS NULL" 
+                insert_query = "SELECT "\
+                                "Players.ID, "\
+                                "Players.Name, "\
+                                "Players_Seasons.ID, "\
+                                "SUM(DISTINCT CASE WHEN Player_Ratings.POTM = 'TRUE' THEN 1 ELSE 0 END) AS POTM_Count, "\
+                                "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Player_ID = Players_Seasons.ID THEN Goals.ID END),0) AS GoalCount, "\
+                                "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Assister_ID = Players_Seasons.ID THEN Goals.ID END),0) AS AssistCount, "\
+                                 "COALESCE(AVG(Player_Ratings.Rating),0) AS AverageRating, "\
+                                 "COALESCE(AVG(Player_Ratings.Technical),0) AS AverageTech, "\
+                                 "COALESCE(AVG(Player_Ratings.Physical),0) AS AveragePhys, "\
+                                 "COALESCE(AVG(Player_Ratings.Psychological),0) AS AveragePsych, "\
+                                 "COALESCE(AVG(Player_Ratings.Social),0) AS AverageSocial "\
+                            "FROM Players "\
+                            "INNER JOIN Players_Seasons ON Players_Seasons.Player_ID = Players.ID "\
+                                f"AND Players_Seasons.Team_Season_ID = {team_id} "\
+                            "LEFT JOIN Goals ON Goals.Player_ID = Players_Seasons.ID "\
+                               "OR Goals.Assister_ID = Players_Seasons.ID "\
+                            "LEFT JOIN Player_Ratings ON Player_Ratings.Player_ID = Players_Seasons.ID "\
+                            "GROUP BY Players_Seasons.ID, Players.Name "\
+                            "ORDER BY GoalCount DESC"
                 print(insert_query)
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query)
@@ -117,7 +136,7 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
                 
                 players = list()
                 for result in results:
-                    players.append(convertStartingLineup(result))
+                    players.append(convertPlayerWithStats(result))
                 
                 team_players ={}
                 team_players["status"] = "squad"
@@ -180,6 +199,12 @@ async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
 def convertStartingLineup(data):
     player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME])
     playerResponse = player_responses.PlayerResponse(info=player_info)
+    return playerResponse.model_dump()
+def convertPlayerWithStats(data):
+    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME])
+    player_stats = player_responses.PlayerStats(goals=data["GoalCount"],assists=data["AssistCount"],rating=round(data["AverageRating"],ndigits=2),potms=data["POTM_Count"])
+    player_rating = player_responses.PlayerRating(overall=str(round(data["AverageRating"],ndigits=2)),technical=str(round(data["AverageTech"],ndigits=2)),physical=str(round(data["AveragePhys"],ndigits=2)),psychological=str(round(data["AveragePsych"],ndigits=2)),social=str(round(data["AverageSocial"],ndigits=2)))
+    playerResponse = player_responses.PlayerResponse(info=player_info,stats=player_stats,rating=player_rating)
     return playerResponse.model_dump()
 
 

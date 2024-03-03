@@ -31,13 +31,14 @@ async def setupHomepage(email):
     teams_list = []
     teams = await retrieve_teams_by_user_id(email)
     
+
     for team in teams:
-        team = await team_backend.getTeamFromDB(team.id)
+        # team = await team_backend.getTeamFromDB(team.id)
         teams_list.append(team.model_dump())
         await updateTeamCache(team.id)
     
     
-    logger.info(teams_list)
+    logger.info(teams)
     logger.info("END")
     return teams_list
 
@@ -55,6 +56,8 @@ async def getUserInfoFromDB(email):
         etag = await setEtag(email,'users',teams_list)
     
     response = api_helper.make_api_response_etag(200,teams_list,etag)
+    print("RESPONSE FROM GETUSERINFOFROMDB ")
+    print(response)
     # get the user
     
     return response

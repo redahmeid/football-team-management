@@ -30,11 +30,14 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from timeit import timeit
-from cache_trigger import updateTeamCache,updateMatchCache, updateUserCache
+from cache_trigger import updateTeamCache,updateMatchCache, updateUserCache,updatePlayerCache
 
 
 async def create_fixtures(event, context):
     lambda_handler(event,context)
+    http_method = event['httpMethod']
+
+    
     body =json.loads(event["body"])
     print(body)
     pathParameters = event["pathParameters"]
@@ -44,7 +47,7 @@ async def create_fixtures(event, context):
     matches = body["matches"]
     created_matches = []
     for match in matches:
-       
+    
         try:
             result = await create_match_backend(match,team_id)
             await updateTeamCache(team_id)
@@ -75,6 +78,32 @@ async def time_played(event,context):
     response = await match_planning_backend.how_long_played(match_id)
     return api_helper.make_api_response(200,{"player":response})
 
+@timeit
+async def updateFromCache(event,context):
+    lambda_handler(event,context)
+    await matches_backend.updateDBFromCache()
+@timeit
+async def edit_match(event,context):
+    lambda_handler(event,context)
+    body =json.loads(event["body"])
+    match_id = event["pathParameters"]["match_id"]
+    
+    goals_for = body.get("goals_for","")
+    goals_against = body.get("goals_against","")
+    players = body.get("players","")
+    if(goals_for!="" and goals_against!=""):
+        await matches_backend.updateScore(match_id,goals_for,goals_against)
+    if(len(players)>0):
+        await matches_backend.addPlayerRatings(match_id,players)
+        await match_planning_backend.updateStatus(match_id,matches_state_machine.MatchState.rated)
+    await updateMatchCache(match_id)
+    
+    result = await matches_backend.getMatchFromDB(match_id)
+    await updateTeamCache(result["result"]["match"]["team"]["id"])
+    await updatePlayerCache(result["result"]["match"]["team"]["id"])
+    response =  api_helper.make_api_response_etag(200,[result["result"]],result["etag"])
+    print(f"EDIT RESPONSE {response}")
+    return response
 
 @timeit
 async def retrieve_match_by_id(event,context):
