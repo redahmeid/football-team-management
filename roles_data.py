@@ -101,6 +101,40 @@ async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
                 print(data)
                 return data
 
+@timeit
+async def retrieve_team_roles_by_user_id(user_id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = "select Email, Team_ID, GROUP_CONCAT(DISTINCT Roles.Role SEPARATOR ',') AS user_roles from Roles where Email=%s and Team_ID IS NOT NULL group by Team_ID;"
+                print(insert_query)
+                data_to_insert = (user_id)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query, data_to_insert)
+                data = await cursor.fetchall()
+                print(data)
+                return data
+
+@timeit
+async def retrieve_player_roles_by_user_id(user_id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = "select Email, Player_ID, GROUP_CONCAT(DISTINCT Roles.Role SEPARATOR ',') AS user_roles from Roles where Email=%s and Player_ID IS NOT NULL group by Player_ID;"
+                print(insert_query)
+                data_to_insert = (user_id)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query, data_to_insert)
+                data = await cursor.fetchall()
+                print(data)
+                return data
+
 async def delete_roles_by_email(user_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:

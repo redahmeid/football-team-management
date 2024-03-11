@@ -267,7 +267,7 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and {TABLE.STATUS} <> 'cancelled' order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc" 
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS} <> 'cancelled' ) order by {TABLE.TABLE_NAME}.{TABLE.DATE} " 
                 print(insert_query)
 
                 # Execute the SQL query to insert data
@@ -283,6 +283,58 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
                 
             
                 return matches
+
+@timeit
+async def retrieve_not_played_by_team(team_id:str,offset:str=0) -> List[response_classes.MatchInfo]:
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS} <> 'cancelled' and {TABLE.STATUS} <> 'ended' and {TABLE.STATUS} <> 'rated') order by {TABLE.TABLE_NAME}.{TABLE.DATE} asc limit 10 offset {offset}" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                rows = await cursor.fetchall()
+
+
+                # club = Club(id=id,name=row)
+                matches = []
+                
+                for row in rows:
+                    matches.append(await convertDataToMatchInfo(row))
+                
+            
+                return matches
+
+@timeit
+async def retrieve_results_by_team(team_id:str,offset:str=0) -> List[response_classes.MatchInfo]:
+    
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = f"select * from {TABLE.TABLE_NAME} inner join {team_season_data.TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{TABLE.TEAM_ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join Teams on {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}=Teams.ID and {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}='{team_id}' and ({TABLE.STATUS}  = 'rated' or {TABLE.STATUS}  = 'ended') order by {TABLE.TABLE_NAME}.{TABLE.DATE} desc limit 10 offset {offset}" 
+                print(insert_query)
+
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                rows = await cursor.fetchall()
+
+
+                # club = Club(id=id,name=row)
+                matches = []
+                
+                for row in rows:
+                    matches.append(await convertDataToMatchInfo(row))
+                
+            
+                return matches
+            
+
 @timeit
 async def wins_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     
@@ -467,8 +519,8 @@ async def convertDataToMatchInfo(data):
         how_long_ago_in_minutes = 0
     
 
-    return response_classes.MatchInfo(id=data[TABLE.ID],type=data[TABLE.TYPE],captain=data[TABLE.CAPTAIN], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
-
+    match_info = response_classes.MatchInfo(id=data[TABLE.ID],type=data[TABLE.TYPE],captain=data[TABLE.CAPTAIN], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
+    return match_info
 
 
 # if __name__ == "__main__":

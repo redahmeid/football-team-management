@@ -1,0 +1,65 @@
+Matches
++---------------+--------------+------+-----+---------+-------+
+| Field         | Type         | Null | Key | Default | Extra |
++---------------+--------------+------+-----+---------+-------+
+| ID            | varchar(255) | NO   | PRI | NULL    |       |
+| Opposition    | varchar(255) | NO   |     | NULL    |       |
+| Team_ID       | varchar(255) | NO   |     | NULL    |       |
+| HomeOrAway    | varchar(255) | YES  |     | NULL    |       |
+| Date          | datetime     | YES  |     | NULL    |       |
+| Status        | varchar(255) | YES  |     | NULL    |       |
+| Goals_For     | int          | YES  |     | NULL    |       |
+| Goals_Against | int          | YES  |     | NULL    |       |
+| Length        | int          | YES  |     | NULL    |       |
+| Type          | varchar(255) | YES  |     | NULL    |       |
+| Time_Started  | int          | YES  |     | NULL    |       |
+| Captain       | varchar(255) | YES  |     | NULL    |       |
+| POTM          | varchar(255) | YES  |     | NULL    |       |
++---------------+--------------+------+-----+---------+-------+
+
+Planned_Lineups
++--------------+--------------+------+-----+---------+-------+
+| Field        | Type         | Null | Key | Default | Extra |
++--------------+--------------+------+-----+---------+-------+
+| ID           | varchar(255) | NO   | PRI | NULL    |       |
+| Match_ID     | varchar(255) | NO   |     | NULL    |       |
+| Player_ID    | varchar(255) | NO   |     | NULL    |       |
+| Minute       | int          | YES  |     | NULL    |       |
+| Position     | varchar(255) | YES  |     | NULL    |       |
+| Time         | int          | YES  |     | NULL    |       |
+| Deleted      | tinyint(1)   | YES  |     | NULL    |       |
+| Deleted_TIME | int          | YES  |     | NULL    |       |
++--------------+--------------+------+-----+---------+-------+
+
+Actual_Lineups
++--------------+--------------+------+-----+---------+-------+
+| Field        | Type         | Null | Key | Default | Extra |
++--------------+--------------+------+-----+---------+-------+
+| ID           | varchar(255) | NO   | PRI | NULL    |       |
+| Match_ID     | varchar(255) | NO   | MUL | NULL    |       |
+| Player_ID    | varchar(255) | NO   | MUL | NULL    |       |
+| Position     | varchar(255) | YES  |     | NULL    |       |
+| Time         | double       | YES  |     | NULL    |       |
+| Deleted      | tinyint(1)   | YES  |     | NULL    |       |
+| Deleted_TIME | int          | YES  |     | NULL    |       |
+| Captain      | tinyint(1)   | YES  |     | NULL    |       |
++--------------+--------------+------+-----+---------+-------+
+
+Players
++---------+--------------+------+-----+---------+-------+
+| Field   | Type         | Null | Key | Default | Extra |
++---------+--------------+------+-----+---------+-------+
+| ID      | varchar(255) | NO   | PRI | NULL    |       |
+| Name    | varchar(255) | NO   |     | NULL    |       |
+| Team_ID | varchar(255) | NO   |     | NULL    |       |
+| Email   | varchar(255) | YES  |     | NULL    |       |
+| live    | varchar(255) | YES  |     | NULL    |       |
++---------+--------------+------+-----+---------+-------+
+
+Players_Seasons+----------------+--------------+------+-----+---------+-------+
+| Field          | Type         | Null | Key | Default | Extra |
++----------------+--------------+------+-----+---------+-------+
+| ID             | varchar(255) | NO   | PRI | NULL    |       |
+| Player_ID      | varchar(255) | NO   |     | NULL    |       |
+| Team_Season_ID | varchar(255) | NO   |     | NULL    |       |
++----------------+--------------+------+-----+---------+-------+

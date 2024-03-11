@@ -114,15 +114,23 @@ async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamRe
 
                 
                 insert_query_2 = f"select * from Roles as r inner join {team_season_data.TABLE.TABLE_NAME} on r.Team_ID={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID} inner join {TABLE.TABLE_NAME} on {TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}={team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_ID}  and r.Email = '{user_id}' and ({team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.DELETE}=False or {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.DELETE} IS NULL) order by {team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.TEAM_AGE_GROUP}, {TABLE.TABLE_NAME}.Name" 
-                logger.info(insert_query_2)
+                print(insert_query_2)
                 await cursor.execute(insert_query_2)
                 rows = await cursor.fetchall()
-
+                print(rows)
                 teams = [] 
+                adminTeams = []
+                guardianTeams = []
                 for row in rows:
                     team = await retrieve_teams_by_user_id_convert_to_team_response(row)
+                    if(row['Role']=='admin' or row['Role']=='coach'):
+                        adminTeams.append(team)
+                    if(row['Role']=='parent'):
+                        guardianTeams.append(team)
+                    
                     teams.append(team)
-                return teams
+                return {"teams":teams,"admin":adminTeams,"guardians":guardianTeams}
+            
             
 
 @timeit
@@ -162,7 +170,8 @@ async def does_userid_match_team(user_id:str,team_id:str):
                     return True
                 else:
                     return False
-                
+
+
 @timeit
 async def retrieve_team_by_id(team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -265,4 +274,4 @@ async def retrieve_teams_by_user_id_convert_to_team_response(team,order=0) -> re
 
     response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id,name=name, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     logger.info(f"{order} Response {response}")
-    return response
+    return response.model_dump()

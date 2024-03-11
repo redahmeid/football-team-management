@@ -140,6 +140,22 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  retrieve_guardians_players:
+    handler: handler.list_players_by_user
+    events:
+      - http:
+          path: /players
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
   retrieve_match_planned_lineups:
     handler: handler.get_match_planned_lineups
     events:
@@ -177,6 +193,22 @@ functions:
     events:
       - http:
           path: /matches/{match_id}/current_lineup
+          method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  user_homepage_bff_v2:
+    handler: handler.getUserV2
+    events:
+      - http:
+          path: /v2/users
           method: get
           cors:
             origins:

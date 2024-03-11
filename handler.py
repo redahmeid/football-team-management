@@ -66,6 +66,10 @@ def list_players_by_team(event, context):
     response = asyncio.run(player_apis.list_players_by_team(event,context))
     return response
 
+def list_players_by_user(event, context):
+    response = asyncio.run(player_apis.list_players_by_guardian(event,context))
+    return response
+
 def update_matches_from_cache(event,context):
     response = asyncio.run(matches_apis.updateFromCache(event,context))
     return response
@@ -151,5 +155,8 @@ def submit_team(event,context):
     return response
 def getUser(event,context):
     response = asyncio.run(user_homepage.enter_screen(event,context))
+    return response
+def getUserV2(event,context):
+    response = asyncio.run(user_homepage.enter_screenV2(event,context))
     return response
 

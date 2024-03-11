@@ -3,7 +3,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Email, To, Content
 from config import app_config
 import json
-
+from timeit import timeit
 
 async def contact_us(event,context):
     body =json.loads(event["body"])
@@ -33,6 +33,7 @@ async def send_email(to,to_name,content,subject):
     except Exception as e:
         print(e)
 
+@timeit
 async def send_email_with_template(to,template_id,template_data):
 
     message = Mail(

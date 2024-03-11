@@ -47,7 +47,7 @@ async def update_user(id,name):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = f"UPDATE {TABLE.TABLE_NAME} set {TABLE.NAME}={name} where {TABLE.ID}={id}"
+                insert_query = f"UPDATE {TABLE.TABLE_NAME} set {TABLE.NAME}='{name}' where {TABLE.ID}={id}"
                 print(insert_query)
 
                 # Execute the SQL query to insert data

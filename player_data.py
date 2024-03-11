@@ -112,7 +112,8 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
                 insert_query = "SELECT "\
                                 "Players.ID, "\
                                 "Players.Name, "\
-                                "Players_Seasons.ID, "\
+                                "Players_Seasons.ID,  Players_Seasons.Team_Season_ID, "\
+                                "GROUP_CONCAT(DISTINCT Roles.Email SEPARATOR ', ') AS Guardians, "\
                                 "SUM(DISTINCT CASE WHEN Player_Ratings.POTM = 'TRUE' THEN 1 ELSE 0 END) AS POTM_Count, "\
                                 "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Player_ID = Players_Seasons.ID THEN Goals.ID END),0) AS GoalCount, "\
                                 "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Assister_ID = Players_Seasons.ID THEN Goals.ID END),0) AS AssistCount, "\
@@ -127,6 +128,7 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
                             "LEFT JOIN Goals ON Goals.Player_ID = Players_Seasons.ID "\
                                "OR Goals.Assister_ID = Players_Seasons.ID "\
                             "LEFT JOIN Player_Ratings ON Player_Ratings.Player_ID = Players_Seasons.ID "\
+                            "LEFT JOIN Roles ON Roles.Player_ID = Players_Seasons.ID "\
                             "GROUP BY Players_Seasons.ID, Players.Name "\
                             "ORDER BY GoalCount DESC"
                 print(insert_query)
@@ -135,8 +137,10 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
                 results = await cursor.fetchall()
                 
                 players = list()
+
                 for result in results:
-                    players.append(convertPlayerWithStats(result))
+                    player_response = convertPlayerWithStats(result)
+                    players.append(player_response)
                 
                 team_players ={}
                 team_players["status"] = "squad"
@@ -144,6 +148,46 @@ async def retrieve_players_by_team(team_id:str) -> List[Dict[str,List[player_res
                 
                 print(team_players)
                 return [team_players]
+
+@timeit
+async def retrieve_players_by_user(email:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+
+                # Define the SQL query to insert data into a table
+                insert_query = "SELECT "\
+                                "Players.ID, "\
+                                "Players.Name, "\
+                                "Players_Seasons.ID, Players_Seasons.Team_Season_ID, "\
+                                "GROUP_CONCAT(DISTINCT Roles.Email SEPARATOR ', ') AS Guardians, "\
+                                "SUM(DISTINCT CASE WHEN Player_Ratings.POTM = 'TRUE' THEN 1 ELSE 0 END) AS POTM_Count, "\
+                                "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Player_ID = Players_Seasons.ID THEN Goals.ID END),0) AS GoalCount, "\
+                                "COALESCE(COUNT(DISTINCT CASE WHEN Goals.Assister_ID = Players_Seasons.ID THEN Goals.ID END),0) AS AssistCount, "\
+                                "COALESCE(AVG(Player_Ratings.Rating),0) AS AverageRating, "\
+                                "COALESCE(AVG(Player_Ratings.Technical),0) AS AverageTech, "\
+                                "COALESCE(AVG(Player_Ratings.Physical),0) AS AveragePhys, "\
+                                "COALESCE(AVG(Player_Ratings.Psychological),0) AS AveragePsych, "\
+                                "COALESCE(AVG(Player_Ratings.Social),0) AS AverageSocial "\
+                                "FROM Players INNER JOIN Players_Seasons ON Players_Seasons.Player_ID = Players.ID "\
+                                "LEFT JOIN Goals ON Goals.Player_ID = Players_Seasons.ID OR Goals.Assister_ID = Players_Seasons.ID "\
+                                "LEFT JOIN Player_Ratings ON Player_Ratings.Player_ID = Players_Seasons.ID "\
+                                f"INNER JOIN Roles ON Roles.Player_ID = Players_Seasons.ID and Roles.Email='{email}' "\
+                                "GROUP BY Players_Seasons.ID, Players.Name, Players_Seasons.Team_Season_ID  ORDER BY GoalCount DESC;"
+                print(insert_query)
+                # Execute the SQL query to insert data
+                await cursor.execute(insert_query)
+                results = await cursor.fetchall()
+                
+                players = list()
+
+                for result in results:
+                    player_response = convertPlayerWithStats(result)
+                    players.append(player_response)
+                
+                return players
+
+            
 
 async def squad_size_by_team(team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -201,10 +245,13 @@ def convertStartingLineup(data):
     playerResponse = player_responses.PlayerResponse(info=player_info)
     return playerResponse.model_dump()
 def convertPlayerWithStats(data):
-    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME])
+    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],team_id=data["Team_Season_ID"])
     player_stats = player_responses.PlayerStats(goals=data["GoalCount"],assists=data["AssistCount"],rating=round(data["AverageRating"],ndigits=2),potms=data["POTM_Count"])
     player_rating = player_responses.PlayerRating(overall=str(round(data["AverageRating"],ndigits=2)),technical=str(round(data["AverageTech"],ndigits=2)),physical=str(round(data["AveragePhys"],ndigits=2)),psychological=str(round(data["AveragePsych"],ndigits=2)),social=str(round(data["AverageSocial"],ndigits=2)))
-    playerResponse = player_responses.PlayerResponse(info=player_info,stats=player_stats,rating=player_rating)
+    guardians = []
+    if(data['Guardians']):
+        guardians = data['Guardians'].split(',')
+    playerResponse = player_responses.PlayerResponse(info=player_info,stats=player_stats,rating=player_rating,guardians=guardians)
     return playerResponse.model_dump()
 
 

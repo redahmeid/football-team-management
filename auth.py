@@ -1,7 +1,7 @@
 import json
 
 from team_data import retrieve_teams_by_user_id,does_userid_match_team
-from roles_data import retrieve_role_by_user_id_and_team_id
+from roles_data import retrieve_role_by_user_id_and_team_id,retrieve_player_roles_by_user_id,retrieve_team_roles_by_user_id
 from secrets_util import  lambda_handler,validate_firebase_id_token
 import api_helper
 import sys
@@ -47,20 +47,31 @@ async def set_custom_claims(event, context):
 
 @timeit
 async def set_claims(email,uid):
-    teams = await retrieve_teams_by_user_id(email)
+    teams = await retrieve_team_roles_by_user_id(email)
+    players = await retrieve_player_roles_by_user_id(email)
     print(teams)
     teamsClaims = {}
+    additionalClaims = {}
     for team in teams:
-        team_id = team.id
-        roles = await retrieve_role_by_user_id_and_team_id(email,team_id)
-        roleClaims = []
-        for role in roles:
-            
-            roleClaims.append(role["Role"])
-        teamsClaims[team_id] = roleClaims
-    additionalClaims = {
-        "teams": teamsClaims
-    }
+        
+        team_id = team['Team_ID']
+        roles = []
+        if(team['user_roles']):
+            roles = team['user_roles'].split(',')
+        
+        teamsClaims[team_id] = roles
+    additionalClaims['teams'] =  teamsClaims
+    playerClaims = {}
+    for player in players:
+        
+        team_id = player['Player_ID']
+        roles = []
+        if(player['user_roles']):
+            roles = player['user_roles'].split(',')
+        
+        playerClaims[team_id] = roles
+    additionalClaims["players"]= playerClaims
+    
     auth.set_custom_user_claims(uid=uid,custom_claims=additionalClaims)
     await etag_manager.setEtag(email,'claims',additionalClaims)
 

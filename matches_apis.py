@@ -5,7 +5,7 @@ from config import app_config
 import api_helper
 import response_errors
 import team_backend
-from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_matches_by_team,retrieve_next_match_by_team,update_match_status
+from matches_data import retrieve_match_by_id,save_team_fixture,retrieve_not_played_by_team,retrieve_next_match_by_team,update_match_status
 import notifications
 from roles import Role
 from auth import check_permissions
@@ -23,8 +23,8 @@ from match_planning_backend import list_matches_by_team_backend,create_match_bac
 from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 import functools
 import time
-import asyncio
-import hashlib
+import sys
+import traceback
 import json
 
 import firebase_admin
@@ -65,10 +65,13 @@ async def create_fixtures(event, context):
     return response
     
 async def list_matches_by_team(event, context):
-    team_id = event["pathParameters"]["team_id"]
-    
-    response =  await list_matches_by_team_backend(team_id)
-    return api_helper.make_api_response(200,response)
+    try:
+        team_id = event["pathParameters"]["team_id"]
+        
+        response =  await list_matches_by_team_backend(team_id)
+        return api_helper.make_api_response(200,response)
+    except Exception as e:
+        traceback.print_exception(*sys.exc_info()) 
 
 @timeit
 async def time_played(event,context):

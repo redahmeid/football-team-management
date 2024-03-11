@@ -2,6 +2,7 @@ import json
 from pydantic import TypeAdapter, ValidationError
 from secrets_util import lambda_handler, getEmailFromToken
 from classes import Player
+from exceptions import AuthError
 from config import app_config
 import api_helper
 import response_errors
@@ -68,8 +69,8 @@ async def addGuardiansToPlayer(event,context):
            
             result = await player_backend.addGuardian(email,player_id,team_id)
             results.append(result.model_dump())
-        team = await team_backend.getTeamFromDB(team_id)
         await cache_trigger.updateTeamCache(team_id)
+        await cache_trigger.updatePlayerCache(team_id)
         data = {
             "link":f"/teams/{team_id}",
             "team_id":f"{team_id}",
@@ -112,7 +113,41 @@ async def list_players_by_team(event, context):
         return response
 
 
-
+@timeit
+async def list_players_by_guardian(event, context):
+    lambda_handler(event,context)
+    acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
+    
+    
+    players = []
+    
+    try:
+        email = getEmailFromToken(event,context)
+        headers = event['headers']
+        etag = headers.get('etag',None)
+        if(etag):
+            print("ETAG EXISTS")
+            isEtag = await isEtaggged(email,'guardian_players',etag)
+            if(isEtag):
+                response = api_helper.make_api_response_etag(304,result={},etag=etag)
+                return response 
+            else:
+                players = await player_backend.getGuardianPlayersFromDB(email)
+                response = api_helper.make_api_response_etag(200,players["result"],players["etag"])
+                return response
+        else:
+            players = await player_backend.getGuardianPlayersFromDB(email)
+            response = api_helper.make_api_response_etag(200,players["result"],players["etag"])
+            return response
+    except ValidationError as e:
+        errors = response_errors.validationErrorsList(e)
+        response = api_helper.make_api_response(400,None,errors)
+    except ValueError as e:
+        response = api_helper.make_api_response(400,None,None)
+    except AuthError as e:
+        response = api_helper.make_api_response(403,None,None)
+   
+    
 
 def delete_player_from_team(event, context):
    

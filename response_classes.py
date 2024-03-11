@@ -44,6 +44,7 @@ class TeamResponse(BaseModel):
     scorers:Optional[List]=[]
     assisters:Optional[List]=[]
     fixtures:Optional[List] = []
+    results:Optional[List] = []
     squad:Optional[List] = []
     coaches:Optional[List]=[]
     season:Optional[str]=''

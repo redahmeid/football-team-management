@@ -16,6 +16,7 @@ class Link(BaseModel):
 class PlayerInfo(BaseModel):
     id:Optional[str]=""
     name:Optional[str]=""
+    team_id:Optional[str]=""
 
 class PlayerRating(BaseModel):
     overall:Optional[str]=""
@@ -44,6 +45,7 @@ class PlayerResponse(BaseModel):
     selectionInfo:Optional[SelectionInfo]=SelectionInfo()
     stats:Optional[PlayerStats]=PlayerStats()
     rating:Optional[PlayerRating]=PlayerRating()
+    guardians:Optional[List]=[]
     links:Optional[Dict[str,Link]]=None
     def __eq__(self, other):
         if isinstance(other, PlayerResponse):
