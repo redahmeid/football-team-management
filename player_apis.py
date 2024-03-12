@@ -56,7 +56,7 @@ async def create_players(event, context):
 @timeit
 async def addGuardiansToPlayer(event,context):
     lambda_handler(event,context)
-    acceptable_roles = [Role.admin.value]
+    acceptable_roles = [Role.admin.value,Role.coach.value]
     team_id = event["pathParameters"]["team_id"]
     player_id = event["pathParameters"]["player_id"]
     body =json.loads(event["body"])
@@ -68,16 +68,19 @@ async def addGuardiansToPlayer(event,context):
         for email in emails:
            
             result = await player_backend.addGuardian(email,player_id,team_id)
+            await cache_trigger.updateGuardiansPlayerCache(email)
+            await cache_trigger.updateUserCache(email)
             results.append(result.model_dump())
         await cache_trigger.updateTeamCache(team_id)
         await cache_trigger.updatePlayerCache(team_id)
+        
         data = {
-            "link":f"/teams/{team_id}",
+            "link":f"/players/{player_id}",
             "team_id":f"{team_id}",
-            "action":"new_users",
+            "action":"new_guardian",
             "silent":"False"
         }
-        # await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),f"Welcome your new coaches",f"New coach added to {team.name}",'team',data)
+        await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),f"Guardian has been added to ",f"New coach added to {team.name}",'team',data)
         response = api_helper.make_api_response(200,results)
     else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")

@@ -118,7 +118,7 @@ async def getMatchPlanningResponse(team_id,match):
     confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
     links = {"submit_plan":submit_first_subs,"confirm_plan":confirm_plan }
     links["submit_captain"]=submit_captain
-    match_day_response = response_classes.PlannedMatchResponse(match=match,captain=captain, planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
+    match_day_response = response_classes.ActualMatchResponse(match=match,captain=captain,  current_players=selected_players[0]['players'],planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
     
     return match_day_response
 

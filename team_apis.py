@@ -43,7 +43,7 @@ from timeit import timeit
 
 async def addUserToTeam(event,context):
     lambda_handler(event,context)
-    acceptable_roles = [Role.admin.value]
+    acceptable_roles = [Role.admin.value,Role.coach.value]
     team_id = event["pathParameters"]["team_id"]
     body =json.loads(event["body"])
     emails = body["emails"]

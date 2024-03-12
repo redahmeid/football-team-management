@@ -71,14 +71,14 @@ async def setupHomepageV2(email):
 @timeit
 async def getUserInfoFromDBV2(email):
 
-    cached_object = await getLatestObject(email,'users_v2')
+    cached_object = await getLatestObject(email,'users')
 
     if(cached_object):
        etag = cached_object["etag"]
        teams_list = json.loads(cached_object["object"])
     else:
         teams_list = await setupHomepageV2(email)
-        etag = await setEtag(email,'users_v2',teams_list)
+        etag = await setEtag(email,'users',teams_list)
     
     response = api_helper.make_api_response_etag(200,teams_list,etag)
     print("RESPONSE FROM GETUSERINFOFROMDB ")

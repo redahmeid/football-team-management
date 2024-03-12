@@ -9,6 +9,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 import player_data
+import cache_trigger
 import matches_backend
 import team_backend
 import team_data
@@ -17,6 +18,7 @@ import boto3
 import firebase_admin
 import matches_backend
 import player_backend
+import team_data
 import user_homepage_backend
 from firebase_admin import credentials
 from firebase_admin import auth, messaging
@@ -68,6 +70,9 @@ async def handler(event,context):
     elif(path==Paths.cacheActual.value):
         match_id = event["id"]
         await cacheActualLineup(match_id)
+    elif(path==Paths.cacheGuardiansPlayers.value):
+        email = event["id"]
+        await cacheGuardiansPlayers(email)
 @timeit
 async def cacheMatch(match_id):
     
@@ -76,6 +81,11 @@ async def cacheMatch(match_id):
 @timeit
 async def cacheTeam(team_id):
     await team_backend.getTeamFromDB(team_id)
+    users = await team_data.retrieve_users_by_team_id(team_id)
+    for user in users:
+        email = user.email
+        await cache_trigger.updateGuardiansPlayerCache(email)
+        await cache_trigger.updateUserCache(email)
 
 @timeit
 async def cachePlans(match_id):
@@ -84,7 +94,7 @@ async def cachePlans(match_id):
 @timeit
 async def cacheUser(email):
     
-    await user_homepage_backend.getUserInfoFromDB(email)
+    await user_homepage_backend.getUserInfoFromDBV2(email)
 
 @timeit
 async def cachePlayers(team_id):
@@ -95,6 +105,11 @@ async def cachePlayers(team_id):
 async def cacheCurrentLineup(match_id):
     
     await matches_backend.getMatchCurrentLineups(match_id)
+
+@timeit
+async def cacheGuardiansPlayers(email):
+    
+    await player_backend.getGuardianPlayersFromDB(email)
 
 @timeit
 async def cacheActualLineup(match_id):

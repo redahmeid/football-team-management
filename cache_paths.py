@@ -9,4 +9,5 @@ class Paths(str, Enum):
     cacheConceded = "cacheConceded"
     cacheUser = "cacheUser"
     cachePlayers = "cachePlayers"
+    cacheGuardiansPlayers = "cacheGuardiansPlayers"
     cacheCurrentLineup = "cacheCurrentLineup"

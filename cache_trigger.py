@@ -72,6 +72,16 @@ async def updatePlayerCache(team_id):
     }
     await invokeCacheHander(event)
 
+@timeit
+async def updateGuardiansPlayerCache(team_id):
+    
+    await deleteEtag(team_id,'guardian_players')
+    event = {
+        "id":team_id,
+        "path":Paths.cacheGuardiansPlayers.value
+    }
+    await invokeCacheHander(event)
+
 
 
 @timeit
