@@ -281,6 +281,25 @@ async def save_goals_for(match_id,player_id,time_playing,type,assister_id,assist
                 await conn.commit()
 
                 return True
+
+@timeit
+async def delete_goal_scorer(id):
+    async with aiomysql.create_pool(**db.db_config) as pool:
+        async with pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cursor:
+                
+        
+                id = uuid.uuid4()
+            
+                insert_query = f"delete from {GOALS_TABLE.TABLE_NAME} where ID={id}"
+                await cursor.execute(insert_query)
+                    
+                    # Commit the transaction
+                await conn.commit()
+
+                return True
+
+
 @timeit
 async def save_assists_for(match_id,player_id,time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:

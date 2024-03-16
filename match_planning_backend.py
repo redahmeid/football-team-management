@@ -573,6 +573,23 @@ async def how_long_played(match_id):
         return 0
  
 
+@timeit
+async def removeGoalsFor(id,match_id,team_id):
+    
+    await match_day_data.delete_goal_scorer(id)
+    await matches_data.increment_goals_scored(match_id=match_id,goals=-1)
+    
+    message = f"Score correction"
+
+    await updateMatchCache(match_id)
+    await updateTeamCache(team_id)
+    data = {
+        "link":f"/matches/{match_id}",
+        "team_id":team_id,
+        "match_id":match_id,
+        "action":"goals_for"
+    }
+    await notifications.sendNotificationUpdatesLink(match_id,message,message,'match',data)
 
 @timeit
 async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):
@@ -639,6 +656,9 @@ async def updateStatus(match_id,status):
     if(status==matches_state_machine.MatchState.rated):
         message = f"{match.team.name} vs {match.opposition} has been rated"
         action = "rated"
+    if(status==matches_state_machine.MatchState.cancelled):
+        message = f"{match.team.name} vs {match.opposition} has been cancelled"
+        action = "cancelled"
     
     data = {
         "link":f"/matches/{match_id}",
