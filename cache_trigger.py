@@ -73,6 +73,20 @@ async def updatePlayerCache(team_id):
     await invokeCacheHander(event)
 
 @timeit
+async def saveDeviceToken(email,device_token,device_id,app_version):
+    
+    
+    event = {
+        "email":email,
+        "device_token":device_token,
+        "device_id":device_id,
+        "app_version":app_version,
+        "path":Paths.saveDeviceToken.value
+    }
+    await invokeCacheHander(event)
+
+
+@timeit
 async def updateGuardiansPlayerCache(team_id):
     
     await deleteEtag(team_id,'guardian_players')

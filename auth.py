@@ -28,7 +28,7 @@ secretsmanager = boto3.client('secretsmanager')
 @timeit
 async def set_custom_claims(event, context):
     print("###################IN SET CLAIMS################")
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     id_token = getToken(event=event)
     
     # body =json.loads(event["body"])
@@ -77,7 +77,7 @@ async def set_claims(email,uid):
 
 @timeit
 async def saveDeviceToken(event,context)  :
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     try:
         headers = event["headers"]
         pathParameters = event.get("pathParameters")
@@ -90,20 +90,22 @@ async def saveDeviceToken(event,context)  :
             match_id=""
 
         print(headers)
-        device_token = event["headers"]['x-device-id']
+        device_token = headers.get('x-device-token',None)
+        device_id = headers.get('x-device-id',None)
+        version = headers.get('x-football-app',None)
         print(f"DEVICE TOKEN {device_token}")
         try:
             email = getToken(event)["email"]
         except AuthError as e:
             email =""
-        await save_token(email=email,token=device_token)
+        await save_token(email=email,token=device_token,device=device_id,version=version)
         print("Token saved")
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 
         logger.error("e")
 
 async def turnOffNotifications(event,context)  :
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     try:
         headers = event["headers"]
         
@@ -118,7 +120,7 @@ async def turnOffNotifications(event,context)  :
         logger.error("e")
 
 async def saveDeviceTokenByMatch(event,context)  :
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     try:
         headers = event["headers"]
         pathParameters = event.get("pathParameters")

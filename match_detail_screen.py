@@ -50,7 +50,7 @@ acceptable_roles = [Role.admin.value,Role.coach.value]
 
 #/teams/{team_id}/matches/{match_id}/players/submit_lineup
 async def start_match(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     body =json.loads(event["body"])
@@ -85,7 +85,7 @@ async def start_match(event,context):
 
 #/teams/{team_id}/matches/{match_id}/players/submit_lineup
 async def submit_lineup(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     body =json.loads(event["body"])
@@ -180,7 +180,7 @@ async def submit_lineup(event,context):
         return response
 
 async def set_captain(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     body =json.loads(event["body"])
@@ -221,7 +221,7 @@ async def set_captain(event,context):
 
 
 async def submit_substitutions(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     body =json.loads(event["body"])
@@ -254,7 +254,7 @@ async def submit_substitutions(event,context):
         return response
 
 async def retrieveScore(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     
@@ -283,7 +283,7 @@ async def retrieveScore(event,context):
 
 
 async def getMatchAsGuest(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     matches = []
@@ -312,7 +312,7 @@ async def getMatchAsGuest(event,context):
 
 
 async def getMatch(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     team_id = pathParameters["team_id"]
@@ -354,7 +354,7 @@ async def getMatch(event,context):
         return response      
 
 async def set_match_stats(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]
     team_id = pathParameters["team_id"]
@@ -394,7 +394,7 @@ async def subs_due(event,context):
       
 
 async def update_match_status(event,context):
-    lambda_handler(event,context)    
+    await lambda_handler(event,context)    
     pathParameters = event["pathParameters"]
     status = pathParameters["status"]
     match_id = pathParameters["match_id"]

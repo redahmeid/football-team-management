@@ -27,8 +27,8 @@ from firebase_admin import credentials, firestore
 
 # from supabase import create_client, Client
 # supabase: Client = create_client(app_config.supabase_url, app_config.supabase_key)
-def enter_screen(event, context):
-    lambda_handler(event,context)
+async def enter_screen(event, context):
+    await lambda_handler(event,context)
     
     try:
         getEmailFromToken(event,context)
@@ -50,7 +50,7 @@ async def submitTeamEvent(team:response_classes.TeamResponse):
             asyncio.create_task(sendMessagesOnTeamUpdate(new_token, f"{team.name} has been created", "New team added",team.id))
 
 async def submit_team(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     body =json.loads(event["body"])
     teams = []
     try:

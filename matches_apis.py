@@ -34,7 +34,7 @@ from cache_trigger import updateTeamCache,updateMatchCache, updateUserCache,upda
 
 
 async def create_fixtures(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     http_method = event['httpMethod']
 
     
@@ -75,7 +75,7 @@ async def list_matches_by_team(event, context):
 
 @timeit
 async def time_played(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     match_id = event["pathParameters"]["match_id"]
     response = await match_planning_backend.how_long_played(match_id)
@@ -83,11 +83,11 @@ async def time_played(event,context):
 
 @timeit
 async def updateFromCache(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     await matches_backend.updateDBFromCache()
 @timeit
 async def edit_match(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     body =json.loads(event["body"])
     match_id = event["pathParameters"]["match_id"]
     
@@ -110,7 +110,7 @@ async def edit_match(event,context):
 
 @timeit
 async def retrieve_match_by_id(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
     queryParameters = event.get("queryStringParameters",{})
     match_id = pathParameters["match_id"]
@@ -165,7 +165,7 @@ async def getMatchFromDBAPIResponse(match_id,refresh:str):
 
 @timeit
 async def retrieve_match_planned_lineups(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     match_id = event["pathParameters"]["match_id"]
     headers = event['headers']
@@ -217,7 +217,7 @@ async def getMatchPlannedLineupsFromDB(match_id):
 
 @timeit
 async def retrieve_match_actual_lineups(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     match_id = event["pathParameters"]["match_id"]
     headers = event['headers']
@@ -261,7 +261,7 @@ async def getMatchActualLineupsFromDB(match_id):
 
 @timeit
 async def retrieve_match_current_lineup(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     match_id = event["pathParameters"]["match_id"]
     headers = event['headers']

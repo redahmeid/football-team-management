@@ -11,3 +11,4 @@ class Paths(str, Enum):
     cachePlayers = "cachePlayers"
     cacheGuardiansPlayers = "cacheGuardiansPlayers"
     cacheCurrentLineup = "cacheCurrentLineup"
+    saveDeviceToken = "saveDeviceToken"

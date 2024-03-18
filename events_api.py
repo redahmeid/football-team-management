@@ -39,7 +39,7 @@ def timeit(method):
     return timed
 
 async def addShot(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value]
     team_id = event["pathParameters"]["team_id"]
     match_id = event["pathParameters"]["match_id"]

@@ -42,7 +42,7 @@ import user_homepage_backend
 from timeit import timeit
 
 async def addUserToTeam(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value]
     team_id = event["pathParameters"]["team_id"]
     body =json.loads(event["body"])
@@ -71,7 +71,7 @@ async def addUserToTeam(event,context):
 
 @timeit
 async def submit_team(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     body =json.loads(event["body"])
     teams = []
     try:
@@ -114,7 +114,7 @@ async def submit_team(event, context):
 
 @timeit
 async def retrieve_team_summary(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     team_id = event["pathParameters"]["team_id"]
     headers = event['headers']
@@ -151,7 +151,7 @@ async def retrieve_team_summary(event, context):
         
 @timeit
 async def delete_team(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     team_id = event["pathParameters"]["team_id"]
     headers = event['headers']

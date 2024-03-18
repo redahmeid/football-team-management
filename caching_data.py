@@ -17,6 +17,7 @@ import json
 import boto3
 import firebase_admin
 import matches_backend
+import notifications
 import player_backend
 import team_data
 import user_homepage_backend
@@ -73,6 +74,12 @@ async def handler(event,context):
     elif(path==Paths.cacheGuardiansPlayers.value):
         email = event["id"]
         await cacheGuardiansPlayers(email)
+    elif(path==Paths.saveDeviceToken.value):
+        email = event["email"]
+        device_id = event["device_id"]
+        device_token = event["device_token"]
+        version = event["app_version"]
+        await saveDeviceToken(email,device_id,device_token,version)
 @timeit
 async def cacheMatch(match_id):
     
@@ -115,3 +122,8 @@ async def cacheGuardiansPlayers(email):
 async def cacheActualLineup(match_id):
     
     await matches_backend.getMatchCurrentLineups(match_id)
+
+@timeit
+async def saveDeviceToken(email,device_id,device_token,app_version):
+    
+    await notifications.save_token(email,device_token,device_id,app_version)

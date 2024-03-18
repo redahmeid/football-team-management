@@ -11,7 +11,7 @@ from secrets_util import getEmailFromToken, lambda_handler,validate_firebase_id_
 import api_helper
 
 def signup_submit(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     
     try:
         return new_user(event,context)

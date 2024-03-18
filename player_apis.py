@@ -31,7 +31,7 @@ import cache_trigger
 
 @timeit    
 async def create_players(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     body =json.loads(event["body"])
     
     team_id = event["pathParameters"]["team_id"]
@@ -55,7 +55,7 @@ async def create_players(event, context):
 
 @timeit
 async def addGuardiansToPlayer(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value]
     team_id = event["pathParameters"]["team_id"]
     player_id = event["pathParameters"]["player_id"]
@@ -88,7 +88,7 @@ async def addGuardiansToPlayer(event,context):
 
 @timeit
 async def list_players_by_team(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
     team_id = event["pathParameters"]["team_id"]
     if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):
@@ -118,7 +118,7 @@ async def list_players_by_team(event, context):
 
 @timeit
 async def list_players_by_guardian(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
     
     

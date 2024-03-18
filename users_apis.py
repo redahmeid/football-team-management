@@ -15,7 +15,7 @@ import asyncio
 from email_sender import send_email,send_email_with_template
 
 async def new_user(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     try:
         body =json.loads(event["body"])
         print(body)
@@ -41,9 +41,10 @@ async def new_user(event, context):
     return response
 
 async def saveDeviceToken(event):
-    device_token = event["headers"]['x-device-id']
+    device_token = event["headers"]['x-device-token']
+    device_id = event["headers"]['x-device-id']
     email = getToken(event)["email"]
-    await save_token(email=email,token=device_token)
+    await save_token(email=email,token=device_token,device=device_id)
 
 
 # "(ID varchar(255),"\

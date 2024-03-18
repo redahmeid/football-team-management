@@ -39,7 +39,7 @@ def custom_sort(item):
 
 @timeit
 async def enter_screen(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     headers = event['headers']
     etag = headers.get('etag',None)
     print(f"USER HEADERS {headers}")
@@ -64,7 +64,7 @@ async def enter_screen(event, context):
 
 @timeit
 async def enter_screenV2(event, context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     headers = event['headers']
     etag = headers.get('etag',None)
     print(f"USER HEADERS {headers}")

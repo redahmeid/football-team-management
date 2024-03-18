@@ -4,6 +4,8 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth, messaging
 from exceptions import AuthError
+import cache_trigger
+
 
 # Initialize the AWS Secrets Manager client
 secretsmanager = boto3.client('secretsmanager')
@@ -43,7 +45,7 @@ def getToken(event):
 from notifications import save_token,save_token_by_match
 
 @timeit
-def lambda_handler(event, context):
+async def lambda_handler(event, context):
     
     try:
         # Retrieve the serviceAccountKey.json from Secrets Manager
@@ -67,14 +69,17 @@ def lambda_handler(event, context):
             match_id=""
 
         print(headers)
-        device_token = headers.get('x-device-id',None)
+        device_token = headers.get('x-device-token',None)
+        device_id = headers.get('x-device-id',None)
+        version = headers.get('x-football-app',None)
         print(f"DEVICE TOKEN {device_token}")
         try:
             email = getToken(event)["email"]
         except AuthError as e:
             email =""
-        loop = asyncio.get_running_loop()  # Get the current loop
-        loop.create_task(save_token(email=email,token=device_token))
+        
+        await cache_trigger.saveDeviceToken(email,device_token,device_id,version)
+        # save_token(email=email,token=device_token,device=device_id,version=version)
         print("Token saved")
     except ValueError as e:
         print("FIREBASE initalize error %s"%e)

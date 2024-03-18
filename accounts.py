@@ -41,7 +41,7 @@ def timeit(method):
 
 @timeit
 async def delete_account(event,context):
-    lambda_handler(event,context)
+    await lambda_handler(event,context)
     email = auth.getEmailFromToken(event,context)
     await users_data.delete_user(email)
     await roles_data.delete_roles_by_email(email)

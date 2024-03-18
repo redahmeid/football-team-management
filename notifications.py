@@ -52,6 +52,8 @@ class TABLE:
     PLAYER_ID="Player_ID"
     TEAM_ID="Team_ID"
     NOTIFY="Notify"
+    DEVICE="Device"
+    VERSION="Version"
     TIME="Time"
 
     def createTable():
@@ -60,10 +62,12 @@ class TABLE:
         f"{TABLE.EMAIL} varchar(255),"\
         f"{TABLE.MATCH_ID} varchar(255),"\
         f"{TABLE.TOKEN} varchar(255),"\
+        f"{TABLE.DEVICE} varchar(255),"\
+        f"{TABLE.VERSION} varchar(255),"\
         f"{TABLE.NOTIFY} bool,"\
         f"{TABLE.TIME} int,"\
-        f"CONSTRAINT UQ_MATCH UNIQUE ({TABLE.MATCH_ID},{TABLE.TOKEN}),"\
-        f"CONSTRAINT UQ_EMAIL UNIQUE ({TABLE.EMAIL},{TABLE.TOKEN}),"\
+        f"CONSTRAINT UQ_MATCH UNIQUE ({TABLE.MATCH_ID},{TABLE.TOKEN},{TABLE.DEVICE}),"\
+        f"CONSTRAINT UQ_EMAIL UNIQUE ({TABLE.EMAIL},{TABLE.TOKEN},{TABLE.DEVICE}),"\
         f"PRIMARY KEY ({TABLE.ID}))"
 
         print(sql)
@@ -95,18 +99,23 @@ class MESSAGES_TABLE:
     
 
 @timeit
-async def save_token(email,token):
+async def save_token(email,token,device,version):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
     
         
                 id = uuid.uuid4()
-                select_query = f"delete from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.TOKEN}='{token}'"
+                select_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.DEVICE}='{device}'"
                 await cursor.execute(select_query)
-                
-                
-                insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())},True)"
+                row = await cursor.fetchall()
+                if(len(row)>0):
+                    if(row[0][TABLE.TOKEN]==token and row[0][TABLE.VERSION]==version):
+                        return True
+                    else:
+                        insert_query = f"UPDATE {TABLE.TABLE_NAME} set {TABLE.TOKEN}='{token}, {TABLE.VERSION}='{version}' where {TABLE.EMAIL}='{email}' and {TABLE.DEVICE}='{device}'"
+                else:
+                    insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY},{TABLE.DEVICE},{TABLE.VERSION}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())},True,'{device}','{version}')"
                 
                 try:
                     await cursor.execute(insert_query)
@@ -309,6 +318,7 @@ async def backgroundSendMatchUpdateNotification(event,context):
     silent = data.get("silent",'False')
     if(type=='match'):
         for user in await getStakeholders(id):
+
             tokens = await getDeviceToken(user.email)
             for token in tokens:
                 new_token = token["Token"]
@@ -354,7 +364,8 @@ async def getStakeholders(match_id):
     team_id = match.team.id
     print(f"TEAM ID {team_id}")
     admins = await team_data.retrieve_users_by_team_id(team_id)
-    return admins
+    unique_objects = {obj.email: obj for obj in admins}.values()
+    return list(unique_objects)
 
 @timeit     
 async def send_push_notification(token, title, body,data):
