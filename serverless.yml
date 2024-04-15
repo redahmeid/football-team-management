@@ -490,6 +490,23 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  add_goal_scorers:
+    handler: handler.add_goal_scorers
+    events:
+      - http:
+          path: /matches/{match_id}/goal_scorers
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+
   update_match_status:
     handler: handler.update_match_status
     events:

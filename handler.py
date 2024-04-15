@@ -73,6 +73,10 @@ def update_matches_from_cache(event,context):
     response = asyncio.run(matches_apis.updateFromCache(event,context))
     return response
 
+def add_goal_scorers(event,context):
+    response = asyncio.run(match_detail_screen.add_goal_scorers(event,context))
+    return response
+
 def get_match_planned_lineups(event,context):
     response = asyncio.run(matches_apis.retrieve_match_planned_lineups(event,context))
     return response

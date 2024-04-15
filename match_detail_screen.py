@@ -17,7 +17,7 @@ import matches_state_machine
 import player_responses
 import response_classes
 import match_planning_backend
-from match_planning_backend import  submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst
+from match_planning_backend import  submit_actual_lineup,submit_planned_lineup,submit_subs,getMatchPlanning,getMatchConfirmedPlanReadyToStart,getMatchStarted,getMatchCreated,setGoalsFor,getMatchGuest,updateMatchPeriod,setGoalsAgainst,addGoalScorers
 from datetime import date
 import user_homepage_backend
 
@@ -392,6 +392,56 @@ async def set_match_stats(event,context):
 async def subs_due(event,context):
     match_planning_backend.subs_due(event)
       
+
+async def add_goal_scorers(event,context):
+    await lambda_handler(event,context)    
+    pathParameters = event["pathParameters"]
+    match_id = pathParameters["match_id"]
+    
+    try:
+        match = await retrieve_match_by_id(match_id)
+        team_id = match[0].team.id
+        if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
+             
+            body =json.loads(event["body"])
+            
+            scorers = body.get('scorers')
+            print(f"SCORERS {scorers}")
+            for scorer in scorers:
+                goal_scorer = scorer['player']
+                assister = scorer['secondary_player']
+                assist_type = scorer['assist_type']
+                time_playing = scorer['minute']
+                
+                type = scorer['type']
+                await addGoalScorers(team_id,match_id,goal_scorer,assister,type,assist_type,time_playing)
+                
+             
+            await updateTeamCache(team_id)
+            await updateUserCache(getEmailFromToken(event,context))
+             
+              # asyncio.create_task(matches_backend.getMatchFromDB(match_id))
+            print(f"UPDATE STATUS TASK CREATION END {match_id}")
+            match = await matches_backend.getMatchFromDB(match_id)
+            return api_helper.make_api_response_etag(200,match["result"],match["etag"])   
+        else:
+            response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
+            return response
+    except exceptions.AuthError as e:
+        print(e)
+        traceback.print_exception(*sys.exc_info()) 
+        response = api_helper.make_api_response(401,None,e)
+        return response
+    except ValidationError as e:
+        print(e)
+        traceback.print_exception(*sys.exc_info()) 
+        response = api_helper.make_api_response(400,None,e)
+        return response
+    except Exception as e:
+        print(e)
+        traceback.print_exception(*sys.exc_info()) 
+        response = api_helper.make_api_response(500,None,e)
+        return response
 
 async def update_match_status(event,context):
     await lambda_handler(event,context)    

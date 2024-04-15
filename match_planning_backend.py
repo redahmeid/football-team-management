@@ -590,6 +590,43 @@ async def removeGoalsFor(id,match_id,team_id):
         "action":"goals_for"
     }
     await notifications.sendNotificationUpdatesLink(match_id,message,message,'match',data)
+@timeit
+async def addGoalScorers(team_id,match_id, goal_scorer,assister,type,assist_type,time_playing):
+    
+    scored_by =""
+    print(assister)
+    if(assister is not None):
+        await save_goals_for(match_id,goal_scorer["id"],time_playing,type,assister["id"],assist_type)
+        scored_by = f"Assisted by {assister['name']} - {type}"
+    else:   
+        await save_goals_for(match_id,goal_scorer["id"],time_playing,type,"","")
+    
+
+    db = firestore.client()
+    if(len(goal_scorer["id"])>0):
+        doc_ref = db.collection(f"{app_config.db_prefix}_player_stats").document(goal_scorer["id"])
+        goalsField = f"matches.{match_id}.goals"
+
+        data = {
+            goalsField: firestore.Increment(1)
+        }
+        doc_ref.set(
+        data, merge=True
+        )
+    
+
+
+    message = f"{round(time_playing)}' {goal_scorer['name']} scores"
+    await updateMatchCache(match_id)
+    await updateTeamCache(team_id)
+    data = {
+        "link":f"/matches/{match_id}",
+        "team_id":team_id,
+        "match_id":match_id,
+        "action":"goals_for"
+    }
+    await notifications.sendNotificationUpdatesLink(match_id,scored_by,message,'match',data)
+
 
 @timeit
 async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):

@@ -403,7 +403,7 @@ async def updateScore(match_id,goals_for,goals_against):
             async with conn.cursor(aiomysql.DictCursor) as cursor:
 
                 # Define the SQL query to insert data into a table
-                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.GOALS_FOR}={goals_for}, {TABLE.GOALS_AGAINST}={goals_against} where {TABLE.ID}='{match_id}'" 
+                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.GOALS_FOR}={goals_for}, {TABLE.GOALS_AGAINST}={goals_against}, {TABLE.STATUS}='{matches_state_machine.MatchState.ended.value}' where {TABLE.ID}='{match_id}'" 
                 print(insert_query)
 
                 # Execute the SQL query to insert data
