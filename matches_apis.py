@@ -29,7 +29,7 @@ import json
 
 import firebase_admin
 from firebase_admin import credentials, firestore
-from timeit import timeit
+from fcatimer import fcatimer
 from cache_trigger import updateTeamCache,updateMatchCache, updateUserCache,updatePlayerCache
 
 
@@ -55,13 +55,16 @@ async def create_fixtures(event, context):
             await updateUserCache(getEmailFromToken(event,context))
             created_matches.append(result.model_dump())
         except ValidationError as e:
+            print(f"CREATE MATCH VALIDATION ERROR {e}")
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
         except ValueError as e:
+            print(f"CREATE MATCH VALUE ERROR {e}")
             response = api_helper.make_api_response(400,None)
 
     
     response = api_helper.make_api_response(200,created_matches)
+    print(f"CREATE MATCH API RESPONSE {response}")
     return response
     
 async def list_matches_by_team(event, context):
@@ -73,7 +76,7 @@ async def list_matches_by_team(event, context):
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 
 
-@timeit
+@fcatimer
 async def time_played(event,context):
     await lambda_handler(event,context)
     
@@ -81,11 +84,11 @@ async def time_played(event,context):
     response = await match_planning_backend.how_long_played(match_id)
     return api_helper.make_api_response(200,{"player":response})
 
-@timeit
+@fcatimer
 async def updateFromCache(event,context):
     await lambda_handler(event,context)
     await matches_backend.updateDBFromCache()
-@timeit
+@fcatimer
 async def edit_match(event,context):
     await lambda_handler(event,context)
     body =json.loads(event["body"])
@@ -108,7 +111,7 @@ async def edit_match(event,context):
     print(f"EDIT RESPONSE {response}")
     return response
 
-@timeit
+@fcatimer
 async def retrieve_match_by_id(event,context):
     await lambda_handler(event,context)
     pathParameters = event["pathParameters"]
@@ -146,7 +149,7 @@ async def retrieve_match_by_id(event,context):
         print(e)
         response = api_helper.make_api_response(400,None)
         return response
-@timeit
+@fcatimer
 async def getMatchFromDBAPIResponse(match_id,refresh:str):
     matches = []
     
@@ -163,7 +166,7 @@ async def getMatchFromDBAPIResponse(match_id,refresh:str):
 
 
 
-@timeit
+@fcatimer
 async def retrieve_match_planned_lineups(event,context):
     await lambda_handler(event,context)
     
@@ -195,7 +198,7 @@ async def retrieve_match_planned_lineups(event,context):
         print(e)
         response = api_helper.make_api_response(400,None)
         return response
-@timeit
+@fcatimer
 async def getMatchPlannedLineupsFromDB(match_id):
 
     latest_planned_lineups = await getLatestObject(match_id,'planned_lineups')
@@ -215,7 +218,7 @@ async def getMatchPlannedLineupsFromDB(match_id):
 
     return response
 
-@timeit
+@fcatimer
 async def retrieve_match_actual_lineups(event,context):
     await lambda_handler(event,context)
     
@@ -247,7 +250,7 @@ async def retrieve_match_actual_lineups(event,context):
         print(e)
         response = api_helper.make_api_response(400,None)
         return response
-@timeit
+@fcatimer
 async def getMatchActualLineupsFromDB(match_id):
     
     matches = await match_day_data.retrieveAllActualLineups(match_id)
@@ -259,7 +262,7 @@ async def getMatchActualLineupsFromDB(match_id):
     
     return response
 
-@timeit
+@fcatimer
 async def retrieve_match_current_lineup(event,context):
     await lambda_handler(event,context)
     
@@ -297,7 +300,7 @@ async def retrieve_match_current_lineup(event,context):
 
 
 
-@timeit
+@fcatimer
 async def updateStatus(event,context):
     pathParameters = event["pathParameters"]
     match_id = pathParameters["match_id"]

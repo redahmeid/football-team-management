@@ -3,7 +3,7 @@ from pydantic import ValidationError
 import traceback
 import exceptions
 from typing import List
-from player_data import retrieve_players_by_team
+from player_data import retrieve_players_by_team_with_stats
 import sys
 from matches_data import retrieve_match_by_id
 import matches_data
@@ -28,7 +28,7 @@ import team_data
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def timeit(method):
+def fcatimer(method):
     def timed(*args, **kw):
         start_time = time.time()
         result = method(*args, **kw)

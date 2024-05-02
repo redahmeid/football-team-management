@@ -28,12 +28,12 @@ from exceptions import AuthError
 # Initialize the AWS Secrets Manager client
 secretsmanager = boto3.client('secretsmanager')
 from cache_paths import Paths
-from timeit import timeit
+from fcatimer import fcatimer
 
 
 
 
-@timeit
+@fcatimer
 async def handler(event,context):
     try:
         # Retrieve the serviceAccountKey.json from Secrets Manager
@@ -80,12 +80,12 @@ async def handler(event,context):
         device_token = event["device_token"]
         version = event["app_version"]
         await saveDeviceToken(email,device_id,device_token,version)
-@timeit
+@fcatimer
 async def cacheMatch(match_id):
     
     await matches_backend.getMatchFromDB(match_id)
 
-@timeit
+@fcatimer
 async def cacheTeam(team_id):
     await team_backend.getTeamFromDB(team_id)
     users = await team_data.retrieve_users_by_team_id(team_id)
@@ -94,36 +94,36 @@ async def cacheTeam(team_id):
         await cache_trigger.updateGuardiansPlayerCache(email)
         await cache_trigger.updateUserCache(email)
 
-@timeit
+@fcatimer
 async def cachePlans(match_id):
     await matches_backend.getPlannedLineupsFromDB(match_id)
 
-@timeit
+@fcatimer
 async def cacheUser(email):
     
     await user_homepage_backend.getUserInfoFromDBV2(email)
 
-@timeit
+@fcatimer
 async def cachePlayers(team_id):
     
     await player_backend.getPlayersFromDB(team_id)
 
-@timeit
+@fcatimer
 async def cacheCurrentLineup(match_id):
     
     await matches_backend.getMatchCurrentLineups(match_id)
 
-@timeit
+@fcatimer
 async def cacheGuardiansPlayers(email):
     
     await player_backend.getGuardianPlayersFromDB(email)
 
-@timeit
+@fcatimer
 async def cacheActualLineup(match_id):
     
     await matches_backend.getMatchCurrentLineups(match_id)
 
-@timeit
+@fcatimer
 async def saveDeviceToken(email,device_id,device_token,app_version):
     
     await notifications.save_token(email,device_token,device_id,app_version)

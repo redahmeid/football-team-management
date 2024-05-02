@@ -29,7 +29,7 @@ from etag_manager import setEtag
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
-from timeit import timeit
+from fcatimer import fcatimer
 
 # "CREATE TABLE Match_Day_Lineup" \
 #         "(ID varchar(255),"\
@@ -98,7 +98,7 @@ class MESSAGES_TABLE:
         f"PRIMARY KEY ({MESSAGES_TABLE.ID}))"
     
 
-@timeit
+@fcatimer
 async def save_token(email,token,device,version):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -117,6 +117,7 @@ async def save_token(email,token,device,version):
                 else:
                     insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY},{TABLE.DEVICE},{TABLE.VERSION}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())},True,'{device}','{version}')"
                 
+                print(insert_query)
                 try:
                     await cursor.execute(insert_query)
                     await conn.commit()
@@ -129,7 +130,7 @@ async def save_token(email,token,device,version):
                     
                     # Commit the transaction
 
-@timeit
+@fcatimer
 async def turn_off_notifications(token):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -155,7 +156,7 @@ async def turn_off_notifications(token):
 
 
 
-@timeit
+@fcatimer
 async def delete_token(email,token):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -185,7 +186,7 @@ async def delete_token(email,token):
                     # Commit the transaction
                 
 
-@timeit
+@fcatimer
 async def save_token_by_match(match_id,token):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -211,7 +212,7 @@ async def save_token_by_match(match_id,token):
                     # Commit the transaction
                 
 
-@timeit
+@fcatimer
 async def save_message(notification_id,message):
     await setEtag(notification_id,'notifications',message)
 
@@ -234,7 +235,7 @@ async def getDeviceToken(email):
                 logger.info("Succesfully saved the token")
                 return row
             
-@timeit
+@fcatimer
 async def getDeviceTokenByMatchOnly(match_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -255,7 +256,7 @@ async def getDeviceTokenByMatchOnly(match_id):
                 return row
 
 
-@timeit
+@fcatimer
 async def sendNotificationUpdatesLink(match_id,message,subject,type,data):
     secretsmanager = boto3.client('secretsmanager')
     event = {
@@ -272,7 +273,7 @@ async def sendNotificationUpdatesLink(match_id,message,subject,type,data):
     Payload=json.dumps(event)  # Asynchronous invocation
     ) 
 
-@timeit
+@fcatimer
 async def sendNotificationUpdates(match_id,message,subject,type):
     secretsmanager = boto3.client('secretsmanager')
     event = {
@@ -288,7 +289,7 @@ async def sendNotificationUpdates(match_id,message,subject,type):
     Payload=json.dumps(event)  # Asynchronous invocation
     ) 
 
-@timeit
+@fcatimer
 async def backgroundSendMatchUpdateNotification(event,context):
     secretsmanager = boto3.client('secretsmanager')
     try:
@@ -367,7 +368,7 @@ async def getStakeholders(match_id):
     unique_objects = {obj.email: obj for obj in admins}.values()
     return list(unique_objects)
 
-@timeit     
+@fcatimer     
 async def send_push_notification(token, title, body,data):
     secretsmanager = boto3.client('secretsmanager')
     print(data)

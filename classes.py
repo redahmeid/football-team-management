@@ -31,6 +31,8 @@ class Match(BaseModel):
 
 class Player(BaseModel):
     name:str
+    forename:str
+    surname:Optional[str]=""
     team_id:str
 
 class Players(BaseModel):

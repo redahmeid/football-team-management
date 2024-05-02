@@ -8,7 +8,7 @@ import api_helper
 import response_errors
 import response_classes
 import team_backend
-from player_data import save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
+from player_data import save_player,retrieve_players_by_team_with_stats,delete_player,retrieve_player,squad_size_by_team
 from roles_data import retrieve_role_by_user_id_and_team_id
 from users_data import retrieve_user_id_by_email
 from etag_manager import deleteEtag
@@ -26,22 +26,42 @@ import hashlib
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-from timeit import timeit
+from fcatimer import fcatimer
 import cache_trigger
+from secrets_util import is_version_greater
 
-@timeit    
+
+
+
+
+
+@fcatimer    
 async def create_players(event, context):
     await lambda_handler(event,context)
     body =json.loads(event["body"])
-    
+    headers = event["headers"]
     team_id = event["pathParameters"]["team_id"]
-    
+    version = headers.get("x-football-app","os.0.0.0")
+
+
     players = body["players"]
     created_players = []
+    print("VERSION")
+    print(version)
     i = 0
-    for player in players:
-        result = await player_backend.create_players(player,team_id)
-        created_players.append(result)
+
+    if(is_version_greater(version,"2.0.6")):
+        for player in players:
+            name = player["forename"]
+            surname = player["surname"]
+            email = player['guardian']
+            result = await player_backend.create_players_and_guardians(name,surname,team_id,email)
+            created_players.append(result)
+    else:
+        for player in players:
+            name = player
+            result = await player_backend.create_players(name,team_id)
+            created_players.append(result)
     await cache_trigger.updatePlayerCache(team_id)
     data = {
         "link":f"/teams/{team_id}",
@@ -53,7 +73,7 @@ async def create_players(event, context):
     response = api_helper.make_api_response(200,created_players)
     return response
 
-@timeit
+@fcatimer
 async def addGuardiansToPlayer(event,context):
     await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value]
@@ -86,7 +106,7 @@ async def addGuardiansToPlayer(event,context):
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
     return response
 
-@timeit
+@fcatimer
 async def list_players_by_team(event, context):
     await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]
@@ -116,7 +136,7 @@ async def list_players_by_team(event, context):
         return response
 
 
-@timeit
+@fcatimer
 async def list_players_by_guardian(event, context):
     await lambda_handler(event,context)
     acceptable_roles = [Role.admin.value,Role.coach.value,Role.parent.value]

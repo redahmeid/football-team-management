@@ -5,7 +5,7 @@ import roles
 import db
 import asyncio
 from player_responses import Guardian
-from timeit import timeit
+from fcatimer import fcatimer
 import aiomysql
 #  "CREATE TABLE if not exists Roles" \
 #         "(ID varchar(255),"\
@@ -84,7 +84,7 @@ async def delete_role(user:TeamUser):
                 await conn.commit()
                 
                 return id
-@timeit
+@fcatimer
 async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -101,7 +101,7 @@ async def retrieve_role_by_user_id_and_team_id(user_id,team_id):
                 print(data)
                 return data
 
-@timeit
+@fcatimer
 async def retrieve_team_roles_by_user_id(user_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -118,7 +118,7 @@ async def retrieve_team_roles_by_user_id(user_id):
                 print(data)
                 return data
 
-@timeit
+@fcatimer
 async def retrieve_player_roles_by_user_id(user_id):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:

@@ -12,7 +12,7 @@ import json
 import firebase_admin
 from firebase_admin import credentials, firestore
 from etag_manager import isEtaggged,setEtag
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -37,7 +37,7 @@ def timeit(func):
 def custom_sort(item):
     return int(item["AgeGroup"][1:])
 
-@timeit
+@fcatimer
 async def enter_screen(event, context):
     await lambda_handler(event,context)
     headers = event['headers']
@@ -62,7 +62,7 @@ async def enter_screen(event, context):
     except exceptions.AuthError as e:
         response = api_helper.make_api_response(401,None,e)
 
-@timeit
+@fcatimer
 async def enter_screenV2(event, context):
     await lambda_handler(event,context)
     headers = event['headers']

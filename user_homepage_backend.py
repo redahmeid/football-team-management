@@ -22,11 +22,11 @@ import api_helper
 from etag_manager import isEtaggged,setEtag,getLatestObject,deleteEtag
 from config import app_config
 from cache_paths import Paths
-from timeit import timeit
+from fcatimer import fcatimer
 def custom_sort(item):
     return int(item.ageGroup[1:])
 
-@timeit
+@fcatimer
 async def setupHomepage(email):
     
     logger.info("START")
@@ -39,7 +39,7 @@ async def setupHomepage(email):
     return result['teams']
 
 
-@timeit
+@fcatimer
 async def getUserInfoFromDB(email):
 
     cached_object = await getLatestObject(email,'users')
@@ -58,7 +58,7 @@ async def getUserInfoFromDB(email):
     
     return response
 
-@timeit
+@fcatimer
 async def setupHomepageV2(email):
     
     logger.info("START")
@@ -68,7 +68,7 @@ async def setupHomepageV2(email):
     return {"teams":result,"players":players["result"]}
 
 
-@timeit
+@fcatimer
 async def getUserInfoFromDBV2(email):
 
     cached_object = await getLatestObject(email,'users')

@@ -3,6 +3,7 @@ from config import app_config
 import id_generator
 from firebase_admin import auth
 import db
+from etag_manager import updateDocument
 import response_classes
 import match_day_data
 import matches_state_machine
@@ -10,6 +11,7 @@ from typing import List
 from datetime import datetime
 import logging
 import time
+from cache_trigger import updateTeamCache, updateMatchCache, updateUserCache
 import asyncio
 import aiomysql
 logger = logging.getLogger(__name__)
@@ -19,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 import team_season_data
 import team_response_creator
 
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -117,7 +119,7 @@ class PLAYER_RATINGS:
         f"{PLAYER_RATINGS.POTM} varchar(255),"\
         f"PRIMARY KEY ({TABLE.ID}))"
 
-@timeit
+@fcatimer
 async def create_player_ratings(match_id, players:List[dict]):
     start_time = datetime.utcnow().timestamp()
     
@@ -159,7 +161,7 @@ async def create_player_ratings(match_id, players:List[dict]):
                     await conn.commit()
                 return id
 
-@timeit
+@fcatimer
 async def retrieve_player_ratings(match_id):
     start_time = datetime.utcnow().timestamp()
     
@@ -180,7 +182,7 @@ async def retrieve_player_ratings(match_id):
                 rows = await cursor.fetchall()
                 return id
 
-@timeit
+@fcatimer
 async def save_team_from_cache(match:response_classes.MatchInfo,team_id):
     start_time = datetime.utcnow().timestamp()
     
@@ -201,7 +203,7 @@ async def save_team_from_cache(match:response_classes.MatchInfo,team_id):
                 return id
             
 
-@timeit
+@fcatimer
 async def save_team_fixture(match:response_classes.MatchInfo,team_id):
     start_time = datetime.utcnow().timestamp()
     
@@ -209,8 +211,10 @@ async def save_team_fixture(match:response_classes.MatchInfo,team_id):
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
                 id = id_generator.generate_random_number(7)
+                location = match.location.replace("'","''")
+                opposition = match.opposition.replace("'","''")
                 # Define the SQL query to insert data into a table
-                insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against,Type) VALUES ('{id}','{match.opposition}','{match.homeOrAway.value}','{match.date}','{match.length}','{team_id}','{match.status.value}',0,0,'{match.type.value}')"
+                insert_query = f"INSERT INTO Matches (ID,Opposition,HomeOrAway, Date,Length,Team_ID,Status,Goals_For,Goals_Against,Type,Location,PlaceId) VALUES ('{id}','{opposition}','{match.homeOrAway.value}','{match.date}','{match.length}','{team_id}','{match.status.value}',0,0,'{match.type.value}','{location}','{match.placeId}')"
                 print(insert_query)
                 # Data to be inserted
                 
@@ -221,7 +225,7 @@ async def save_team_fixture(match:response_classes.MatchInfo,team_id):
                 logger.info(f"Save team fixtures took {end_time} to finish")
                 return id
 
-@timeit
+@fcatimer
 async def set_captain(match:response_classes.MatchInfo,player_id):
     start_time = datetime.utcnow().timestamp()
     
@@ -240,7 +244,7 @@ async def set_captain(match:response_classes.MatchInfo,player_id):
                 
                 return match.id
 
-@timeit
+@fcatimer
 async def set_potm(match:response_classes.MatchInfo,player_id):
     start_time = datetime.utcnow().timestamp()
     
@@ -259,7 +263,7 @@ async def set_potm(match:response_classes.MatchInfo,player_id):
                 
                 return match.id
 
-@timeit
+@fcatimer
 async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -284,7 +288,7 @@ async def retrieve_matches_by_team(team_id:str) -> List[response_classes.MatchIn
             
                 return matches
 
-@timeit
+@fcatimer
 async def retrieve_not_played_by_team(team_id:str,offset:str=0) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -309,7 +313,7 @@ async def retrieve_not_played_by_team(team_id:str,offset:str=0) -> List[response
             
                 return matches
 
-@timeit
+@fcatimer
 async def retrieve_results_by_team(team_id:str,offset:str=0) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -335,7 +339,7 @@ async def retrieve_results_by_team(team_id:str,offset:str=0) -> List[response_cl
                 return matches
             
 
-@timeit
+@fcatimer
 async def wins_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -356,7 +360,7 @@ async def wins_by_team(team_id:str) -> List[response_classes.MatchInfo]:
             
                 return row["wins"]
 
-@timeit
+@fcatimer
 async def defeats_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -376,7 +380,7 @@ async def defeats_by_team(team_id:str) -> List[response_classes.MatchInfo]:
             
                 return row["defeats"]
 
-@timeit
+@fcatimer
 async def draws_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -396,7 +400,7 @@ async def draws_by_team(team_id:str) -> List[response_classes.MatchInfo]:
             
                 return row["draws"]
 
-@timeit
+@fcatimer
 async def updateScore(match_id,goals_for,goals_against):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -413,7 +417,7 @@ async def updateScore(match_id,goals_for,goals_against):
 
 
 
-@timeit
+@fcatimer
 async def update_match_status(match_id,status)  -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -426,9 +430,11 @@ async def update_match_status(match_id,status)  -> List[response_classes.MatchIn
                 # Execute the SQL query to insert data
                 await cursor.execute(insert_query)
                 await conn.commit()
+                
+                
                 return await retrieve_match_by_id(match_id)
                 
-@timeit
+@fcatimer
 async def increment_goals_scored(match_id,goals)  -> List[response_classes.MatchInfo]:
     start_time = datetime.utcnow().timestamp()
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -443,7 +449,7 @@ async def increment_goals_scored(match_id,goals)  -> List[response_classes.Match
                 await cursor.execute(insert_query)
                 await conn.commit()
                 
-@timeit
+@fcatimer
 async def increment_goals_conceded(match_id,goals)  -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -457,7 +463,7 @@ async def increment_goals_conceded(match_id,goals)  -> List[response_classes.Mat
                 await cursor.execute(insert_query)
                 await conn.commit()
                 
-@timeit
+@fcatimer
 async def start_match(match_id)  -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -472,7 +478,7 @@ async def start_match(match_id)  -> List[response_classes.MatchInfo]:
                 await conn.commit()
                 
 
-@timeit
+@fcatimer
 async def retrieve_match_by_id(id:str) -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -491,7 +497,7 @@ async def retrieve_match_by_id(id:str) -> List[response_classes.MatchInfo]:
                     matches.append(await convertDataToMatchInfo(row))
                 
                 return matches
-@timeit
+@fcatimer
 async def retrieve_next_match_by_team(team_id:str) -> List[response_classes.MatchInfo]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -519,7 +525,9 @@ async def convertDataToMatchInfo(data):
         how_long_ago_in_minutes = 0
     
 
-    match_info = response_classes.MatchInfo(id=data[TABLE.ID],type=data[TABLE.TYPE],captain=data[TABLE.CAPTAIN], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
+    match_info = response_classes.MatchInfo(location=data["Location"],placeId=data["PlaceId"],id=data[TABLE.ID],type=data[TABLE.TYPE],captain=data[TABLE.CAPTAIN], team=team_response,status=matches_state_machine.MatchState(data[TABLE.STATUS]),length=data[TABLE.LENGTH],opposition=data[TABLE.OPPOSITION],homeOrAway=response_classes.HomeOrAway(data[TABLE.HOME_OR_AWAY]),date=data[TABLE.DATE],how_long_ago_started=how_long_ago_in_minutes,time_start=data[TABLE.TIME_STARTED],goals=data[TABLE.GOALS_FOR],conceded=data[TABLE.GOALS_AGAINST])
+    
+    await updateDocument('matches_new',match_info.id,match_info)
     return match_info
 
 

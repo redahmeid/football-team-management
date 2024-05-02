@@ -5,9 +5,9 @@ from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 import boto3
 from config import app_config
 import json
-from timeit import timeit
+from fcatimer import fcatimer
 
-@timeit
+@fcatimer
 async def updateTeamCache(team_id):
     
     await deleteEtag(team_id,'teams')
@@ -17,7 +17,7 @@ async def updateTeamCache(team_id):
     }
     await invokeCacheHander(event)
 
-@timeit
+@fcatimer
 async def updateMatchCache(match_id):
     await deleteEtag(match_id,'matches')
     event = {
@@ -26,7 +26,7 @@ async def updateMatchCache(match_id):
     }
     await invokeCacheHander(event)
 
-@timeit
+@fcatimer
 async def updateMatchPlanCache(match_id):
     await deleteEtag(match_id,'planned_lineups')
     event = {
@@ -35,7 +35,7 @@ async def updateMatchPlanCache(match_id):
     }
     await invokeCacheHander(event) # Opt
 
-@timeit
+@fcatimer
 async def updateMatchActualCache(match_id):
     await deleteEtag(match_id,'actual_lineups')
     event = {
@@ -44,7 +44,7 @@ async def updateMatchActualCache(match_id):
     }
     await invokeCacheHander(event) # Opt
 
-@timeit
+@fcatimer
 async def updateMatchCurrentLineupCache(match_id):
     await deleteEtag(match_id,'current_lineup')
     event = {
@@ -53,7 +53,7 @@ async def updateMatchCurrentLineupCache(match_id):
     }
     await invokeCacheHander(event) #
 
-@timeit
+@fcatimer
 async def updateUserCache(email):
     await deleteEtag(email,'users')
     event = {
@@ -62,7 +62,7 @@ async def updateUserCache(email):
     }
     await invokeCacheHander(event)
 
-@timeit
+@fcatimer
 async def updatePlayerCache(team_id):
     
     await deleteEtag(team_id,'players')
@@ -72,7 +72,7 @@ async def updatePlayerCache(team_id):
     }
     await invokeCacheHander(event)
 
-@timeit
+@fcatimer
 async def saveDeviceToken(email,device_token,device_id,app_version):
     
     
@@ -86,7 +86,7 @@ async def saveDeviceToken(email,device_token,device_id,app_version):
     await invokeCacheHander(event)
 
 
-@timeit
+@fcatimer
 async def updateGuardiansPlayerCache(team_id):
     
     await deleteEtag(team_id,'guardian_players')
@@ -98,7 +98,7 @@ async def updateGuardiansPlayerCache(team_id):
 
 
 
-@timeit
+@fcatimer
 async def  invokeCacheHander(event):
     lambda_client = boto3.client('lambda')
     lambda_client.invoke(

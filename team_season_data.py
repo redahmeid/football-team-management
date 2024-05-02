@@ -12,7 +12,7 @@ import functools
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
 
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -66,7 +66,7 @@ class TABLE:
     
 
 
-@timeit
+@fcatimer
 async def save_team_season(team_id,season_name,age_group):
     
     
@@ -85,7 +85,7 @@ async def save_team_season(team_id,season_name,age_group):
                 
                 return id
 
-@timeit
+@fcatimer
 async def delete_team_season(team_id):
     
     
@@ -104,7 +104,7 @@ async def delete_team_season(team_id):
                 
                 return True
 
-@timeit
+@fcatimer
 async def retrieve_seasons_by_user_id(user_id):
     
     
@@ -123,7 +123,7 @@ async def retrieve_seasons_by_user_id(user_id):
                 
                 return id
 
-@timeit
+@fcatimer
 async def retrieve_seasons_by_team_id(team_id):
     
     logger.info(team_id)

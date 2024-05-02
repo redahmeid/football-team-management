@@ -13,36 +13,16 @@ import player_data
 import matches_data
 import player_responses
 from typing import List
-from timeit import timeit
+from fcatimer import fcatimer
+from etag_manager import updateDocument
 import logging
 logger = logging.getLogger(__name__)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 
-import functools
-import time
+
 import asyncio
-def timeit(func):
-    @functools.wraps(func)
-    async def async_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = await func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
 
-    @functools.wraps(func)
-    def sync_wrapper(*args, **kwargs):
-        start_time = time.time()
-        result = func(*args, **kwargs)
-        end_time = time.time()
-        print(f"{func.__name__} took {end_time - start_time:.2f} seconds")
-        return result
-
-    if asyncio.iscoroutinefunction(func):
-        return async_wrapper
-    else:
-        return sync_wrapper
 class TABLE:
     ID = "ID"
     NAME="Name"
@@ -66,7 +46,7 @@ class TABLE:
 #         "Email varchar(255) NOT NULL,"\
 #         "PRIMARY KEY (ID),"\
 #         "FOREIGN KEY(Club_ID) references Clubs(ID))"
-@timeit
+@fcatimer
 async def save_team(team:Team,id):
     print("IN SAVE TEAM ")
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -86,7 +66,7 @@ async def save_team(team:Team,id):
                 
                 print("IN SAVE TEAM %s"%id)
                 return id
-@timeit
+@fcatimer
 async def delete_team(team_id):
     print("IN DELETE TEAM ")
     async with aiomysql.create_pool(**db.db_config) as pool:
@@ -106,7 +86,7 @@ async def delete_team(team_id):
                 print("IN SAVE TEAM %s"%id)
                 return id
 
-@timeit
+@fcatimer
 async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamResponse]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -123,6 +103,7 @@ async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamRe
                 guardianTeams = []
                 for row in rows:
                     team = await retrieve_teams_by_user_id_convert_to_team_response(row)
+                    
                     if(row['Role']=='admin' or row['Role']=='coach'):
                         adminTeams.append(team)
                     if(row['Role']=='parent'):
@@ -133,7 +114,7 @@ async def retrieve_teams_by_user_id(user_id:str) -> List[response_classes.TeamRe
             
             
 
-@timeit
+@fcatimer
 async def retrieve_users_by_team_id(team_id:str) -> List[response_classes.Admin]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -152,7 +133,7 @@ async def retrieve_users_by_team_id(team_id:str) -> List[response_classes.Admin]
                     coaches.append(user)
                 logger.info(coaches)
                 return coaches
-@timeit
+@fcatimer
 async def does_userid_match_team(user_id:str,team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -172,7 +153,7 @@ async def does_userid_match_team(user_id:str,team_id:str):
                     return False
 
 
-@timeit
+@fcatimer
 async def retrieve_team_by_id(team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -188,7 +169,7 @@ async def retrieve_team_by_id(team_id:str):
                 team = await retrieve_team_by_id_convert_to_team_response(row)
                 return team
             
-@timeit
+@fcatimer
 async def retrieve_team_assister_stats(team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -203,7 +184,7 @@ async def retrieve_team_assister_stats(team_id:str):
                 
                 team = await retrieve_team_by_id_convert_to_team_response(row)
                 return team
-@timeit
+@fcatimer
 async def retrieve_team_scorer_stats(team_id:str):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -274,4 +255,5 @@ async def retrieve_teams_by_user_id_convert_to_team_response(team,order=0) -> re
 
     response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id,name=name, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     logger.info(f"{order} Response {response}")
+    await updateDocument("teams_new",response.id,response)
     return response.model_dump()

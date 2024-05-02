@@ -7,7 +7,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 import functools
 import time
 import asyncio
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -28,7 +28,7 @@ def timeit(func):
         return async_wrapper
     else:
         return sync_wrapper
-@timeit
+@fcatimer
 async def convertTeamSeasonDataToTeamResponse(team) -> response_classes.TeamResponse:
     
     id = team[f"{team_season_data.TABLE.TABLE_NAME}.{team_season_data.TABLE.ID}"]
@@ -49,7 +49,7 @@ async def convertTeamSeasonDataToTeamResponse(team) -> response_classes.TeamResp
     response =  response_classes.TeamResponse(id=id,season=season, team_id=team_id,name=name, season_id=season_id,ageGroup=ageGroup,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
     
     return response
-@timeit
+@fcatimer
 async def convertTeamSeasonDataToTeamSeaonOnlyResponse(team,wins,defeats,draws) -> response_classes.TeamResponse:
     
     id = team[team_season_data.TABLE.ID]

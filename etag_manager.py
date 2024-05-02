@@ -1,4 +1,5 @@
 import functools
+
 import time
 import asyncio
 import hashlib
@@ -8,10 +9,10 @@ from firebase_admin import credentials, firestore
 import api_helper
 import datetime
 from config import app_config
-from timeit import timeit
+from fcatimer import fcatimer
 
 
-@timeit
+@fcatimer
 async def isEtaggged(id,type,etag):
     db = firestore.client()
     print("ETAG EXISTS")
@@ -26,8 +27,32 @@ async def isEtaggged(id,type,etag):
         return etag_obj["etag"]==etag
     else:
         return False
+def date_to_timestamp(date_obj):
+    unix_epoch = datetime.date(1970, 1, 1)
+    timestamp = (date_obj - unix_epoch).total_seconds()
+    return int(timestamp)
 
-@timeit
+def serialize(obj):
+    if isinstance(obj, datetime.date):
+        return date_to_timestamp(obj)
+    elif isinstance(obj, dict):
+        return {key: serialize(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [serialize(item) for item in obj]
+    else:
+        return obj
+    
+@fcatimer
+async def updateDocument(collection,id,object):
+    db = firestore.client()
+    doc_ref = db.collection(f"{app_config.db_prefix}_{collection}").document(id)  # Replace with your collection and document ID
+
+# Update the document with matchInfo data
+    doc_ref.set(serialize(object.dict()),merge=True)  # Update using dictionary from object
+
+    print('Document updated successfully!')
+
+@fcatimer
 async def getLatestObject(id,type):
     db = firestore.client()
     print("ETAG EXISTS")
@@ -40,7 +65,7 @@ async def getLatestObject(id,type):
         return None
    
 
-@timeit
+@fcatimer
 async def getAllObjects(type):
     db = firestore.client()
     print("ETAG EXISTS")
@@ -55,7 +80,7 @@ async def getAllObjects(type):
     
     
     
-@timeit
+@fcatimer
 async def deleteEtag(id,type):
     db = firestore.client()
     user = db.collection(f"{app_config.db_prefix}_{type}").document(id)
@@ -68,7 +93,7 @@ async def deleteEtag(id,type):
     else:
         print("Document not found!")
 
-@timeit
+@fcatimer
 async def setEtag(id,type,object):
     db = firestore.client()
     data = json.dumps(object,default=str).encode("utf-8")
@@ -83,7 +108,7 @@ async def setEtag(id,type,object):
 
     return etag
 
-@timeit
+@fcatimer
 async def setEtagList(id,type,object):
     db = firestore.client()
     data = json.dumps(object, default=lambda o: o.dict()).encode()

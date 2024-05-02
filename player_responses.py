@@ -16,6 +16,9 @@ class Link(BaseModel):
 class PlayerInfo(BaseModel):
     id:Optional[str]=""
     name:Optional[str]=""
+    forename:Optional[str]=""
+    surname:Optional[str]=""
+    shortname:Optional[str]=""
     team_id:Optional[str]=""
 
 class PlayerRating(BaseModel):

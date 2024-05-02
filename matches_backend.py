@@ -15,10 +15,10 @@ import match_planning_backend
 import asyncio
 import json
 import match_day_data
-from etag_manager import setEtag,isEtaggged,getLatestObject,deleteEtag,setEtagList,getAllObjects
-from timeit import timeit
+from etag_manager import setEtag,isEtaggged,getLatestObject,deleteEtag,setEtagList,getAllObjects,updateDocument
+from fcatimer import fcatimer
 
-@timeit
+@fcatimer
 async def getMatchCurrentLineups(match_id):
     
     actual_lineups = await getLatestObject(match_id,"actual_lineups")
@@ -43,7 +43,7 @@ async def getMatchCurrentLineups(match_id):
     return {"etag":etag,"object":current_lineup}
    
 
-@timeit
+@fcatimer
 async def getPlannedLineup(match_id):
     matchList = await retrieve_match_by_id(match_id)
     print(f"############################MATCH LIST##################################")
@@ -66,7 +66,7 @@ async def getStakeholders(match_id):
     admins = await team_data.retrieve_users_by_team_id(team_id)
     return admins
 
-@timeit
+@fcatimer
 async def updateStatus(match_id,status):
     matches = await matches_data.update_match_status(match_id,status)
     match = matches[0]
@@ -91,7 +91,7 @@ async def updateStatus(match_id,status):
         new_token = token["Token"]
         asyncio.create_task(sendMessagesOnMatchUpdates(new_token, "" ,message,match_id))
 
-@timeit
+@fcatimer
 async def sendMessagesOnMatchUpdates(token,message,title,match_id):
     data = {
         "link":f"/matches/{match_id}"
@@ -100,11 +100,10 @@ async def sendMessagesOnMatchUpdates(token,message,title,match_id):
 
 
 
-    
 
 
 
-@timeit
+@fcatimer
 async def getMatchFromDB(match_id) :
     
     matches = []
@@ -118,11 +117,12 @@ async def getMatchFromDB(match_id) :
         object = await match_planning_backend.getMatchParent(match[0].team.id,match[0])
 
     actual_match = response_classes.ActualMatchResponse(**object)
+    # await updateDocument('matches_new',str(match_id),actual_match)
     print(actual_match)
     etag = await setEtag(match_id,'matches',actual_match.model_dump())
     return {"etag":etag,"result":actual_match.model_dump()}
 
-@timeit
+@fcatimer
 async def getMatchFromDBRefresh(match_id,refresh) :
     
     matches = []
@@ -151,7 +151,7 @@ async def getMatchFromDBRefresh(match_id,refresh) :
     return {"etag":etag,"result":actual_match.model_dump()}
 
 
-@timeit
+@fcatimer
 async def updateScore(match_id,goals_for,goals_against):
     try:
         await matches_data.updateScore(match_id,goals_for,goals_against)
@@ -160,7 +160,7 @@ async def updateScore(match_id,goals_for,goals_against):
     except:
         traceback.print_exception(*sys.exc_info()) 
 
-@timeit
+@fcatimer
 async def addPlayerRatings(match_id,players):
     try:
         await matches_data.create_player_ratings(match_id,players)
@@ -169,7 +169,7 @@ async def addPlayerRatings(match_id,players):
         traceback.print_exception(*sys.exc_info()) 
 
 
-@timeit
+@fcatimer
 async def updateDBFromCache():
     objs = await getAllObjects('matches')
     for obj in objs:
@@ -178,7 +178,7 @@ async def updateDBFromCache():
         if(actual_match.match.status=='created'):
             await matches_data.save_team_fixture(actual_match.match,actual_match.match.team.id)
 
-@timeit
+@fcatimer
 async def getPlannedLineupsFromDB(match_id):
     object = await match_day_data.retrieveAllPlannedLineups(match_id)
     etag = await setEtagList(match_id,'planned_lineups',object)

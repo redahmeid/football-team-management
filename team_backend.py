@@ -7,7 +7,7 @@ from classes import TeamUser
 import sys
 import team_season_data
 from team_data import retrieve_users_by_team_id
-from player_data import retrieve_players_by_team
+from player_data import retrieve_players_by_team_with_stats
 import logging
 import matches_data
 import player_data
@@ -16,7 +16,7 @@ from match_planning_backend import list_matches_by_team_backend
 logger = logging.getLogger(__name__)
 import json
 import team_data
-from timeit import timeit
+from fcatimer import fcatimer
 from email_sender import send_email,send_email_with_template
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
 from team_response_creator import convertTeamSeasonDataToTeamResponse,convertTeamSeasonDataToTeamSeaonOnlyResponse
@@ -26,7 +26,7 @@ from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 import asyncio
 import response_classes
 
-@timeit
+@fcatimer
 async def addSingleUser(email,team_id):
     user_id = await retrieve_user_id_by_email(email)
     print(user_id)
@@ -56,13 +56,13 @@ async def addSingleUser(email,team_id):
 
 
 
-@timeit
+@fcatimer
 async def retrieveTeamResponse(team) -> response_classes.TeamResponse:
     
     emails,players,team_seasons,matches,wins,defeats,draws = await asyncio.gather(
         
         retrieve_users_by_team_id(team.id),
-        retrieve_players_by_team(team.id),
+        retrieve_players_by_team_with_stats(team.id),
         team_season_data.retrieve_seasons_by_team_id(team.team_id),
         list_matches_by_team_backend(team.id),
         matches_data.wins_by_team(team.id),
@@ -91,7 +91,7 @@ async def retrieveTeamResponse(team) -> response_classes.TeamResponse:
     team.fixtures = matches
     return team
 
-@timeit
+@fcatimer
 async def getTeamFromDB(team_id):
     cached_object = await getLatestObject(team_id,'teams')
     teams = []
@@ -114,7 +114,7 @@ async def getTeamFromDB(team_id):
     return team_object
 
 
-@timeit
+@fcatimer
 async def deleteTeam(team_id):
     await team_season_data.delete_team_season(team_id)
     await deleteEtag(team_id,'teams')

@@ -18,7 +18,7 @@ import functools
 import aiomysql
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -78,7 +78,7 @@ class TABLE:
         f"PRIMARY KEY ({TABLE.ID}))"
 
 
-@timeit
+@fcatimer
 async def save_match_event(match_id,player_id,time_playing,type,detail):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -97,7 +97,7 @@ async def save_match_event(match_id,player_id,time_playing,type,detail):
                 return True
 
 
-@timeit
+@fcatimer
 async def retrieve_match_events(match:response_classes.MatchInfo):
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:

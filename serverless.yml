@@ -5,11 +5,11 @@ frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: python3.8
-  stage: ${opt:stage, 'dev'}
+  runtime: python3.11
+  stage: ${opt:stage, 'devnew'}
   region: eu-west-2
   environment:
-    ENVIRONMENT: ${opt:stage, 'dev'}
+    ENVIRONMENT: ${opt:stage, 'devnew'}
 
 functions:
   check_online:

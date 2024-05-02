@@ -41,10 +41,12 @@ async def new_user(event, context):
     return response
 
 async def saveDeviceToken(event):
+    headers = event["headers"]
     device_token = event["headers"]['x-device-token']
     device_id = event["headers"]['x-device-id']
     email = getToken(event)["email"]
-    await save_token(email=email,token=device_token,device=device_id)
+    version = headers.get('x-football-app',None)
+    await save_token(email=email,token=device_token,device=device_id,version=version)
 
 
 # "(ID varchar(255),"\

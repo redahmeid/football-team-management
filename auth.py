@@ -14,7 +14,7 @@ from firebase_admin import credentials
 from firebase_admin import auth
 from exceptions import AuthError
 from notifications import save_token,save_token_by_match,turn_off_notifications
-from timeit import timeit
+from fcatimer import fcatimer
 import traceback
 import logging
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Initialize the AWS Secrets Manager client
 secretsmanager = boto3.client('secretsmanager')
 
-@timeit
+@fcatimer
 async def set_custom_claims(event, context):
     print("###################IN SET CLAIMS################")
     await lambda_handler(event,context)
@@ -45,7 +45,7 @@ async def set_custom_claims(event, context):
     return response
 
 
-@timeit
+@fcatimer
 async def set_claims(email,uid):
     teams = await retrieve_team_roles_by_user_id(email)
     players = await retrieve_player_roles_by_user_id(email)
@@ -75,7 +75,7 @@ async def set_claims(email,uid):
     auth.set_custom_user_claims(uid=uid,custom_claims=additionalClaims)
     await etag_manager.setEtag(email,'claims',additionalClaims)
 
-@timeit
+@fcatimer
 async def saveDeviceToken(event,context)  :
     await lambda_handler(event,context)
     try:
@@ -154,7 +154,7 @@ def getToken(event):
     else:
         raise AuthError
 
-@timeit 
+@fcatimer 
 async def check_permissions(event,team_id,acceptable_roles):
     try:
         id_token = getToken(event)

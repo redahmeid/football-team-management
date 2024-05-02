@@ -88,6 +88,12 @@ class HomeOrAway(str, Enum):
 
 
 
+class User(BaseModel):
+    email:str
+    first_name:Optional[str]=''
+    surname:Optional[str]=''
+    teams:Optional[List]=[]
+    children:Optional[List]=[]
 
 class MatchType(str, Enum):
     friendly = "friendly"
@@ -98,6 +104,7 @@ class MatchType(str, Enum):
 class MatchInfo(BaseModel):
     id:str
     team:Optional[TeamResponse]=None
+    team_id:Optional[str]=""
     team_link:Optional[Link]=None
     self:Optional[Link]=None
     status:MatchState
@@ -106,6 +113,8 @@ class MatchInfo(BaseModel):
     length:int
     opposition:str
     homeOrAway:HomeOrAway
+    location:Optional[str] = ''
+    placeId:Optional[str] = ''
     date:datetime.date
     type:Optional[MatchType]=None
     captain:Optional[str]=None

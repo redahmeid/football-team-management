@@ -8,7 +8,7 @@ import response_errors
 from team_data import save_team,retrieve_team_by_id
 from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
-from player_data import retrieve_players_by_team
+from player_data import retrieve_players_by_team_with_stats
 from auth import check_permissions
 from roles import Role
 import team_season_data
@@ -39,7 +39,7 @@ import notifications
 import cache_trigger
 
 import user_homepage_backend
-from timeit import timeit
+from fcatimer import fcatimer
 
 async def addUserToTeam(event,context):
     await lambda_handler(event,context)
@@ -69,7 +69,7 @@ async def addUserToTeam(event,context):
 
 
 
-@timeit
+@fcatimer
 async def submit_team(event, context):
     await lambda_handler(event,context)
     body =json.loads(event["body"])
@@ -112,7 +112,7 @@ async def submit_team(event, context):
         response = api_helper.make_api_response(400,None,e)
     return response
 
-@timeit
+@fcatimer
 async def retrieve_team_summary(event, context):
     await lambda_handler(event,context)
     
@@ -149,7 +149,7 @@ async def retrieve_team_summary(event, context):
         response = api_helper.make_api_response(400,None)
         return response
         
-@timeit
+@fcatimer
 async def delete_team(event, context):
     await lambda_handler(event,context)
     
@@ -175,7 +175,7 @@ async def delete_team(event, context):
 
 
 
-@timeit
+@fcatimer
 def convertTeamDataToTeamResponse(team) -> response_classes.TeamResponse:
     print("convertTeamDataToTeamResponse: %s"%(team))
     id = team["ts.ID"]

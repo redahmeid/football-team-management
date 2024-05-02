@@ -3,7 +3,7 @@ from pydantic import ValidationError
 import traceback
 import exceptions
 from typing import List
-from player_data import retrieve_players_by_team
+from player_data import retrieve_players_by_team_with_stats
 import sys
 from cache_trigger import updateTeamCache,updateMatchCache, updateMatchPlanCache,updateMatchCurrentLineupCache, updateMatchActualCache,updateUserCache
 from matches_data import retrieve_match_by_id
@@ -11,6 +11,7 @@ import matches_data
 from match_day_data import retrieve_periods_by_match,retrieveNextPlanned,retrieveAllPlannedLineups,save_actual_lineup,save_planned_lineup,retrieveCurrentActual, save_assists_for,save_goals_for,save_opposition_goal
 from secrets_util import lambda_handler,getEmailFromToken
 import api_helper
+import match_day_data
 from auth import check_permissions
 from roles import Role
 import matches_state_machine
@@ -36,7 +37,7 @@ from etag_manager import setEtag,isEtaggged,deleteEtag
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def timeit(method):
+def fcatimer(method):
     def timed(*args, **kw):
         start_time = time.time()
         result = method(*args, **kw)
@@ -404,7 +405,7 @@ async def add_goal_scorers(event,context):
         if(await check_permissions(event=event,team_id=team_id,acceptable_roles=acceptable_roles)):  
              
             body =json.loads(event["body"])
-            
+            await match_day_data.delete_goal_scorers(match_id)
             scorers = body.get('scorers')
             print(f"SCORERS {scorers}")
             for scorer in scorers:
@@ -448,7 +449,7 @@ async def update_match_status(event,context):
     pathParameters = event["pathParameters"]
     status = pathParameters["status"]
     match_id = pathParameters["match_id"]
-    
+    print(f"STATUS FROM REQUEST {status}")
     try:
         match = await retrieve_match_by_id(match_id)
         team_id = match[0].team.id
@@ -468,7 +469,7 @@ async def update_match_status(event,context):
                  
                  await updateMatchPeriod(match_id,status)
                  
-                 await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status))
+                 await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState(status).value)
              else:
                 await match_planning_backend.updateStatus(match_id=match_id,status=matches_state_machine.MatchState(status))
                 print(f"UPDATE STATUS TASK CREATION START {match_id}")

@@ -14,7 +14,7 @@ import functools
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -63,7 +63,7 @@ class ClUB_TEAM_TABLE:
         f"PRIMARY KEY ({TABLE.ID}))"
 
 
-@timeit
+@fcatimer
 async def save_club(club_name):
     
     
@@ -82,7 +82,7 @@ async def save_club(club_name):
                 
                 return id
 
-@timeit
+@fcatimer
 async def add_team_to_club(club_id,team_id):
     
     
@@ -101,7 +101,7 @@ async def add_team_to_club(club_id,team_id):
                 
                 return id
 
-@timeit
+@fcatimer
 async def retrieve_clubs_by_user_id(user_id):
     
     
@@ -118,7 +118,7 @@ async def retrieve_clubs_by_user_id(user_id):
                 
                 return id
 
-@timeit
+@fcatimer
 async def retrieve_seasons_by_team_id(team_id):
     
     

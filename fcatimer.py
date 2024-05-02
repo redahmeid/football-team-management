@@ -3,7 +3,7 @@ import time
 import asyncio
 
 
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()

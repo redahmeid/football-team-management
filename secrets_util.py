@@ -5,6 +5,7 @@ from firebase_admin import credentials
 from firebase_admin import auth, messaging
 from exceptions import AuthError
 import cache_trigger
+from packaging import version
 
 
 # Initialize the AWS Secrets Manager client
@@ -12,7 +13,7 @@ secretsmanager = boto3.client('secretsmanager')
 import functools
 import time
 import asyncio
-def timeit(func):
+def fcatimer(func):
     @functools.wraps(func)
     async def async_wrapper(*args, **kwargs):
         start_time = time.time()
@@ -44,7 +45,19 @@ def getToken(event):
 
 from notifications import save_token,save_token_by_match
 
-@timeit
+def is_version_greater(version_str, reference_version):
+    # Split the version string by "."
+    version_components = version_str.split(".")
+
+    # Remove the OS prefix if present
+    if len(version_components) > 1:
+        version_without_os = ".".join(version_components[1:])
+    else:
+        version_without_os = version_str
+
+    return version.parse(version_without_os) > version.parse(reference_version)
+
+@fcatimer
 async def lambda_handler(event, context):
     
     try:
@@ -97,7 +110,7 @@ def send_push_notification(token, title, body):
     response = messaging.send(message)
     print('Successfully sent message:', response)
 
-@timeit        
+@fcatimer        
 def validate_firebase_id_token(id_token):
     try:
         
@@ -114,7 +127,7 @@ def validate_firebase_id_token(id_token):
         print(f"Error validating token: {e}")
         return False
 
-@timeit        
+@fcatimer        
 def delete_firebase_account(event):
     try:
         
@@ -126,7 +139,7 @@ def delete_firebase_account(event):
         print(f"Error deleting user")
         return False
 
-@timeit
+@fcatimer
 def getEmailFromToken(event,context):
     print("GET EMAIL FROM TOKEN")
     id_token = event["headers"]['Authorization'].split('Bearer ')[1]

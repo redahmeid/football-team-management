@@ -4,7 +4,7 @@ from classes import Player
 from config import app_config
 from team_data import retrieve_team_by_id
 import api_helper
-from player_data import save_player_season,save_player,retrieve_players_by_team,delete_player,retrieve_player,squad_size_by_team
+from player_data import save_player_season,save_player,retrieve_players_by_team_with_stats,delete_player,retrieve_player,squad_size_by_team
 from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 from roles import Role
 from users_data import retrieve_user_id_by_email,save_user
@@ -19,20 +19,21 @@ import hashlib
 import json
 import firebase_admin
 from firebase_admin import credentials, firestore
-from timeit import timeit
+from fcatimer import fcatimer
 import cache_trigger
 from email_sender import send_email_with_template
 
-@timeit
+@fcatimer
 async def create_players(name, team_id):
     
-        request_player = Player(name=name,team_id=team_id)
+        request_player = Player(forename=name,team_id=team_id)
         PlayerValidator = TypeAdapter(Player)
 
         try:
             new_player = PlayerValidator.validate_python(request_player)
             id = await save_player(new_player)
             player_season_id = await save_player_season(id,team_id)
+            
             await cache_trigger.updateTeamCache(team_id)
             await cache_trigger.updatePlayerCache(team_id)
             result = await retrieve_player(player_season_id)
@@ -41,13 +42,33 @@ async def create_players(name, team_id):
         except Exception as e:
             raise
 
+@fcatimer
+async def create_players_and_guardians(forename, surname, team_id,email):
+    
+        request_player = Player(forename=forename,name=forename,surname=surname,team_id=team_id)
+        PlayerValidator = TypeAdapter(Player)
 
-@timeit
+        try:
+            new_player = PlayerValidator.validate_python(request_player)
+            id = await save_player(new_player)
+            player_season_id = await save_player_season(id,team_id)
+            
+            await cache_trigger.updateTeamCache(team_id)
+            await cache_trigger.updatePlayerCache(team_id)
+            result = await retrieve_player(player_season_id)
+            await addGuardian(email,player_season_id,team_id)
+            return result[0]
+
+        except Exception as e:
+            raise
+
+
+@fcatimer
 async def addGuardian(email,player_id,team_id):
     user_id = await retrieve_user_id_by_email(email)
     team = await retrieve_team_by_id(team_id)
     print(user_id)
-    user = Guardian(email=email,player_id=player_id,team_id=team_id)
+    user = Guardian(email=email,player_id=str(player_id),team_id=team_id)
     player = await player_data.retrieve_player(player_id)
     if(user_id):
         
@@ -73,7 +94,7 @@ async def addGuardian(email,player_id,team_id):
     return user
 
 
-@timeit
+@fcatimer
 async def getPlayersFromDB(team_id):
     cached_object = await getLatestObject(team_id,'players')
     teams = []
@@ -81,12 +102,12 @@ async def getPlayersFromDB(team_id):
        etag = cached_object["etag"]
        players = json.loads(cached_object["object"])
     else:
-        players = await retrieve_players_by_team(team_id)
+        players = await retrieve_players_by_team_with_stats(team_id)
         etag = await setEtag(team_id,'players',players)
     response = api_helper.make_api_response_etag(200,players,etag)
     return response
 
-@timeit
+@fcatimer
 async def getGuardianPlayersFromDB(email):
     cached_object = await getLatestObject(email,'guardian_players')
     teams = []

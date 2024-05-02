@@ -5,7 +5,7 @@ import time
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def timeit(method):
+def fcatimer(method):
     def timed(*args, **kw):
         start_time = time.time()
         result = method(*args, **kw)
