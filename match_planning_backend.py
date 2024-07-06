@@ -9,6 +9,7 @@ from matches_data import retrieve_match_by_id
 from typing import Dict, List
 import matches_state_machine
 import player_data
+import classes
 from config import app_config
 import traceback
 import logging
@@ -28,7 +29,7 @@ import notifications
 from fcatimer import fcatimer
 import matches_backend
 import json
-from etag_manager import getLatestObject,deleteEtag,setEtag,updateDocument
+from etag_manager import getLatestObject,deleteEtag,setEtag,updateDocument, getObject,whereEqualwhere,whereEqual,whereContains
 
 import exceptions
 logger = logging.getLogger(__name__)
@@ -74,7 +75,7 @@ async def getMatchParent(team_id,match):
         return response  
 
 @fcatimer
-async def getMatchCreatedResponse(team_id,match:response_classes.MatchInfo):
+async def getMatchCreatedResponse(team_id,match:classes.MatchInfo):
     playersList = await retrieve_players_by_team_with_stats(team_id)  
     url = f"/matches/{match.id}/captain"
     submit_captain = response_classes.Link(link=url,method="post")
@@ -94,18 +95,76 @@ async def getMatchCreatedResponse(team_id,match:response_classes.MatchInfo):
     return match_day_response
 
 @fcatimer
-async def getMatchCreated(team_id,match:response_classes.MatchInfo):
+async def getMatchCreated(team_id,match:classes.MatchInfo):
     match_day_responses = []
     return await getMatchCreatedResponse(team_id,match)    
 
 
-async def getMatchConfirmedPlanReadyToStart(team_id,match:response_classes.MatchInfo):
+async def getMatchConfirmedPlanReadyToStart(team_id,match:classes.MatchInfo):
     match_day_responses = []
     return await getMatch(team_id,match)
 
 
+
+
+
+@fcatimer
 async def getMatchPlanningResponse(team_id,match):
     selected_players = await retrieveAllPlannedLineups(match_id=match.id)
+    last_minute = 0
+    last_lineup = []
+    lineup_summary = []
+
+    for lineup in selected_players:
+        minute = lineup["status"]
+        for player in last_lineup:
+            isNew = False
+            if(player.selectionInfo.position):
+                print(player)
+                contains_value = any(obj.info.id == player.info.id for obj in lineup["players"])
+                if contains_value:
+                    # Check if the player already exists in lineup_summary
+                    existing_player = next((p for p in lineup_summary if p.info.id == player.info.id), None)
+                    if existing_player:
+                        # If player exists, update their stats
+                        existing_player.stats.minutes += (minute - last_minute)
+                    else:
+                        # If player does not exist, add them to lineup_summary
+                        isNew = True
+                        new_player = classes.Player(info=player.info, stats=player_responses.PlayerStats())
+                        new_player.stats.minutes = (minute - last_minute)
+                        
+            else:
+                print(player)
+                contains_value = any(obj.info.id == player.info.id for obj in lineup["players"])
+                if contains_value:
+                    # Check if the player already exists in lineup_summary
+                    existing_player = next((p for p in lineup_summary if p.info.id == player.info.id), None)
+                    if existing_player:
+                        # If player exists, update their stats
+                        existing_player.stats.minutes += 0
+                    else:
+                        # If player does not exist, add them to lineup_summary
+                        isNew = True
+                        new_player = classes.Player(info=player.info, stats=player_responses.PlayerStats())
+                        new_player.stats.minutes = 0
+                        
+            if(isNew):
+                new_player.stats.total_minutes = (match.length - minute)+new_player.stats.minutes
+                lineup_summary.append(new_player)
+            else:
+                existing_player.stats.total_minutes = (match.length - minute)+existing_player.stats.minutes
+
+        last_minute = minute
+        last_lineup = lineup["players"]
+        print("LAST MINUTE")
+        print(last_minute)
+        print("LAST LINEUP")
+        print(last_lineup)
+
+    print("LINEUP SUMMARY")
+    print(lineup_summary)
+
     captains = await retrieve_player(match.captain)
     captain = None
     url = f"/matches/{match.id}/captain"
@@ -119,10 +178,10 @@ async def getMatchPlanningResponse(team_id,match):
     confirm_plan = response_classes.Link(link=f'{url}/{matches_state_machine.MatchState.plan_confirmed.value}',method="post")
     links = {"submit_plan":submit_first_subs,"confirm_plan":confirm_plan }
     links["submit_captain"]=submit_captain
-    match_day_response = response_classes.ActualMatchResponse(match=match,captain=captain,  current_players=selected_players[0]['players'],planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
+    match_day_response = response_classes.ActualMatchResponse(match=match,captain=captain, planned_lineup_summary=lineup_summary, current_players=selected_players[0]['players'],planned_lineups=selected_players,links=createMatchLinks(url,links)).model_dump()
     
     return match_day_response
-
+@fcatimer
 async def getMatchPlanning(team_id,match):
     match_day_responses = []
     return await getMatchPlanningResponse(team_id,match)
@@ -130,7 +189,7 @@ async def getMatchPlanning(team_id,match):
 
 
 @fcatimer
-async def getMatchGuest(match:response_classes.MatchInfo)-> response_classes.ActualMatchResponse:
+async def getMatchGuest(match:classes.MatchInfo)-> response_classes.ActualMatchResponse:
     time_playing = await how_long_played(match.id)
     how_long_left = 0
     if(match.status==matches_state_machine.MatchState.ended.value):
@@ -209,7 +268,8 @@ async def getMatchGuest(match:response_classes.MatchInfo)-> response_classes.Act
     
     return match_day_response
 
-async def getSubs(next_lineup, current_lineup):
+@fcatimer
+async def getSubs(next_lineup, current_lineup)->List[response_classes.PlayerMatchStat]:
     if not next_lineup or not current_lineup:
         return []
 
@@ -359,7 +419,7 @@ async def getChangesDue(match):
 
 
 @fcatimer
-async def getMatchEnded(team_id,match:response_classes.MatchInfo):
+async def getMatchEnded(team_id,match:classes.MatchInfo):
     try:
         goals,opposition,all_actual_lineups,players = await asyncio.gather(
             match_day_data.retrieve_player_goals(match),
@@ -400,7 +460,7 @@ async def getMatchEnded(team_id,match:response_classes.MatchInfo):
         traceback.print_exception(*sys.exc_info()) 
 
 @fcatimer
-async def getMatch(team_id,match:response_classes.MatchInfo):
+async def getMatch(team_id,match:classes.MatchInfo):
     try:
         time_playing = await how_long_played(match.id)
         how_long_left = 0
@@ -538,6 +598,7 @@ async def getMatchStarted(team_id,match):
 
 async def how_long_played(match_id):
     periods = await retrieve_periods_by_match(match_id)
+    
     time_playing = 0
     last_period = {}
     isStarted = False
@@ -559,15 +620,15 @@ async def how_long_played(match_id):
     
     if(isStarted):
         if(len(periods)>0 and last_period.status=="paused"):
-            current_pause = datetime.datetime.utcnow().timestamp()-last_period.time
+            current_pause = datetime.datetime.now(datetime.timezone.utc).timestamp()-last_period.time
             time_playing = time_playing+current_pause
             
         print("################### TIME PLAYING 1#######################")
         print(time_playing)
-        how_long_ago_started = (datetime.datetime.utcnow().timestamp()-started_at)
+        how_long_ago_started = (datetime.datetime.now(datetime.timezone.utc).timestamp()-started_at)
         print("HOW LONG AGO STARTED")
         print(how_long_ago_started)
-        time_playing = (datetime.datetime.utcnow().timestamp()-time_playing-started_at)
+        time_playing = (datetime.datetime.now(datetime.timezone.utc).timestamp()-time_playing-started_at)
         print("################### TIME PLAYING 2#######################")
         print(time_playing/60)
         return time_playing/60
@@ -587,7 +648,6 @@ async def removeGoalsFor(id,match_id,team_id):
     await updateTeamCache(team_id)
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":team_id,
         "match_id":match_id,
         "action":"goals_for"
     }
@@ -626,7 +686,6 @@ async def addGoalScorers(team_id,match_id, goal_scorer,assister,type,assist_type
     await updateTeamCache(team_id)
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":team_id,
         "match_id":match_id,
         "action":"goals_for"
     }
@@ -638,25 +697,49 @@ async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):
     time_playing = await how_long_played(match_id)
     scored_by =""
     print(assister)
+    fs_match = await getObject(match_id,'matches_store')
     if(assister is not None):
         await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,assister["info"]["id"],assist_type)
         scored_by = f"Assisted by {assister['info']['name']} - {type}"
+        if(fs_match):
+            fs_match_dict = fs_match.get().to_dict()
+            scorers = fs_match_dict.get('scorers',[])
+            scorers.append({"scorer":goal_scorer['info']['id'],"assister":assister['info']['id'],"goal_type":type,"assist_type":assist_type,"minute":time_playing})
     else:   
         await save_goals_for(match_id,goal_scorer["info"]["id"],time_playing,type,"","")
+        if(fs_match):
+            fs_match_dict = fs_match.get().to_dict()
+            fs_match_dict = fs_match.get().to_dict()
+            scorers = fs_match_dict.get('scorers',[])
+            scorers.append({"scorer":goal_scorer['info']['id'],"goal_type":type,"minute":time_playing})
     await matches_data.increment_goals_scored(match_id=match_id,goals=1)
     
-
-    db = firestore.client()
     
-    doc_ref = db.collection(f"{app_config.db_prefix}_player_stats").document(goal_scorer["info"]["id"])
-    goalsField = f"matches.{match_id}.goals"
+    if(fs_match):
+        
+        fs_match.update({"scorers":scorers})
 
-    data = {
-        goalsField: firestore.Increment(1)
-    }
-    doc_ref.set(
-       data, merge=True
-    )
+    fs_player = await getObject(goal_scorer,'player_stats')
+    if fs_player:
+        fs_player_dict = fs_player.get().to_dict()
+        current_list = fs_player_dict.get('actual_matches', {})
+        fs_match = current_list.get(match_id,{match_id:{}})
+        fs_subs = fs_match.get("goals",[])
+        fs_subs.append({"goal_type":type,"minute":time_playing})
+        fs_match["goals"] = fs_subs
+        current_list[match_id] = fs_match
+        fs_player.update(current_list)
+    
+    fs_assister = await getObject(assister,'player_stats')
+    if fs_assister:
+        fs_assister_dict = fs_assister.get().to_dict()
+        current_list = fs_assister_dict.get('actual_matches', {})
+        fs_match = current_list.get(match_id,{match_id:{}})
+        fs_subs = fs_match.get("assists",[])
+        fs_subs.append({"assist_type":assist_type,"minute":time_playing})
+        fs_match["assists"] = fs_subs
+        current_list[match_id] = fs_match
+        fs_assister.update(current_list)
     
 
 
@@ -666,48 +749,160 @@ async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):
     await updatePlayerCache(team_id)
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":team_id,
         "match_id":match_id,
         "action":"goals_for"
     }
     await notifications.sendNotificationUpdatesLink(match_id,scored_by,message,'match',data)
 
-async def updateStatus(match_id,status:matches_state_machine.MatchState):
-    print(f"STATUS {status.value}")
-    matches = await matches_data.update_match_status(match_id,status.value)
+@fcatimer
+async def sendGoalScoredNotification(team_id,match_id, goal_scorer,assister,type,assist_type):
+
+    fs_team = await getObject(team_id,'teams_store')
+    team_name = ""
     
-    await deleteEtag(match_id,"matches")
-    match = matches[0]
+    if(fs_team):
+        fs_team_dict = fs_team.get().to_dict()
+        team_name = fs_team_dict['name']
+
+    fs_match = await getObject(match_id,'matches_store')
+    opposition = ""
+    goals_for = 0
+    goals_against = 0
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        opposition = fs_match_dict['opposition']
+        goals_for = fs_match_dict.get('goal',0)
+        goals_against = fs_match_dict.get('conceded',0)
+    assisted_by = ""
+    if(assister is not None):
+        assisted_by = f" and assisted by {assister['forename']} - {assist_type}"
+    title = f"Gooooaaaal {team_name} ({goals_for}) - {goals_against} {opposition}"
+    message = f"{type} goal scored by {goal_scorer['forename']} with a {assisted_by}"
+    data = {
+            "link":f"/matches/{match_id}",
+            "match_id":match_id,
+            "team_id":team_id,
+            "action":"goal_scored",
+            "silent":False
+        }
+    fs_team_users = await whereContains('users_store','teams',team_id)
+    
+    if(fs_team_users):
+        for fs_team_user in fs_team_users:
+            fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
+            print(f"DEVICES {fs_devices}")
+            for fs_device in fs_devices:
+                fs_device_dict = fs_device.to_dict()
+                token = fs_device_dict['token']
+                print(f"TOKEN {token}")
+                await notifications.sendNotification(match_id,message,title,'match_update',False,token,data)
+
+@fcatimer
+async def sendGoalConcededNotification(team_id,match_id):
+
+    fs_team = await getObject(team_id,'teams_store')
+    team_name = ""
+    
+    if(fs_team):
+        fs_team_dict = fs_team.get().to_dict()
+        team_name = fs_team_dict['name']
+
+    fs_match = await getObject(match_id,'matches_store')
+    opposition = ""
+    goals_for = 0
+    goals_against = 0
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        opposition = fs_match_dict['opposition']
+        goals_for = fs_match_dict.get('goals',0)
+        goals_against = fs_match_dict.get('conceded',0)
+    
+    title = f"Goal conceded - {team_name} {goals_for} - ({goals_against}) {opposition}"
+    message = f"Scored by {opposition}"
+    data = {
+            "link":f"/matches/{match_id}",
+            "match_id":match_id,
+            "team_id":team_id,
+            "action":"goal_conceded",
+            "silent":False
+        }
+    fs_team_users = await whereContains('users_store','teams',team_id)
+    
+    if(fs_team_users):
+        for fs_team_user in fs_team_users:
+            fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
+            print(f"DEVICES {fs_devices}")
+            for fs_device in fs_devices:
+                fs_device_dict = fs_device.to_dict()
+                token = fs_device_dict['token']
+                print(f"TOKEN {token}")
+                await notifications.sendNotification(match_id,message,title,'match_update',False,token,data)
+
+@fcatimer
+async def calculateTimePlayed(match:classes.MatchInfo):
+    print(f"TIME NOW IN SECONDS = {datetime.datetime.now(datetime.timezone.utc).timestamp}")
+    print(f"LAST START TIME = {match.time_last_started.timestamp}")
+    minutes_played = ((datetime.datetime.now(datetime.timezone.utc) - match.time_last_started))
+    
+    return minutes_played.total_seconds()+match.seconds_played_when_paused
+
+
+            
+@fcatimer
+async def updateStatus(match_id,status:matches_state_machine.MatchState):
+    print(f"UPDATE STATUS {status.value}")
+    # matches = await matches_data.update_match_status(match_id,status.value)
+    fs_match = await getObject(match_id,'matches_store')
+    fs_match_dict = fs_match.get().to_dict()
+    match = classes.MatchInfo(**fs_match_dict)
+    print(f"FS MATCH DICT {fs_match_dict}")
+    match.status = status
+    
+    state = {'status':status.value,'time':datetime.datetime.now(datetime.timezone.utc)}
+    match.status_history.append(state)
+    fs_match.update(match.model_dump())
+    
+    fs_team = await getObject(match.team_id,'teams_store')
+    team = classes.Team(**fs_team.get().to_dict())
     type="match"
     silent='False'
     action = "status_updated"
     if(status==matches_state_machine.MatchState.plan_confirmed):
-        message = f"{match.team.name} vs {match.opposition} match day plans confirmed"
+        message = f"{team.name} vs {match.opposition} match day plans confirmed"
         type="admins"
-    if(status==matches_state_machine.MatchState.started):
-        message = f"{match.team.name} vs {match.opposition} has started"
-    if(status==matches_state_machine.MatchState.paused):
-        message = f"{match.team.name} vs {match.opposition} has paused"
-    if(status==matches_state_machine.MatchState.ended):
-        message = f"{match.team.name} vs {match.opposition} has ended"
-    if(status==matches_state_machine.MatchState.created):
-        message = f"{match.team.name} vs {match.opposition} start_again"
+    elif(status==matches_state_machine.MatchState.started):
+        fs_match.update({'time_started':datetime.datetime.now(datetime.timezone.utc)})
+        fs_match.update({'time_last_started':datetime.datetime.now(datetime.timezone.utc)})
+        message = f"{team.name} vs {match.opposition} has started"
+    elif(status==matches_state_machine.MatchState.restarted):
+        fs_match.update({'time_last_started':datetime.datetime.now(datetime.timezone.utc)})
+        message = f"{team.name} vs {match.opposition} has restarted"
+    elif(status==matches_state_machine.MatchState.paused):
+        fs_match.update({'seconds_played_when_paused':await calculateTimePlayed(match)})
+        message = f"{team.name} vs {match.opposition} has paused"
+    elif(status==matches_state_machine.MatchState.ended):
+        fs_lineups = await whereEqual('lineups_store','match_id',match_id)
+
+        fs_match.update({'time_ended':datetime.datetime.now(datetime.timezone.utc)})
+        message = f"{team.name} vs {match.opposition} has ended"
+    elif(status==matches_state_machine.MatchState.created):
+        await delete_lineups(match_id,0)
+        message = f"{team.name} vs {match.opposition} start_again"
         action = "start_again"
         silent='True'
-    if(status==matches_state_machine.MatchState.plan):
-        message = f"{match.team.name} vs {match.opposition} in plan"
+    elif(status==matches_state_machine.MatchState.plan):
+        message = f"{team.name} vs {match.opposition} in plan"
         action = "plan"
         silent='True'
-    if(status==matches_state_machine.MatchState.rated):
-        message = f"{match.team.name} vs {match.opposition} has been rated"
+    elif(status==matches_state_machine.MatchState.rated):
+        message = f"{team.name} vs {match.opposition} has been rated"
         action = "rated"
-    if(status==matches_state_machine.MatchState.cancelled):
-        message = f"{match.team.name} vs {match.opposition} has been cancelled"
+    elif(status==matches_state_machine.MatchState.cancelled):
+        message = f"{team.name} vs {match.opposition} has been cancelled"
         action = "cancelled"
     
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":match.team.id,
         "match_id":match_id,
         "action":action,
         "status":status,
@@ -715,10 +910,10 @@ async def updateStatus(match_id,status:matches_state_machine.MatchState):
     }
     
     await updateMatchCache(match_id)
-    await updateTeamCache(match.team.id)
+    await updateTeamCache(team.id)
     await notifications.sendNotificationUpdatesLink(match_id,message,message,type,data)
     
-    return matches
+    return ""
 
 
 
@@ -738,12 +933,21 @@ async def setGoalsAgainst(match_id,team_id, opposition):
     await save_opposition_goal(match_id,time_playing)
     await matches_data.increment_goals_conceded(match_id=match_id,goals=1)
     scored_by = f"{int(time_playing)}' Goal scored by {opposition}"
-
+    fs_match = await getObject(match_id,'matches_store')
+    fs_match_dict = fs_match.get().to_dict()
+    print(f"FS MATCH DICT {fs_match_dict}")
+    conceded_history = fs_match_dict.get('conceded_history',[])
+    conceded_history.append({"minute":time_playing})
+    conceded = fs_match_dict.get('conceded',0)
+    conceded = conceded+1
+    status = {'conceded':conceded,'conceded_history':conceded_history}
+    
+    fs_match.update(status)
+    print(f"UPDATED SUCCESSFULLY FS MATCH DICT {fs_match_dict}")
     await updateMatchCache(match_id)
     await updateTeamCache(team_id)
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":team_id,
         "match_id":match_id,
         "action":"goals_against"
     }
@@ -782,35 +986,129 @@ async def sendStatusUpdate(match_id,status):
    
     data = {
         "link":f"/matches/{match_id}",
-        "team_id":match.team.id,
         "match_id":match_id,
         "action":"status_updated",
         "status":status
     }
     await notifications.sendNotificationUpdatesLink(match_id,message,message,'match',data)
 
-async def submit_planned_lineup(match_id,players:List[player_responses.PlayerResponse],minute):
-   
-    committed = await match_day_data.save_planned_lineup(match_id=match_id,minute=minute,players=players)
-    # if(committed):setMatc
-    #     for user in await getStakeholders(match_id):
-    #         tokens = await notifications.getDeviceToken(user.email)
+def remove_lineups_greater_than_minute(data_list, field_name, minute):
+  """Removes objects from a list where a specified field meets a condition.
 
-    #         for token in tokens:
-    #             new_token = token["Token"]
-    #             asyncio.create_task(sendMessagesOnMatchUpdates(new_token, "", "Match plan updated",match_id,team_id))
+  Args:
+      data_list: The list to filter.
+      field_name: The name of the field to check for the condition.
+      condition: A function that takes an object from the list and returns True
+                 if the object should be removed, False otherwise.
+
+  Returns:
+      A new list containing only objects that don't meet the condition.
+  """
+
+  return [item for item in data_list if not item[field_name]>=minute]
+
+@fcatimer
+async def delete_lineups(match_id,minute):
+    db = firestore.client()
+    docs = await whereEqual('lineups_store','match_id',match_id)
+    batch = db.batch()
+    for doc in docs:
+        fs_lineup_dict = doc.to_dict()
+        print(fs_lineup_dict['minute'])
+        if fs_lineup_dict['type']=='planned' and int(fs_lineup_dict['minute'])>=int(minute):
+            print("deleted")
+            batch.update(doc.reference, {'deleted':True})
+    batch.commit()
+@fcatimer
+async def submit_planned_lineup(match_id,players:List[classes.Player],minute):
+   
+  
+    id = id_generator.generate_random_number(7)
+    await delete_lineups(match_id,minute)
+    fs_match = await getObject(match_id,'matches_store')
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        match = classes.MatchInfo(**fs_match_dict)
+        if(match.planned_lineups is None):
+            match.planned_lineups = []
+        i = 0
+        for lineup in match.planned_lineups:
+            i = i+1
+            if(lineup.minute>=float(minute)):
+                match.planned_lineups.pop(i)
+        match.planned_lineups.append(classes.Lineup(id=str(id),players=players,match_id=match_id,minute=minute,type='planned'))
+        fs_match.update(match.model_dump())
+    # await updateDocument('lineups_store',str(id),classes.Lineup(id=str(id),players=players,match_id=match_id,minute=minute,type='planned'))
+    
+
+@fcatimer
+async def submit_match_lineup(match_id,players:List[classes.Player],minute):
+   
+  
+    id = id_generator.generate_random_number(7)
+    await delete_lineups(match_id,minute)
+    fs_match = await getObject(match_id,'matches_store')
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        match = classes.MatchInfo(**fs_match_dict)
+        for lineup in match.actual_lineups:
+            if(lineup.minute>=float(minute)):
+                lineup.deleted=True
+        match.actual_lineups.append(classes.Lineup(id=str(id),players=players,match_id=match_id,minute=minute,type='actual'))
+        fs_match.update(match.model_dump())
+    
     
            
       
 async def start_match(match_id):
-    await updateMatchPeriod(match_id,matches_state_machine.MatchState.started.value)
-    await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState.started.value)
+    # await updateMatchPeriod(match_id,matches_state_machine.MatchState.started.value)
+    await updateStatus(match_id,matches_state_machine.MatchState.started)
 
-async def submit_actual_lineup(match_id,players:List[player_responses.PlayerResponse]):
-    await match_day_data.save_actual_lineup(match_id=match_id,players=players,time_playing=0)
-    await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState.starting_lineup_confirmed.value)
+async def sort_by_minute(lineup):
+    return lineup['minute']
 
-async def submit_subs(match,players:List[player_responses.PlayerResponse]):
+# @fcatimer
+# async def submit_match_lineup(match_id,players:List[classes.Player],minute):
+#     id = id_generator.generate_random_number(7)
+#     player_ids = [{"id":player.info.id,"position":player.selectionInfo.position} for player in players]
+#     # await delete_lineups(match_id,minute)
+#     await updateDocument('lineups_store',str(id),classes.Lineup(id=str(id),players=players,match_id=match_id,minute=minute,type='actual'))
+#     fs_match = await getObject(match_id,'matches_store')
+#     print(fs_match)
+#     empty_list = []
+#     fs_match_dict = fs_match.get().to_dict()
+#     fs_lineups = fs_match_dict.get('actual_lineups',[])
+  
+#     fs_lineups = remove_lineups_greater_than_minute(fs_lineups,"minute",minute)
+#       # Set an empty list as the default
+#     fs_lineups.append({"minute":minute,"id":id})
+#     fs_match.update({'actual_lineups':fs_lineups})
+#     for player in players:
+#         if(len(player.selectionInfo.position)>0):
+#             fs_player = await getObject('player_stats',player.info.id)
+#             if fs_player:
+#                 fs_player_dict = fs_player.get().to_dict()
+#                 current_list = fs_player_dict.get('actual_matches', {})
+#                 fs_match = current_list.get(match_id,{match_id:{}})
+               
+                
+#                 fs_subs = fs_match.get("lineup",[])
+#                 fs_subs.append({"position":player.selectionInfo.position,"minute":minute})
+#                 fs_match["lineup"] = fs_subs
+#                 current_list[match_id] = fs_match
+#                 fs_player.update(current_list)
+#             else:
+#                 await updateDocument('player_stats',str(player.info.id),{'actual_matches': {match_id:{"lineup":[{"position":player.selectionInfo.position}]}}})
+
+    
+@fcatimer
+async def submit_starting_lineup(match_id,players:List[classes.Player]):
+    # await match_day_data.save_actual_lineup(match_id=match_id,players=players,time_playing=0)
+    await submit_match_lineup(match_id,players,0)
+    await updateStatus(match_id=match_id,status=matches_state_machine.MatchState.starting_lineup_confirmed)
+    # await matches_data.update_match_status(match_id=match_id,status=matches_state_machine.MatchState.starting_lineup_confirmed.value)
+
+async def submit_subs(match,players:List[classes.Player]):
     time_playing = await how_long_played(match.id)
     
     print("************** SUBS ON HERE ***************")
@@ -818,9 +1116,35 @@ async def submit_subs(match,players:List[player_responses.PlayerResponse]):
     current_players = all_actual[0]
     print(current_players)
     print(players)
-    difference = set(players).difference(current_players)
+    difference = set(players).difference(current_players["players"])
+
+    subs = await getSubs(players,current_players["players"])
+    for sub in subs:
+        fs_match = await getObject(match.id,'matches_store')
+        if(fs_match):
+            fs_match_dict = fs_match.get().to_dict()
+            fs_subs = fs_match_dict.get('subs',[])
+            fs_sub = {'on':sub.player_on.info.id,'off':sub.player_off.info.id,'minute':time_playing}
+            fs_subs.append(fs_sub)
+            fs_match.update({'subs':fs_subs})
+
     print("************** SUBS ON***************")
     print(difference)
+    await submit_match_lineup(match.id,players,time_playing)
+    for player in difference:
+        sub_type = "on" if (len(player.selectionInfo.position)>0) else "off"
+        fs_player = await getObject(player.info.id,'player_stats')
+        if fs_player:
+            fs_player_dict = fs_player.get().to_dict()
+            current_list = fs_player_dict.get('actual_matches', {})
+            fs_match = current_list.get(match.id,{match.id:{}})
+            fs_subs = fs_match.get("subs",[])
+            fs_subs.append({"type":sub_type,"minute":time_playing,"position":player.selectionInfo.position})
+            fs_match["subs"] = fs_subs
+            current_list[match.id] = fs_match
+            fs_player.update(current_list)
+        else:
+            await updateDocument('player_stats',str(player.info.id),{'actual_matches':{match.id:{"subs":[{"type":sub_type,"minute":time_playing}]}}})
     await match_day_data.save_subs(match_id=match.id,players=difference,time_playing=time_playing)
     await match_day_data.save_actual_lineup(match_id=match.id,players=players,time_playing=time_playing)
     await updateMatchPeriod(match.id,matches_state_machine.MatchState.substitutions.value)
@@ -832,39 +1156,41 @@ def createMatchLinks(url, links:Dict[str,response_classes.Link]):
     print(links)
     return links
 
+
+
+
+
+
 async def create_match_backend(match,team_id) -> response_classes.PlannedMatchResponse:
     type = match.get("type",None)
     if(type):
         type = response_classes.MatchType(type)
     id = id_generator.generate_random_number(7)
-    matchInfo = response_classes.MatchInfo(id=str(id),opposition=match["opposition"],homeOrAway=match["homeOrAway"],location=match["location"],placeId=match["placeId"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created,type=type,team_id=team_id)
+    matchInfo = classes.MatchInfo(id=str(id),opposition=match["opposition"],homeOrAway=match["homeOrAway"],location=match["location"],placeId=match["placeId"],date=match["date"],length=match["length"],status=matches_state_machine.MatchState.created,type=type,team_id=team_id)
     
-    
+    await updateDocument('matches_store',str(id),matchInfo.dict())
+    fs_team = await getObject(team_id,'teams_store')
+    print(fs_team)
+    empty_list = []
+    fs_team_dict = fs_team.get().to_dict()
+    fs_fixtures = fs_team_dict.get('fixtures',[])
+      # Set an empty list as the default
+    fs_fixtures.append(id)
+    fs_team.update({'fixtures':fs_fixtures})
 
 
-    match_id = await save_team_fixture(matchInfo,team_id)
-    matchInfo = await retrieve_match_by_id(match_id)
-    print(f"MATCH INFO {matchInfo[0]}")
-    result = await getMatchCreated(team_id,matchInfo[0])
-    print(f"CREATE MATCH RESULT {result}")
-    match_response = response_classes.PlannedMatchResponse(**result)
-    print(f"CREATE MATCH RESPONSE {match_response}")
-    self_url = response_classes.getMatchUrl(team_id,match_response.match.id)
-    await updateDocument('matches_new',str(id),match_response)
-    self = response_classes.Link(link=self_url,method="get")
-    links = {"self":self}
     
-    message = f"{match_response.match.team.name} vs {match_response.match.opposition} scheduled"
-    subject = f"New match for {match_response.match.team.name}"
+    
+    message = f"{fs_team_dict['name']} vs {matchInfo.opposition} scheduled"
+    subject = f"New match for {fs_team_dict['name']}"
     data = {
-        "link":self_url,
-        "team_id":team_id,
-        "match_id":match_response.match.id,
+        "link":f'/matches/{id}',
+        "match_id":id,
         "action":"new_match",
         "silent": 'False'
     }
-    await notifications.sendNotificationUpdatesLink(match_response.match.id,message,subject,'match',data)
-    return match_response
+    await notifications.sendNotificationUpdatesLink(id,message,subject,'match',data)
+    return matchInfo
 @fcatimer
 async def setUpMatchFromDB(match):
     
@@ -884,9 +1210,10 @@ async def setUpMatch(match):
 async def list_matches_by_team_backend(team_id):
 
     team = await getLatestObject(team_id,"teams")
+    print(f"TEAM FROM LIST MATCHES \n {team}")
     match_list = []
     if(team):
-        team_mapping = json.loads(team)
+        team_mapping = json.loads(team['object'])
         response = response_classes.TeamResponse(**team_mapping)
         print(f"TEAM IN FIRESTORE {team}")
         matches = response.fixtures
@@ -915,6 +1242,7 @@ async def list_matches_by_team_backend(team_id):
     matches = []
     for match in match_list:
         try:
+            match["team_id"] = team_id
             matches.append(match)
             
         except ValidationError as e:

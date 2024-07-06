@@ -1,4 +1,4 @@
-from classes import Match, PlayerMatch
+import classes 
 import response_classes
 from config import app_config
 import id_generator
@@ -98,7 +98,7 @@ async def save_match_event(match_id,player_id,time_playing,type,detail):
 
 
 @fcatimer
-async def retrieve_match_events(match:response_classes.MatchInfo):
+async def retrieve_match_events(match:classes.MatchInfo):
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -113,8 +113,8 @@ async def retrieve_match_events(match:response_classes.MatchInfo):
                     
                 return player_stats
 
-def convertToGoalPlayerMatchStats(data,match:response_classes.MatchInfo):
-    player_info = player_responses.PlayerInfo(id=data[TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
+def convertToGoalPlayerMatchStats(data,match:classes.MatchInfo):
+    player_info = classes.PlayerInfo(id=data[TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
     return response_classes.PlayerMatchStat(player=player_info,time=int(data[TABLE.TIME]),minute=int(data[TABLE.TIME]),type=data[TABLE.TYPE],detail=data[TABLE.DETAIL])
 
 

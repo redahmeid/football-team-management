@@ -106,7 +106,7 @@ async def cacheUser(email):
 @fcatimer
 async def cachePlayers(team_id):
     
-    await player_backend.getPlayersFromDB(team_id)
+    await player_backend.getPlayersByTeam(team_id)
 
 @fcatimer
 async def cacheCurrentLineup(match_id):

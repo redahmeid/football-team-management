@@ -1,4 +1,4 @@
-from classes import Club, Team, User, TeamUser
+from classes import  Team, User, TeamUser
 from config import app_config
 import id_generator
 import roles

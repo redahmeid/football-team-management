@@ -19,7 +19,8 @@ import user_homepage_backend
 import matches_state_machine
 import exceptions
 from secrets_util import lambda_handler, getEmailFromToken
-from match_planning_backend import list_matches_by_team_backend,create_match_backend
+from match_planning_backend import list_matches_by_team_backend
+from matches_backend import create_match_backend
 from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
 import functools
 import time
@@ -50,9 +51,7 @@ async def create_fixtures(event, context):
     
         try:
             result = await create_match_backend(match,team_id)
-            await updateTeamCache(team_id)
-            await updateMatchCache(result.match.id)
-            await updateUserCache(getEmailFromToken(event,context))
+            
             created_matches.append(result.model_dump())
         except ValidationError as e:
             print(f"CREATE MATCH VALIDATION ERROR {e}")
@@ -84,10 +83,10 @@ async def time_played(event,context):
     response = await match_planning_backend.how_long_played(match_id)
     return api_helper.make_api_response(200,{"player":response})
 
-@fcatimer
-async def updateFromCache(event,context):
-    await lambda_handler(event,context)
-    await matches_backend.updateDBFromCache()
+# @fcatimer
+# async def updateFromCache(event,context):
+#     await lambda_handler(event,context)
+#     await matches_backend.updateDBFromCache()
 @fcatimer
 async def edit_match(event,context):
     await lambda_handler(event,context)
@@ -111,6 +110,20 @@ async def edit_match(event,context):
     print(f"EDIT RESPONSE {response}")
     return response
 
+
+@fcatimer
+async def addGoalScorer(event,context):
+    await lambda_handler(event,context)
+
+    
+    body =json.loads(event["body"])
+    goal_scorer = body["scorer"]
+    assister = body.get('assister')
+    assist_type = body.get('assist_type',"")
+    
+    type = body.get('type','')
+    minutes = body.get('minutes','')
+
 @fcatimer
 async def retrieve_match_by_id(event,context):
     await lambda_handler(event,context)
@@ -127,19 +140,8 @@ async def retrieve_match_by_id(event,context):
     matches = []
 
     try:
-        if(refresh):
-            etag=None
-        if(etag):
-            isEtag = await isEtaggged(match_id,'matches',etag)
-            if(isEtag):
-                response = api_helper.make_api_response_etag(304,result={},etag=etag)
-                return response 
-                
-            else:
-                return await getMatchFromDBAPIResponse(match_id,refresh)
-        else:
-               return await getMatchFromDBAPIResponse(match_id,refresh)
-
+        response = await matches_backend.getMatchFromDB(match_id)
+        api_helper.make_api_response(200,response)
     except ValidationError as e:
         errors = response_errors.validationErrorsList(e)
         print(errors)
@@ -149,153 +151,153 @@ async def retrieve_match_by_id(event,context):
         print(e)
         response = api_helper.make_api_response(400,None)
         return response
-@fcatimer
-async def getMatchFromDBAPIResponse(match_id,refresh:str):
-    matches = []
+# @fcatimer
+# async def getMatchFromDBAPIResponse(match_id,refresh:str):
+#     matches = []
     
-    if(refresh is not None):
-        match = await matches_backend.getMatchFromDBRefresh(match_id,refresh)
-    else:
-        match = await matches_backend.getMatchFromDB(match_id)
+#     if(refresh is not None):
+#         match = await matches_backend.getMatchFromDBRefresh(match_id,refresh)
+#     else:
+#         match = await matches_backend.getMatchFromDB(match_id)
     
     
-    matches.append(match["result"])
-    etag = match["etag"]
-    return api_helper.make_api_response_etag(200,matches,etag)    
+#     matches.append(match["result"])
+#     etag = match["etag"]
+#     return api_helper.make_api_response_etag(200,matches,etag)    
 
 
 
 
-@fcatimer
-async def retrieve_match_planned_lineups(event,context):
-    await lambda_handler(event,context)
+# @fcatimer
+# async def retrieve_match_planned_lineups(event,context):
+#     await lambda_handler(event,context)
     
-    match_id = event["pathParameters"]["match_id"]
-    headers = event['headers']
-    etag = headers.get('etag',None)
-    print(f"USER HEADERS {headers}")
+#     match_id = event["pathParameters"]["match_id"]
+#     headers = event['headers']
+#     etag = headers.get('etag',None)
+#     print(f"USER HEADERS {headers}")
     
-    matches = []
+#     matches = []
 
-    try:
-        if(etag):
-            isEtag = await isEtaggged(match_id,'planned_lineups',etag)
-            if(isEtag):
-                response = api_helper.make_api_response_etag(304,result={},etag=etag)
-                return response 
+#     try:
+#         if(etag):
+#             isEtag = await isEtaggged(match_id,'planned_lineups',etag)
+#             if(isEtag):
+#                 response = api_helper.make_api_response_etag(304,result={},etag=etag)
+#                 return response 
                 
-            else:
-                return await getMatchPlannedLineupsFromDB(match_id)
-        else:
-                return await getMatchPlannedLineupsFromDB(match_id)
+#             else:
+#                 return await getMatchPlannedLineupsFromDB(match_id)
+#         else:
+#                 return await getMatchPlannedLineupsFromDB(match_id)
 
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        print(errors)
-        response = api_helper.make_api_response(400,None,errors)
-        return response
-    except ValueError as e:
-        print(e)
-        response = api_helper.make_api_response(400,None)
-        return response
-@fcatimer
-async def getMatchPlannedLineupsFromDB(match_id):
+#     except ValidationError as e:
+#         errors = response_errors.validationErrorsList(e)
+#         print(errors)
+#         response = api_helper.make_api_response(400,None,errors)
+#         return response
+#     except ValueError as e:
+#         print(e)
+#         response = api_helper.make_api_response(400,None)
+#         return response
+# @fcatimer
+# async def getMatchPlannedLineupsFromDB(match_id):
 
-    latest_planned_lineups = await getLatestObject(match_id,'planned_lineups')
-    if(latest_planned_lineups):
-        object = json.loads(latest_planned_lineups["object"])
-    else:
-        latest_planned_lineups = await matches_backend.getPlannedLineupsFromDB(match_id)
-        object = latest_planned_lineups["result"]
+#     latest_planned_lineups = await getLatestObject(match_id,'planned_lineups')
+#     if(latest_planned_lineups):
+#         object = json.loads(latest_planned_lineups["object"])
+#     else:
+#         latest_planned_lineups = await matches_backend.getPlannedLineupsFromDB(match_id)
+#         object = latest_planned_lineups["result"]
     
     
-    etag = latest_planned_lineups["etag"]
+#     etag = latest_planned_lineups["etag"]
     
     
     
-    response = api_helper.make_api_response_etag(200,object,etag)
-    # get the user
+#     response = api_helper.make_api_response_etag(200,object,etag)
+#     # get the user
 
-    return response
+#     return response
 
-@fcatimer
-async def retrieve_match_actual_lineups(event,context):
-    await lambda_handler(event,context)
+# @fcatimer
+# async def retrieve_match_actual_lineups(event,context):
+#     await lambda_handler(event,context)
     
-    match_id = event["pathParameters"]["match_id"]
-    headers = event['headers']
-    etag = headers.get('etag',None)
-    print(f"USER HEADERS {headers}")
+#     match_id = event["pathParameters"]["match_id"]
+#     headers = event['headers']
+#     etag = headers.get('etag',None)
+#     print(f"USER HEADERS {headers}")
     
-    matches = []
+#     matches = []
 
-    try:
-        if(etag):
-            isEtag = await isEtaggged(match_id,'actual_lineups',etag)
-            if(isEtag):
-                response = api_helper.make_api_response_etag(304,result={},etag=etag)
-                return response 
+#     try:
+#         if(etag):
+#             isEtag = await isEtaggged(match_id,'actual_lineups',etag)
+#             if(isEtag):
+#                 response = api_helper.make_api_response_etag(304,result={},etag=etag)
+#                 return response 
                 
-            else:
-                return await getMatchActualLineupsFromDB(match_id)
-        else:
-                return await getMatchActualLineupsFromDB(match_id)
+#             else:
+#                 return await getMatchActualLineupsFromDB(match_id)
+#         else:
+#                 return await getMatchActualLineupsFromDB(match_id)
 
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        print(errors)
-        response = api_helper.make_api_response(400,None,errors)
-        return response
-    except ValueError as e:
-        print(e)
-        response = api_helper.make_api_response(400,None)
-        return response
-@fcatimer
-async def getMatchActualLineupsFromDB(match_id):
+#     except ValidationError as e:
+#         errors = response_errors.validationErrorsList(e)
+#         print(errors)
+#         response = api_helper.make_api_response(400,None,errors)
+#         return response
+#     except ValueError as e:
+#         print(e)
+#         response = api_helper.make_api_response(400,None)
+#         return response
+# @fcatimer
+# async def getMatchActualLineupsFromDB(match_id):
     
-    matches = await match_day_data.retrieveAllActualLineups(match_id)
+#     matches = await match_day_data.retrieveAllActualLineups(match_id)
     
-    etag = await setEtag(match_id,'actual_lineups',matches)
+#     etag = await setEtag(match_id,'actual_lineups',matches)
     
-    response = api_helper.make_api_response_etag(200,matches,etag)
-    # get the user
+#     response = api_helper.make_api_response_etag(200,matches,etag)
+#     # get the user
     
-    return response
+#     return response
 
-@fcatimer
-async def retrieve_match_current_lineup(event,context):
-    await lambda_handler(event,context)
+# @fcatimer
+# async def retrieve_match_current_lineup(event,context):
+#     await lambda_handler(event,context)
     
-    match_id = event["pathParameters"]["match_id"]
-    headers = event['headers']
-    etag = headers.get('etag',None)
-    print(f"USER HEADERS {headers}")
+#     match_id = event["pathParameters"]["match_id"]
+#     headers = event['headers']
+#     etag = headers.get('etag',None)
+#     print(f"USER HEADERS {headers}")
     
-    matches = []
+#     matches = []
 
-    try:
-        if(etag):
-            isEtag = await isEtaggged(match_id,'current_lineup',etag)
-            if(isEtag):
-                response = api_helper.make_api_response_etag(304,result={},etag=etag)
-                return response 
+#     try:
+#         if(etag):
+#             isEtag = await isEtaggged(match_id,'current_lineup',etag)
+#             if(isEtag):
+#                 response = api_helper.make_api_response_etag(304,result={},etag=etag)
+#                 return response 
                 
-            else:
-                response =  await matches_backend.getMatchCurrentLineups(match_id)
-        else:
-                response =  await matches_backend.getMatchCurrentLineups(match_id)
+#             else:
+#                 response =  await matches_backend.getMatchCurrentLineups(match_id)
+#         else:
+#                 response =  await matches_backend.getMatchCurrentLineups(match_id)
         
-        return api_helper.make_api_response_etag(200,response["object"],response["etag"])
+#         return api_helper.make_api_response_etag(200,response["object"],response["etag"])
 
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        print(errors)
-        response = api_helper.make_api_response(400,None,errors)
-        return response
-    except ValueError as e:
-        print(e)
-        response = api_helper.make_api_response(400,None)
-        return response
+#     except ValidationError as e:
+#         errors = response_errors.validationErrorsList(e)
+#         print(errors)
+#         response = api_helper.make_api_response(400,None,errors)
+#         return response
+#     except ValueError as e:
+#         print(e)
+#         response = api_helper.make_api_response(400,None)
+#         return response
 
 
 
@@ -311,36 +313,36 @@ async def updateStatus(event,context):
     response = api_helper.make_api_response(200,{})
 
 
-async def next_match_by_team(event, context):
-    team_id = event["pathParameters"]["team_id"]
+# async def next_match_by_team(event, context):
+#     team_id = event["pathParameters"]["team_id"]
     
-    matches = []
+#     matches = []
     
-    try:
-        for match in await retrieve_next_match_by_team(team_id):
-            self_url = response_classes.getMatchUrl(team_id,match.id)
-            self = response_classes.Link(link=self_url,method="get")
-            links = {"self":self}
-            match_response = response_classes.MatchResponse(match=match,links=links).model_dump()
-            matches.append(match_response)
-        if(len(matches)==0):
-            response = api_helper.make_api_response(404,None)
-        else:
-            response = api_helper.make_api_response(200,matches)
+#     try:
+#         for match in await retrieve_next_match_by_team(team_id):
+#             self_url = response_classes.getMatchUrl(team_id,match.id)
+#             self = response_classes.Link(link=self_url,method="get")
+#             links = {"self":self}
+#             match_response = response_classes.MatchResponse(match=match,links=links).model_dump()
+#             matches.append(match_response)
+#         if(len(matches)==0):
+#             response = api_helper.make_api_response(404,None)
+#         else:
+#             response = api_helper.make_api_response(200,matches)
         
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        print(errors)
-        response = api_helper.make_api_response(400,None,errors)
-        return response
-    except ValueError as e:
-        print(e)
-        response = api_helper.make_api_response(400,None)
-        return response
+#     except ValidationError as e:
+#         errors = response_errors.validationErrorsList(e)
+#         print(errors)
+#         response = api_helper.make_api_response(400,None,errors)
+#         return response
+#     except ValueError as e:
+#         print(e)
+#         response = api_helper.make_api_response(400,None)
+#         return response
             
     
     
-    return response
+#     return response
 
 
 

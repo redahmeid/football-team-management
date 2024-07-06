@@ -1,6 +1,7 @@
-from classes import Club, Team,Player
+from classes import  Team,Player
 from config import app_config
 import id_generator
+import classes
 import db
 import player_responses
 from typing import List, Dict
@@ -84,7 +85,7 @@ async def save_player_season(player_id,team_season_id):
                 
                 return id
 @fcatimer
-async def retrieve_players_by_team_with_stats(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
+async def retrieve_players_by_team_with_stats(team_id:str) -> List[Dict[str,List[classes.Player]]]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -92,7 +93,7 @@ async def retrieve_players_by_team_with_stats(team_id:str) -> List[Dict[str,List
                 # Define the SQL query to insert data into a table
                 insert_query = "SELECT "\
                                 "Players.ID, "\
-                                "Players.Name, Players.Surname, Players.Shortname"\
+                                "Players.Name, Players.Surname, Players.Shortname, "\
                                 "Players_Seasons.ID,  Players_Seasons.Team_Season_ID, "\
                                 "GROUP_CONCAT(DISTINCT Roles.Email SEPARATOR ', ') AS Guardians, "\
                                 "SUM(DISTINCT CASE WHEN Player_Ratings.POTM = 'TRUE' THEN 1 ELSE 0 END) AS POTM_Count, "\
@@ -129,9 +130,11 @@ async def retrieve_players_by_team_with_stats(team_id:str) -> List[Dict[str,List
                 
                 print(team_players)
                 return [team_players]
+
+
             
 @fcatimer
-async def retrieve_players_by_team_no_stats(team_id:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
+async def retrieve_players_by_team_no_stats(team_id:str) -> List[Dict[str,List[classes.Player]]]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -139,7 +142,7 @@ async def retrieve_players_by_team_no_stats(team_id:str) -> List[Dict[str,List[p
                 # Define the SQL query to insert data into a table
                 insert_query = "SELECT "\
                                 "Players.ID, "\
-                                "Players.Name, Players.Surname, Players.Shortname"\
+                                "Players.Name, Players.Surname, Players.Shortname, "\
                                 "Players_Seasons.ID,  Players_Seasons.Team_Season_ID "\
                             "FROM Players "\
                             "INNER JOIN Players_Seasons ON Players_Seasons.Player_ID = Players.ID "\
@@ -163,7 +166,7 @@ async def retrieve_players_by_team_no_stats(team_id:str) -> List[Dict[str,List[p
                 return [team_players]
 
 @fcatimer
-async def retrieve_players_by_user(email:str) -> List[Dict[str,List[player_responses.PlayerResponse]]]:
+async def retrieve_players_by_user(email:str) -> List[Dict[str,List[classes.Player]]]:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -171,7 +174,7 @@ async def retrieve_players_by_user(email:str) -> List[Dict[str,List[player_respo
                 # Define the SQL query to insert data into a table
                 insert_query = "SELECT "\
                                 "Players.ID, "\
-                                "Players.Name, Players.Surname, Players.Shortname"\
+                                "Players.Name, Players.Surname, Players.Shortname, "\
                                 "Players_Seasons.ID, Players_Seasons.Team_Season_ID, "\
                                 "GROUP_CONCAT(DISTINCT Roles.Email SEPARATOR ', ') AS Guardians, "\
                                 "SUM(DISTINCT CASE WHEN Player_Ratings.POTM = 'TRUE' THEN 1 ELSE 0 END) AS POTM_Count, "\
@@ -232,7 +235,7 @@ async def delete_player(player_id:str):
                
                 
 
-async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
+async def retrieve_player(id:str) -> List[classes.Player]:
     
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
@@ -256,25 +259,24 @@ async def retrieve_player(id:str) -> List[player_responses.PlayerResponse]:
 def convertStartingLineup(data):
 
 
-
-    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"])
-    playerResponse = player_responses.PlayerResponse(info=player_info)
+    player_info = classes.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"],team_id=data['Team_Season_ID'])
+    playerResponse = classes.Player(info=player_info)
     return playerResponse.model_dump()
 def convertPlayerWithStats(data):
-    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"],team_id=data["Team_Season_ID"])
-    player_stats = player_responses.PlayerStats(goals=data["GoalCount"],assists=data["AssistCount"],rating=round(data["AverageRating"],ndigits=2),potms=data["POTM_Count"])
-    player_rating = player_responses.PlayerRating(overall=str(round(data["AverageRating"],ndigits=2)),technical=str(round(data["AverageTech"],ndigits=2)),physical=str(round(data["AveragePhys"],ndigits=2)),psychological=str(round(data["AveragePsych"],ndigits=2)),social=str(round(data["AverageSocial"],ndigits=2)))
+    player_info = classes.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"],team_id=data["Team_Season_ID"])
+    player_stats = classes.PlayerStats(goals=data["GoalCount"],assists=data["AssistCount"],rating=round(data["AverageRating"],ndigits=2),potms=data["POTM_Count"])
+    player_rating = classes.PlayerRating(overall=str(round(data["AverageRating"],ndigits=2)),technical=str(round(data["AverageTech"],ndigits=2)),physical=str(round(data["AveragePhys"],ndigits=2)),psychological=str(round(data["AveragePsych"],ndigits=2)),social=str(round(data["AverageSocial"],ndigits=2)))
     guardians = []
     if(data['Guardians']):
         guardians = data['Guardians'].split(',')
-    playerResponse = player_responses.PlayerResponse(info=player_info,stats=player_stats,rating=player_rating,guardians=guardians)
+    playerResponse = classes.Player(info=player_info,stats=player_stats,rating=player_rating,guardians=guardians)
     return playerResponse.model_dump()
 
 def convertPlayerNoStats(data):
-    player_info = player_responses.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"],team_id=data["Team_Season_ID"])
+    player_info = classes.PlayerInfo(id=data[f'{PLAYER_SEASON_TABLE.TABLE_NAME}.{PLAYER_SEASON_TABLE.ID}'],name=data[TABLE.NAME],forename=data[TABLE.NAME],surname=data["Surname"],shortname=data["Shortname"],team_id=data["Team_Season_ID"])
     guardians = []
     
-    playerResponse = player_responses.PlayerResponse(info=player_info)
+    playerResponse = classes.Player(info=player_info)
     return playerResponse.model_dump()
 
 

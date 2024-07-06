@@ -6,7 +6,6 @@ import db
 import roles_data
 import logging
 import time
-import response_classes
 import asyncio
 import aiomysql
 logger = logging.getLogger(__name__)
@@ -138,12 +137,12 @@ async def retrieve_seasons_by_team_id(team_id):
                 return rows
 
 
-def convertAdminDataToAdminResponse(team) -> response_classes.ClubResponse:
-    print(team)
-    club_name = team[TABLE.CLUB_NAME]
-    id = team[TABLE.ID]
+# def convertAdminDataToAdminResponse(team) -> response_classes.ClubResponse:
+#     print(team)
+#     club_name = team[TABLE.CLUB_NAME]
+#     id = team[TABLE.ID]
     
 
-    response =  response_classes.ClubResponse(name=club_name,id=id)
-    print(response)
-    return response
+#     response =  response_classes.ClubResponse(name=club_name,id=id)
+#     print(response)
+#     return response

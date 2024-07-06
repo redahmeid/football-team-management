@@ -8,6 +8,7 @@ import sys
 import asyncio
 import json
 import boto3    
+from etag_manager import getObject,updateDocument
 import firebase_admin
 import etag_manager
 from firebase_admin import credentials
@@ -47,29 +48,40 @@ async def set_custom_claims(event, context):
 
 @fcatimer
 async def set_claims(email,uid):
-    teams = await retrieve_team_roles_by_user_id(email)
-    players = await retrieve_player_roles_by_user_id(email)
-    print(teams)
     teamsClaims = {}
     additionalClaims = {}
-    for team in teams:
-        
-        team_id = team['Team_ID']
-        roles = []
-        if(team['user_roles']):
-            roles = team['user_roles'].split(',')
-        
-        teamsClaims[team_id] = roles
-    additionalClaims['teams'] =  teamsClaims
     playerClaims = {}
-    for player in players:
-        
-        team_id = player['Player_ID']
-        roles = []
-        if(player['user_roles']):
-            roles = player['user_roles'].split(',')
-        
-        playerClaims[team_id] = roles
+    user = await getObject(email,'users_store')
+    if(user):
+        user_dict = user.get().to_dict()
+        admins = user_dict.get('admin',[])
+        for admin in admins:
+            team_id = admin
+            roles = []
+            if team_id in teamsClaims:
+                teamsClaims[team_id].append('admin')
+            else:
+                teamsClaims[team_id] = ['admin']
+        guardians = user_dict.get('guardians',[])
+        for guardian in guardians:
+            team_id = guardian
+            roles = []
+            if team_id in teamsClaims:
+                teamsClaims[team_id].append('parent')
+            else:
+                teamsClaims[team_id] = ['parent']
+        players = user_dict.get('players',[])
+        for player in players:
+            player_id = player
+            roles = []
+            if player_id in playerClaims:
+                playerClaims[player_id].append('parent')
+            else:
+                playerClaims[player_id] = ['parent']
+    
+    additionalClaims['teams'] =  teamsClaims
+    
+   
     additionalClaims["players"]= playerClaims
     
     auth.set_custom_user_claims(uid=uid,custom_claims=additionalClaims)
@@ -113,7 +125,7 @@ async def turnOffNotifications(event,context)  :
         device_token = event["headers"]['x-device-id']
         print(f"DEVICE TOKEN {device_token}")
        
-        await turn_off_notifications(token=device_token)
+        await turn_off_notifications(device=device_token)
         print("Token saved")
     except Exception as e:
         traceback.print_exception(*sys.exc_info()) 

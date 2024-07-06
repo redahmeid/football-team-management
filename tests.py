@@ -1,7 +1,7 @@
 import asyncio
 import team_data
 import team_season_data
-from classes import Club, Team,UpdateTeam,TeamUser,Player
+from classes import Team,TeamUser,Player
 import roles
 import roles_data
 import team_data

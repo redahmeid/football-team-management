@@ -1,4 +1,4 @@
-from classes import Club, Team,UpdateTeam
+from classes import Team,GroupTeam
 from config import app_config
 import id_generator
 import db
@@ -10,6 +10,7 @@ import asyncio
 import team_season_data
 import match_day_data
 import player_data
+from etag_manager import getObject,updateDocument
 import matches_data
 import player_responses
 from typing import List
@@ -49,23 +50,14 @@ class TABLE:
 @fcatimer
 async def save_team(team:Team,id):
     print("IN SAVE TEAM ")
-    async with aiomysql.create_pool(**db.db_config) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-# Data to be inserted
-                # Define the SQL query to insert data into a table
-                insert_query = f"INSERT INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.NAME},{TABLE.AGE_GROUP}, {TABLE.LIVE}) VALUES ({id},'{team.name}','{team.age_group}',True)"
+    await updateDocument('teams_store',id,team.model_dump())
 
-                
-                data_to_insert = (id,team.name,team.age_group,True)
+@fcatimer
+async def save_group_team(team:GroupTeam,id):
+    print("IN SAVE TEAM ")
+    await updateDocument('group_store',id,team.model_dump())
 
-                # Execute the SQL query to insert data
-                await cursor.execute(insert_query)
-                await conn.commit()
-                # Commit the transaction
-                
-                print("IN SAVE TEAM %s"%id)
-                return id
+
 @fcatimer
 async def delete_team(team_id):
     print("IN DELETE TEAM ")
@@ -154,7 +146,7 @@ async def does_userid_match_team(user_id:str,team_id:str):
 
 
 @fcatimer
-async def retrieve_team_by_id(team_id:str):
+async def retrieve_team_by_id(team_id:str)-> response_classes.TeamResponse:
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:

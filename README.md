@@ -29,7 +29,7 @@ After deploying, you should see output similar to:
 ```bash
 Deploying aws-python-http-api-project to stage dev (us-east-1)
 
-✔ Service deployed to stack aws-python-http-api-project-dev (140s)
+Service deployed to stack aws-python-http-api-project-dev 
 
 endpoint: GET - https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/
 functions:

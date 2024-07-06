@@ -21,6 +21,12 @@ import notifications
 def contact_us(event,context):
     response = asyncio.run(email_sender.contact_us(event,context))
     return response
+def send_invites(event,context):
+    response = asyncio.run(users_apis.sendInvites(event,context))
+    return response
+def send_invite_response(event,context):
+    response = asyncio.run(users_apis.sendResponse(event,context))
+    return response
 def check_online(event,context):
     return api_helper.make_api_response(200,{})
 def create_team(event, context):
@@ -63,6 +69,10 @@ def create_team_fixtures(event, context):
 
 def list_players_by_team(event, context):
     response = asyncio.run(player_apis.list_players_by_team(event,context))
+    return response
+
+def update_invites(event, context):
+    response = asyncio.run(match_detail_screen.update_invites(event,context))
     return response
 
 def list_players_by_user(event, context):

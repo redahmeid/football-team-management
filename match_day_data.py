@@ -1,5 +1,6 @@
-from classes import Match, PlayerMatch
+
 import response_classes
+import classes
 from config import app_config
 import id_generator
 from firebase_admin import auth
@@ -373,7 +374,7 @@ async def update_period(match_id,status):
 
             
 @fcatimer
-async def retrieve_player_goals(match:response_classes.MatchInfo):
+async def retrieve_player_goals(match:classes.MatchInfo):
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor: 
@@ -390,7 +391,7 @@ async def retrieve_player_goals(match:response_classes.MatchInfo):
 
                 return player_stats
 @fcatimer
-async def retrieve_opposition_goals(match:response_classes.MatchInfo):
+async def retrieve_opposition_goals(match:classes.MatchInfo):
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -417,7 +418,7 @@ async def save_opposition_goal(match_id,time_playing):
                 await conn.commit()
                 return True
 
-async def save_planned_lineup(match_id,minute,players:List[player_responses.PlayerResponse]):
+async def save_planned_lineup(match_id,minute,players:List[classes.Player]):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -435,7 +436,7 @@ async def save_planned_lineup(match_id,minute,players:List[player_responses.Play
                 await conn.commit()
                 return True
 
-async def save_actual_lineup(match_id,players:List[player_responses.PlayerResponse],time_playing):
+async def save_actual_lineup(match_id,players:List[classes.Player],time_playing):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -529,7 +530,7 @@ async def retrieveAllPlannedLineups(match_id):
     
 
 @fcatimer
-async def retrieveNextPlanned(match:response_classes.MatchInfo,how_long_ago) -> List[player_responses.PlayerResponse]:
+async def retrieveNextPlanned(match:classes.MatchInfo,how_long_ago) -> List[classes.Player]:
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -557,7 +558,7 @@ async def retrieveNextPlanned(match:response_classes.MatchInfo,how_long_ago) -> 
                 
                 return players
 @fcatimer
-async def retrieveLastPlanned(match:response_classes.MatchInfo,how_long_ago):
+async def retrieveLastPlanned(match:classes.MatchInfo,how_long_ago):
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -582,7 +583,7 @@ async def retrieveLastPlanned(match:response_classes.MatchInfo,how_long_ago):
                 return players
     
 @fcatimer
-async def retrieveNextPlannedByMinute(match:response_classes.MatchInfo,minutes):
+async def retrieveNextPlannedByMinute(match:classes.MatchInfo,minutes):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -637,7 +638,7 @@ async def retrieveStartingLineup(match_id):
                 
                 return players
 @fcatimer
-async def retrieveCurrentActual(match,how_log_ago) -> List[player_responses.PlayerResponse]:
+async def retrieveCurrentActual(match,how_log_ago) -> List[classes.Player]:
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -663,7 +664,7 @@ async def retrieveCurrentActual(match,how_log_ago) -> List[player_responses.Play
                 return players  
 
 @fcatimer
-async def retrieveAllActualLineups(match,how_log_ago) -> List[List[player_responses.PlayerResponse]]:
+async def retrieveAllActualLineups(match,how_log_ago) -> List[List[classes.Player]]:
      async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -701,26 +702,26 @@ async def retrieveAllActualLineups(match,how_log_ago) -> List[List[player_respon
 
 
 def convertToPlannedStartingLineup(data):
-    player_info = player_responses.PlayerInfo(id=data[PLANNED_LINEUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
+    player_info = player_responses.PlayerInfo(id=data[PLANNED_LINEUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME],forename=data[player_data.TABLE.NAME],surname=data["Surname"])
     selection_info = player_responses.SelectionInfo(id=data[f'{PLANNED_LINEUP_TABLE.ID}'],position=data[PLANNED_LINEUP_TABLE.POSITION],minuteOn=round(data[PLANNED_LINEUP_TABLE.MINUTE]))
-    playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info)
+    playerResponse = classes.Player(info=player_info,selectionInfo=selection_info)
     return playerResponse
 
 
 
 def convertToActualStartingLineup(data):
-    player_info = player_responses.PlayerInfo(id=data[ACTUAL_LINEDUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
+    player_info = player_responses.PlayerInfo(id=data[ACTUAL_LINEDUP_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME],forename=data[player_data.TABLE.NAME],surname=data["Surname"])
     selection_info = player_responses.SelectionInfo(id=data[f'{ACTUAL_LINEDUP_TABLE.ID}'],position=data[ACTUAL_LINEDUP_TABLE.POSITION],minuteOn=data[ACTUAL_LINEDUP_TABLE.TIME])
     player_rating = player_responses.PlayerRating(overall = data.get("Rating",""),potm=(data["POTM"]=="True"),technical=data.get("Technical",""),physical=data.get("Physical",""),psychological=data.get("Psychological",""),social=data.get("Social",""),comments=data.get("Comments",""))
-    playerResponse = player_responses.PlayerResponse(info=player_info,selectionInfo=selection_info,rating=player_rating)
+    playerResponse = classes.Player(info=player_info,selectionInfo=selection_info,rating=player_rating)
     return playerResponse
 
-def convertToOppositionPlayerMatchStats(data,match:response_classes.MatchInfo):
+def convertToOppositionPlayerMatchStats(data,match:classes.MatchInfo):
     player_info = player_responses.PlayerInfo(id="",name="")
     
     return response_classes.PlayerMatchStat(player=player_info,time=int(data[OPPOSITION_GOALS_TABLE.TIME]),type="Conceded",minute=int(data[OPPOSITION_GOALS_TABLE.TIME]))
 
-def convertToGoalPlayerMatchStats(data,match:response_classes.MatchInfo):
+def convertToGoalPlayerMatchStats(data,match:classes.MatchInfo):
     player_info = player_responses.PlayerInfo(id=data[GOALS_TABLE.PLAYER_ID],name=data[player_data.TABLE.NAME])
     if(data[GOALS_TABLE.ASSISTER_ID]):
         assister_info = player_responses.PlayerInfo(id=data[GOALS_TABLE.ASSISTER_ID],name=data[f"p2.{player_data.TABLE.NAME}"])

@@ -1,4 +1,5 @@
 import response_classes
+import classes
 # (ID varchar(255),"\
 #         "Opposition varchar(255) NOT NULL,"\
 #         "Team_ID varchar(255) NOT NULL,"\
@@ -25,7 +26,7 @@ def convertMatchDatatoMatchResponse(match) -> response_classes.MatchResponse:
     print("Convert Match %s"%(response))
     return response.model_dump()
 
-def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse:
+def convertPlayerDataToPlayerResponse(player) -> classes.Player:
     
     id = player["ID"]
     baseTeamUrl = "/players/%s"%(id)
@@ -35,12 +36,12 @@ def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse
         live = True
     self = response_classes.Link(link=baseTeamUrl,method="get")
     deletePlayer = response_classes.Link(link=baseTeamUrl,method="delete")
-    response =  response_classes.PlayerResponse(id=id,name=name,live=live,self=self,deletePlayer=deletePlayer)
+    response =  response_classes.classes.Player(id=id,name=name,live=live,self=self,deletePlayer=deletePlayer)
     print("Convert player %s"%(response))
     return response.model_dump()
 
 
-def convertPlayerDataToLineupPlayerResponse(player,isSelected,baseUrl,position,team_id,match_id,selection_id) -> response_classes.SelectedPlayerResponse:
+def convertPlayerDataToLineupPlayeResponser(player,isSelected,baseUrl,position,team_id,match_id,selection_id) -> response_classes.SelectedPlayer:
     
     id = player["mdl.ID"]
     
@@ -54,7 +55,7 @@ def convertPlayerDataToLineupPlayerResponse(player,isSelected,baseUrl,position,t
     
     
     subOnOff = response_classes.Link(link=url,method="patch")
-    response =  response_classes.SelectedPlayerResponse(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,toggleStarting=subOnOff,isSelected=isSelected)
+    response =  response_classes.Selectedclasses.Player(id=id,selectionId=selection_id,name=name,live=live,self=self,position=position,toggleStarting=subOnOff,isSelected=isSelected)
     print("Convert player %s"%(response))
     return response.model_dump()
 

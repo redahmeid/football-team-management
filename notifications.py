@@ -1,9 +1,11 @@
-from classes import Match, PlayerMatch
+
 import response_classes
 from config import app_config
 from firebase_admin import credentials, firestore
 # Initialize the AWS Secrets Manager client
 import traceback
+import id_generator
+from etag_manager import getObject, whereEqual, whereContains, updateDocument
 from firebase_admin import auth,messaging
 import boto3
 import db
@@ -100,38 +102,16 @@ class MESSAGES_TABLE:
 
 @fcatimer
 async def save_token(email,token,device,version):
-    async with aiomysql.create_pool(**db.db_config) as pool:
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as cursor:
-    
-        
-                id = uuid.uuid4()
-                select_query = f"select * from {TABLE.TABLE_NAME} where {TABLE.EMAIL}='{email}' and {TABLE.DEVICE}='{device}'"
-                await cursor.execute(select_query)
-                row = await cursor.fetchall()
-                if(len(row)>0):
-                    if(row[0][TABLE.TOKEN]==token and row[0][TABLE.VERSION]==version):
-                        return True
-                    else:
-                        insert_query = f"UPDATE {TABLE.TABLE_NAME} set {TABLE.TOKEN}='{token}, {TABLE.VERSION}='{version}' where {TABLE.EMAIL}='{email}' and {TABLE.DEVICE}='{device}'"
-                else:
-                    insert_query = f"insert INTO {TABLE.TABLE_NAME} ({TABLE.ID},{TABLE.EMAIL},{TABLE.TOKEN}, {TABLE.TIME},{TABLE.NOTIFY},{TABLE.DEVICE},{TABLE.VERSION}) VALUES ('{id}','{email}','{token}',{int(datetime.utcnow().timestamp())},True,'{device}','{version}')"
-                
-                print(insert_query)
-                try:
-                    await cursor.execute(insert_query)
-                    await conn.commit()
-                    print("Succesfully saved the token")
-                    return True
-                except Exception as e:
-                    print(e)
-                    print("Token already exists")
-                    return False
-                    
-                    # Commit the transaction
+   
+   data = {
+       'email':email,
+       'token':token,
+       'version':version
+   }
+   await updateDocument('devices',device,data)
 
 @fcatimer
-async def turn_off_notifications(token):
+async def turn_off_notifications(device):
     async with aiomysql.create_pool(**db.db_config) as pool:
         async with pool.acquire() as conn:
             async with conn.cursor(aiomysql.DictCursor) as cursor:
@@ -139,7 +119,7 @@ async def turn_off_notifications(token):
         
                 
                 
-                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.NOTIFY}=False where {TABLE.TOKEN}='{token}'"
+                insert_query = f"update {TABLE.TABLE_NAME} set {TABLE.NOTIFY}=False where {TABLE.DEVICE}='{device}'"
                 print(insert_query)
                 try:
                     await cursor.execute(insert_query)
@@ -274,7 +254,28 @@ async def sendNotificationUpdatesLink(match_id,message,subject,type,data):
     ) 
 
 @fcatimer
-async def sendNotificationUpdates(match_id,message,subject,type):
+async def sendNotification(id,message,subject,type,silent,token,metadata):
+    secretsmanager = boto3.client('secretsmanager')
+    
+    print(f"SENDING MESSAGE TO {token}")
+    event = {
+        "type":type,
+        "id":id,
+        "message":message,
+        "subject":subject,
+        "silent":silent,
+        "token":token,
+        "metadata":metadata
+    }
+    lambda_client = boto3.client('lambda')
+    lambda_client.invoke(
+    FunctionName=app_config.send_notifications,  # Name of the target Lambda
+    InvocationType='Event',
+    Payload=json.dumps(event)  # Asynchronous invocation
+    ) 
+
+@fcatimer
+async def sendNotificationUpdates(match_id,message,subject,type,token):
     secretsmanager = boto3.client('secretsmanager')
     event = {
         "type":type,
@@ -288,6 +289,9 @@ async def sendNotificationUpdates(match_id,message,subject,type):
     InvocationType='Event',
     Payload=json.dumps(event)  # Asynchronous invocation
     ) 
+
+
+
 
 @fcatimer
 async def backgroundSendMatchUpdateNotification(event,context):
@@ -306,53 +310,77 @@ async def backgroundSendMatchUpdateNotification(event,context):
     except Exception as e:
         print(e)
 
-
+    random_id = id_generator.generate_random_number(12)
     id = event["id"]
     message = event["message"]
     subject = event["subject"]
     type = event["type"]
-    data = event.get("data",None)
-    if(data is None):
-        data = {
-            "id":id
-        }
-    silent = data.get("silent",'False')
-    if(type=='match'):
-        for user in await getStakeholders(id):
+    silent = event.get("silent",'False')
+    token = event["token"]
+    metadata = event["metadata"]
+    body = {
+        "id":str(random_id),
+        "type":type,
+        "message":message,
+        "subject":subject,
+       
+    }
 
-            tokens = await getDeviceToken(user.email)
-            for token in tokens:
-                new_token = token["Token"]
-                if(silent=="True"):
-                    await send_push_message(new_token,subject,message,data)
-                else:
-                    await send_push_notification(new_token,subject,message,data)
+    stored_document = {
+        "token":token,
+        "metadata":metadata,
+        "type":type,
+        "message":message,
+        "subject":subject,
+
+    }
+
+    
+
+    await updateDocument('notifications',str(random_id),stored_document)
+    if(silent=="True"):
+        await send_push_message(token,subject,message,body)
+    else:
+        await send_push_notification(token,subject,message,body)
+
+
+    # silent = data.get("silent",'False')
+    # if(type=='match'):
+    #     for user in await getStakeholders(id):
+
+    #         tokens = await getDeviceToken(user.email)
+    #         for token in tokens:
+    #             new_token = token["Token"]
+    #             if(silent=="True"):
+    #                 await send_push_message(new_token,subject,message,data)
+    #             else:
+    #                 await send_push_notification(new_token,subject,message,data)
         
-        tokens = await getDeviceTokenByMatchOnly(id)
+    #     tokens = await getDeviceTokenByMatchOnly(id)
 
-        for token in tokens:
-            new_token = token["Token"]
-            if(silent=="True"):
-                await send_push_message(new_token,subject,message,data)
-            else:
-                await send_push_notification(new_token,subject,message,data)
-    elif(type=='team'):
-        tokens = await getDeviceToken(id)
-        for token in tokens:
-            new_token = token["Token"]
-            if(silent=="True"):
-                await send_push_message(new_token,subject,message,data)
-            else:
-                await send_push_notification(new_token,subject,message,data)
-    if(type=='admins'):
-        for user in await getStakeholders(id):
-            tokens = await getDeviceToken(user.email)
-            for token in tokens:
-                new_token = token["Token"]
-                if(silent=="True"):
-                    await send_push_message(new_token,subject,message,data)
-                else:
-                    await send_push_notification(new_token,subject,message,data)
+    #     for token in tokens:
+    #         new_token = token["Token"]
+    #         if(silent=="True"):
+    #             await send_push_message(new_token,subject,message,data)
+    #         else:
+    #             await send_push_notification(new_token,subject,message,data)
+    # elif(type=='team'):
+    #     tokens = await getDeviceToken(id)
+    #     for token in tokens:
+    #         new_token = token["Token"]
+    #         if(silent=="True"):
+    #             await send_push_message(new_token,subject,message,data)
+    #         else:
+    #             await send_push_notification(new_token,subject,message,data)
+    # if(type=='admins'):
+    #     for user in await getStakeholders(id):
+    #         tokens = await getDeviceToken(user.email)
+    #         for token in tokens:
+    #             new_token = token["Token"]
+    #             if(silent=="True"):
+    #                 await send_push_message(new_token,subject,message,data)
+    #             else:
+    #                 await send_push_notification(new_token,subject,message,data)
         
         
 
@@ -389,7 +417,7 @@ async def send_push_notification(token, title, body,data):
     try:
         response = messaging.send(message)
         print(f"Sent to {token}")
-        await save_message(token,body)
+        # await save_message(token,body)
     except firebase_admin._messaging_utils.UnregisteredError as e:
         print(f"Token is invalid or unregistered: {e}")
     except Exception as e:
@@ -406,7 +434,7 @@ async def send_push_message(token, title, body,data):
     )
     try:
         messaging.send(message)
-        await save_message(token,body)
+        # await save_message(token,body)
     except firebase_admin._messaging_utils.UnregisteredError as e:
         print(f"Token is invalid or unregistered: {e}")
     except Exception as e:

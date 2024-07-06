@@ -1,12 +1,13 @@
 import json
 from pydantic import TypeAdapter, ValidationError
 from secrets_util import lambda_handler, getEmailFromToken
-from classes import Player
+import classes
 from exceptions import AuthError
 from config import app_config
 import api_helper
 import response_errors
 import response_classes
+import team_data
 import team_backend
 from player_data import save_player,retrieve_players_by_team_with_stats,delete_player,retrieve_player,squad_size_by_team
 from roles_data import retrieve_role_by_user_id_and_team_id
@@ -95,11 +96,13 @@ async def addGuardiansToPlayer(event,context):
         await cache_trigger.updatePlayerCache(team_id)
         
         data = {
-            "link":f"/players/{player_id}",
+            "link":f"/teams/{team_id}",
             "team_id":f"{team_id}",
             "action":"new_guardian",
             "silent":"False"
         }
+
+        team = await team_data.retrieve_team_by_id(team_id)
         await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),f"Guardian has been added to ",f"New coach added to {team.name}",'team',data)
         response = api_helper.make_api_response(200,results)
     else:
@@ -123,9 +126,9 @@ async def list_players_by_team(event, context):
                     response = api_helper.make_api_response_etag(304,result={},etag=etag)
                     return response 
                 else:
-                    return await player_backend.getPlayersFromDB(team_id)
+                    return await player_backend.getPlayersByTeam(team_id)
             else:
-                return await player_backend.getPlayersFromDB(team_id)
+                return await player_backend.getPlayersByTeam(team_id)
         except ValidationError as e:
             errors = response_errors.validationErrorsList(e)
             response = api_helper.make_api_response(400,None,errors)
@@ -203,17 +206,5 @@ def delete_player_from_team(event, context):
         # "Team_ID varchar(255) NOT NULL,"\
         # "Email varchar(255),"\
         # "live varchar(255),"\
-def convertPlayerDataToPlayerResponse(player) -> response_classes.PlayerResponse:
-    
-    id = player["ID"]
-    baseTeamUrl = "/players/%s"%(id)
-    name = player["Name"]
-    live = player["live"]
-    if(live == None):
-        live = True
-    self = response_classes.Link(link=baseTeamUrl,method="get")
-    deletePlayer = response_classes.Link(link=baseTeamUrl,method="delete")
-    response =  response_classes.PlayerResponse(id=id,name=name,live=live,self=self,deletePlayer=deletePlayer)
-    print("Convert player %s"%(response))
-    return response.model_dump()
+
 

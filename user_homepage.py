@@ -66,23 +66,11 @@ async def enter_screen(event, context):
 async def enter_screenV2(event, context):
     await lambda_handler(event,context)
     headers = event['headers']
-    etag = headers.get('etag',None)
-    print(f"USER HEADERS {headers}")
     
-    db = firestore.client()
-    teams_list = []
     try:
         
         email =  getEmailFromToken(event,context)
-        if(etag):
-            isEtag = await isEtaggged(email,'users_v2',etag)
-            if(isEtag):
-                response = api_helper.make_api_response_etag(304,result={},etag=etag)
-                return response 
-            else:
-                return await getUserInfoFromDBV2(email)
-        else:
-            return await getUserInfoFromDBV2(email)
+        return await getUserInfoFromDBV2(email)
         
     except exceptions.AuthError as e:
         response = api_helper.make_api_response(401,None,e)

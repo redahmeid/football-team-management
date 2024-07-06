@@ -1,15 +1,17 @@
 
 from pydantic import TypeAdapter
 from classes import Player
+import id_generator
 from config import app_config
 from team_data import retrieve_team_by_id
 import api_helper
 from player_data import save_player_season,save_player,retrieve_players_by_team_with_stats,delete_player,retrieve_player,squad_size_by_team
-from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject
+from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject,getObject,updateDocument,whereContains,whereEqual
 from roles import Role
 from users_data import retrieve_user_id_by_email,save_user
 from roles_data import save_role, save_guardian_role
-from player_responses import PlayerResponse,Guardian
+import classes
+import response_classes
 import player_data
 import time
 from cache_paths import Paths
@@ -18,6 +20,7 @@ import asyncio
 import hashlib
 import json
 import firebase_admin
+import classes
 from firebase_admin import credentials, firestore
 from fcatimer import fcatimer
 import cache_trigger
@@ -45,66 +48,48 @@ async def create_players(name, team_id):
 @fcatimer
 async def create_players_and_guardians(forename, surname, team_id,email):
     
-        request_player = Player(forename=forename,name=forename,surname=surname,team_id=team_id)
-        PlayerValidator = TypeAdapter(Player)
+        id = id_generator.generate_random_number(7)
+        request_player = classes.Player(info=classes.PlayerInfo(id=str(id),forename=forename,name=forename,surname=surname,team_id=team_id),guardians=[email])
+        
 
         try:
-            new_player = PlayerValidator.validate_python(request_player)
-            id = await save_player(new_player)
-            player_season_id = await save_player_season(id,team_id)
+
+            await updateDocument('players_store',str(id),request_player)
+
+            fs_team = await getObject(team_id,'teams_store')
+            if(fs_team):
+                fs_team_dict = fs_team.get().to_dict()
+                team = classes.Team(**fs_team_dict)
+                
+                team.squad.append(str(id))
+                fs_team.update(team.model_dump())
             
-            await cache_trigger.updateTeamCache(team_id)
-            await cache_trigger.updatePlayerCache(team_id)
-            result = await retrieve_player(player_season_id)
-            await addGuardian(email,player_season_id,team_id)
-            return result[0]
+            fs_user = await getObject(email,'users_store')
+            if(fs_user):
+                fs_user_dict = fs_user.get().to_dict()
+                user = classes.User(**fs_user_dict)
+                user.players.append(id)
+                user.guardians.append(team_id)
+                user.teams.append(team_id)
+                fs_user.update(user.model_dump())
+            else:
+                 await updateDocument('users_store',email,classes.User(email=email,players=[id],guardians=[team_id],teams=[team_id]))
+
+            return request_player.model_dump()
 
         except Exception as e:
             raise
 
 
 @fcatimer
-async def addGuardian(email,player_id,team_id):
-    user_id = await retrieve_user_id_by_email(email)
-    team = await retrieve_team_by_id(team_id)
-    print(user_id)
-    user = Guardian(email=email,player_id=str(player_id),team_id=team_id)
-    player = await player_data.retrieve_player(player_id)
-    if(user_id):
-        
-        await save_guardian_role(user)
-        template_data = {
-            "player": player[0]['info']['name'],
-            "team": team.name
-        }
-        template_id = 'd-d84865ab98a44c9aa6770e86364df6e5'
-        await send_email_with_template(email,template_id,template_data)
-    else:
-        user_id = await save_user("",email,"")
-        
-        await save_guardian_role(user)
-        template_data = {
-            "player": player[0]['info']['name'],
-            "team": team.name
-        }
-        template_id = 'd-0904ad249669492fb6999ff0102742f1'
-        await send_email_with_template(email,template_id,template_data)
-        
-    
-    return user
-
-
-@fcatimer
-async def getPlayersFromDB(team_id):
-    cached_object = await getLatestObject(team_id,'players')
-    teams = []
-    if(cached_object):
-       etag = cached_object["etag"]
-       players = json.loads(cached_object["object"])
-    else:
-        players = await retrieve_players_by_team_with_stats(team_id)
-        etag = await setEtag(team_id,'players',players)
-    response = api_helper.make_api_response_etag(200,players,etag)
+async def getPlayersByTeam(team_id):
+    fs_players = await whereEqual('players_store','team_id',team_id)
+    players = []
+    for fs_player in fs_players:
+        fs_player_dict = fs_player.to_dict()
+        player = classes.Player(**fs_player_dict)
+        players.append(player)
+    response = api_helper.make_api_response(200,players)
     return response
 
 @fcatimer

@@ -5,6 +5,7 @@ import player_responses
 from roles import Role
 from typing import Optional, List, Dict
 import datetime
+import classes
 from matches_state_machine import MatchState
 import player_responses
 
@@ -19,7 +20,7 @@ class Admin(BaseModel):
     name:Optional[str]=""
     role:Optional[Role]=None
     email:str
-class PlayerResponse(BaseModel):
+class Player(BaseModel):
     id:str
     name:str
     isSelected:bool=False
@@ -27,7 +28,7 @@ class PlayerResponse(BaseModel):
     self:Link
     deletePlayer:Link
 
-class SelectedPlayerResponse(BaseModel):
+class SelectedPlayer(BaseModel):
     id:str
     selectionId:Optional[str]=None
     name:str
@@ -47,6 +48,7 @@ class TeamResponse(BaseModel):
     results:Optional[List] = []
     squad:Optional[List] = []
     coaches:Optional[List]=[]
+    guardians:Optional[List]=[]
     season:Optional[str]=''
     wins:Optional[int]=0
     defeats:Optional[int]=0
@@ -66,12 +68,12 @@ class TeamResponse(BaseModel):
 #         "Short_Name varchar(255) NOT NULL,"\
 #         "Email varchar(255),"\
 #         "Phone varchar(255)NOT NULL,"\
-class ClubResponse(BaseModel):
-    id:str
-    name:str
-    teams:Optional[TeamResponse]=[]
+# class ClubResponse(BaseModel):
+#     id:str
+#     name:str
+#     teams:Optional[TeamResponse]=[]
 
-       #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
+#        #save_response["addFixtures"] = {"link":"/teams/%s/matches"%(save_response["ID"]),"method":"post"}
 
 
 class MATCH_CONSTS:
@@ -87,14 +89,6 @@ class HomeOrAway(str, Enum):
     neutral="Neutral"
 
 
-
-class User(BaseModel):
-    email:str
-    first_name:Optional[str]=''
-    surname:Optional[str]=''
-    teams:Optional[List]=[]
-    children:Optional[List]=[]
-
 class MatchType(str, Enum):
     friendly = "friendly"
     league = "league"
@@ -105,17 +99,19 @@ class MatchInfo(BaseModel):
     id:str
     team:Optional[TeamResponse]=None
     team_id:Optional[str]=""
-    team_link:Optional[Link]=None
-    self:Optional[Link]=None
     status:MatchState
+    status_history:Optional[List]=[]
     goals:Optional[int]=0
     conceded:Optional[int]=0
+    scorers:Optional[List]=[]
+    opposition_goals:Optional[List]=[]
     length:int
     opposition:str
     homeOrAway:HomeOrAway
     location:Optional[str] = ''
     placeId:Optional[str] = ''
-    date:datetime.date
+    date:datetime.datetime
+    time:Optional[datetime.time]=datetime.datetime.now(datetime.timezone.utc)
     type:Optional[MatchType]=None
     captain:Optional[str]=None
 
@@ -124,11 +120,11 @@ class MatchPeriod(BaseModel):
     time:int
 
 class PlayerMatchStat(BaseModel):
-    player: Optional[player_responses.PlayerInfo]=None
+    player: Optional[classes.PlayerInfo]=None
     position: Optional[str]=""
-    secondary_player: Optional[player_responses.PlayerInfo]=None
-    player_off: Optional[player_responses.PlayerResponse]=None
-    player_on: Optional[player_responses.PlayerResponse]=None
+    secondary_player: Optional[classes.PlayerInfo]=None
+    player_off: Optional[classes.Player]=None
+    player_on: Optional[classes.Player]=None
     time: Optional[int]=0
     minute:Optional[int]=0
     type:Optional[str]=""
@@ -143,7 +139,6 @@ class PlannedMatchResponse(BaseModel):
     match:MatchInfo
     planned_lineups:Optional[List]=None
     links:Optional[Dict[str,Link]]=None
-    captain:Optional[player_responses.PlayerResponse]=None
 
 
 class Lineups(BaseModel):
@@ -162,6 +157,7 @@ class ActualMatchResponse(BaseModel):
     next_players:Optional[List]=[]
     planned_subs:Optional[List]=[]
     planned_position_changes:Optional[List]=[]
+    planned_lineup_summary:Optional[List]=[]
     planned_lineups:Optional[List]=[]
     actual_lineups:Optional[List]=[]
     actual_subs:Optional[List]=[]
@@ -171,7 +167,6 @@ class ActualMatchResponse(BaseModel):
     opposition:Optional[List]=[]
     report:Optional[List]=[]
     links:Optional[Dict[str,Link]]=None
-    captain:Optional[player_responses.PlayerResponse]=None
     links:Optional[Dict[str,Link]]=None
 
 

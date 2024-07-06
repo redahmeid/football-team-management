@@ -10,7 +10,7 @@ from matches_data import retrieve_next_match_by_team
 from secrets_util import getEmailFromToken, lambda_handler,validate_firebase_id_token
 import api_helper
 
-def signup_submit(event, context):
+async def signup_submit(event, context):
     await lambda_handler(event,context)
     
     try:
