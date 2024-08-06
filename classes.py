@@ -97,6 +97,7 @@ class Team(BaseModel):
     age_group:str
     season:str
     admins:Optional[List[Dict]]={}
+    settings:Optional[Dict]={}
     team_id:Optional[str]=""
     fixtures:Optional[List] = []
     squad:Optional[List] = []

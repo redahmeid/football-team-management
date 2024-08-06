@@ -1,10 +1,11 @@
 import json
-from pydantic import TypeAdapter, ValidationError
 from secrets_util import lambda_handler, getEmailFromToken
 import classes
 from exceptions import AuthError
 from config import app_config
+from datetime import datetime,timezone
 import api_helper
+import id_generator
 import response_errors
 import response_classes
 import team_data
@@ -19,15 +20,18 @@ from firebase_admin import credentials
 from firebase_admin import messaging
 import notifications
 import player_backend
-from etag_manager import isEtaggged,deleteEtag,setEtag
+from etag_manager import getObject,updateDocument
+from etag_manager import isEtaggged,deleteEtag,setEtag,whereEqual
 import functools
 import time
 import asyncio
 import hashlib
 import json
+from notifications import sendNotification
 import firebase_admin
 from firebase_admin import credentials, firestore
 from fcatimer import fcatimer
+from email_sender import send_email_with_template
 import cache_trigger
 from secrets_util import is_version_greater
 
@@ -55,24 +59,77 @@ async def create_players(event, context):
         for player in players:
             name = player["forename"]
             surname = player["surname"]
-            email = player['guardian']
-            result = await player_backend.create_players_and_guardians(name,surname,team_id,email)
+            emails = player['guardians']
+            result = await player_backend.create_players_and_guardians(name,surname,team_id,emails)
             created_players.append(result)
     else:
         for player in players:
             name = player
             result = await player_backend.create_players(name,team_id)
             created_players.append(result)
-    await cache_trigger.updatePlayerCache(team_id)
-    data = {
-        "link":f"/teams/{team_id}",
-        "team_id":team_id,
-        "action":"new_players",
-        "silent":"True"
-    }
-    await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),"New players","New players",'team',data)
+    print(f"RESULT {result}")
+    for email in emails:
+        await sendGuardianEmail(result['info']["id"],email)
+        
+        data = {
+            "link":f"/teams/{team_id}",
+            "team_id":team_id,
+            "action":"new_players",
+            "silent":"True"
+        }
+        await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),"New players","New players",'team',data)
     response = api_helper.make_api_response(200,created_players)
     return response
+
+
+@fcatimer
+async def sendGuardianEmail(player_id,email):
+    fs_player = await getObject(player_id,'players_store')
+    if(fs_player):
+        fs_player_dict = fs_player.get().to_dict()
+        fs_team = await getObject(fs_player_dict['info']['team_id'],'teams_store')
+        if(fs_team):
+            fs_team_dict = fs_team.get().to_dict()
+            
+
+            template_data = {'player':fs_player_dict['info']['forename'],'team':fs_team_dict['name']}
+            fs_user = await getObject(email,'users_store')
+            if(fs_user):
+                fs_user_dict = fs_user.get().to_dict()
+                
+                if(fs_user_dict.get('last_seen',None)):
+                    await send_email_with_template(email,'d-d84865ab98a44c9aa6770e86364df6e5',template_data)
+                else:
+                    await send_email_with_template(email,'d-0904ad249669492fb6999ff0102742f1',template_data)
+                message = f"You have been added as a guardian to {fs_player_dict['info']['forename']}"
+                notification_id = id_generator.generate_random_number(10)
+               
+                fs_devices = await whereEqual('devices','email',email)
+                metadata={"player_id":fs_player_dict["info"]["id"],'notification_id':notification_id}
+                if(fs_devices):
+                    
+                    for fs_device in fs_devices:
+                        fs_device_dict = fs_device.to_dict()
+                        
+                        await sendNotification(type="invitation",token=fs_device_dict["token"],message=message,silent=False,subject="You've been added as a guardian",id=fs_player_dict["info"]["id"],metadata=metadata)
+                notification = {
+                                'message':message,
+                                'metadata':metadata,
+                                'email':email,
+                                'type':'guardian_add',
+                                'subject':f"You've been added to {fs_player_dict['info']['forename']}",
+                                'sent':datetime.now(timezone.utc)
+                            }
+                await updateDocument('user_notifications',str(notification_id),notification)
+
+@fcatimer
+async def sendNewGuardianAnEmail(event,context):
+    await lambda_handler(event,context)
+    player_id = event["pathParameters"]["player_id"]
+    body =json.loads(event["body"])
+    
+    email = body["email"]
+    await sendGuardianEmail(player_id,email)
 
 @fcatimer
 async def addGuardiansToPlayer(event,context):

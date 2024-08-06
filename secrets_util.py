@@ -58,6 +58,23 @@ def is_version_greater(version_str, reference_version):
     return version.parse(version_without_os) > version.parse(reference_version)
 
 @fcatimer
+async def initialise_firebase():
+    secretsmanager = boto3.client('secretsmanager')
+    try:
+        # Retrieve the serviceAccountKey.json from Secrets Manager
+        secret_name = "dev/firebase"  # Replace with your secret name
+        secret = secretsmanager.get_secret_value(SecretId=secret_name)
+        secret_dict = json.loads(secret['SecretString'])
+        
+        # Initialize Firebase Admin SDK with the retrieved credentials
+        firebase_cred = credentials.Certificate(secret_dict)
+        
+        app = firebase_admin.initialize_app(credential=firebase_cred)
+        print("FIREBASE APP initialized: %s"%app)
+    except Exception as e:
+        print(e)
+
+@fcatimer
 async def lambda_handler(event, context):
     
     try:

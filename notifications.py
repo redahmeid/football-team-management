@@ -319,10 +319,11 @@ async def backgroundSendMatchUpdateNotification(event,context):
     token = event["token"]
     metadata = event["metadata"]
     body = {
-        "id":str(random_id),
+        "id":str(id),
         "type":type,
         "message":message,
         "subject":subject,
+        "notification_id":str(random_id)
        
     }
 
@@ -406,6 +407,7 @@ async def send_push_notification(token, title, body,data):
             title=title,
             body=body,
         ),
+       
         token=token,
         data = data
     )

@@ -21,7 +21,7 @@ import asyncio
 logger = logging.getLogger(__name__)
 import functools
 import player_responses
-from datetime import date
+from datetime import date,timezone
 from pydantic import ValidationError
 from matches_data import retrieve_match_by_id,retrieve_matches_by_team,save_team_fixture
 import response_errors
@@ -771,31 +771,36 @@ async def sendGoalScoredNotification(team_id,match_id, goal_scorer,assister,type
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
         opposition = fs_match_dict['opposition']
-        goals_for = fs_match_dict.get('goal',0)
+        goals_for = fs_match_dict.get('goals',0)
         goals_against = fs_match_dict.get('conceded',0)
     assisted_by = ""
     if(assister is not None):
-        assisted_by = f" and assisted by {assister['forename']} - {assist_type}"
+        assisted_by = f", assisted by {assister['forename']} with a {assist_type.lower()}"
     title = f"Gooooaaaal {team_name} ({goals_for}) - {goals_against} {opposition}"
-    message = f"{type} goal scored by {goal_scorer['forename']} with a {assisted_by}"
-    data = {
-            "link":f"/matches/{match_id}",
-            "match_id":match_id,
-            "team_id":team_id,
-            "action":"goal_scored",
-            "silent":False
-        }
+    message = f"{type.lower()} goal scored by {goal_scorer['forename']}{assisted_by}"
+    
     fs_team_users = await whereContains('users_store','teams',team_id)
     
     if(fs_team_users):
         for fs_team_user in fs_team_users:
+            notification_id = id_generator.generate_random_number(10)
+            metadata={"match_id":match_id,"team_id":fs_match_dict["team_id"],"email":fs_team_user.to_dict()['email'],'notification_id':match_id}
             fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
             print(f"DEVICES {fs_devices}")
             for fs_device in fs_devices:
                 fs_device_dict = fs_device.to_dict()
                 token = fs_device_dict['token']
                 print(f"TOKEN {token}")
-                await notifications.sendNotification(match_id,message,title,'match_update',False,token,data)
+                await notifications.sendNotification(match_id,message,title,'match',False,token,metadata)
+            notification = {
+                'message':message,
+                'metadata':metadata,
+                'email':fs_team_user.to_dict()['email'],
+                'type':'match',
+                'subject':title,
+                'sent':datetime.datetime.now(timezone.utc)
+            }
+            await updateDocument('user_notifications',str(match_id),notification)
 
 @fcatimer
 async def sendGoalConcededNotification(team_id,match_id):

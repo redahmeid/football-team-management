@@ -7,7 +7,7 @@ env = os.environ.get('ENVIRONMENT', 'test')
 
 def load_dotenv_path():
     if env=='prod':
-        return 'prod.env'
+        return 'prodv1.env'
     elif env == 'dev':
         return 'dev.env'
     elif env == 'devnew':
@@ -37,6 +37,7 @@ class AppConfig:
         self.email_token = os.environ["email_token"]
         self.cache_handler = os.environ["cache_handler"]
         self.send_notifications = os.environ["send_notifications"]
+        self.schedule_invitations = os.environ["schedule_invitations"]
         self.db_prefix = os.environ["db_prefix"]
 
 

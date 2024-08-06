@@ -5,19 +5,18 @@ import traceback
 import sys
 import api_helper
 import response_errors
-from team_data import save_team,retrieve_team_by_id,save_group_team
+from team_data import save_team,save_group_team
 from secrets_util import getEmailFromToken, lambda_handler
 from auth import set_custom_claims
-from player_data import retrieve_players_by_team_with_stats
+
 from auth import check_permissions
 from roles import Role
 
 from team_backend import getTeamFromDB
-import team_season_data
+
 
 import id_generator
 from cache_trigger import updateUserCache
-from etag_manager import isEtaggged,deleteEtag,setEtag
 import json
 import team_backend
 
@@ -26,13 +25,11 @@ from classes import User,Team,TeamUser, GroupTeam
 from config import app_config
 import exceptions
 from users_data import retrieve_user_id_by_email,update_user
-from team_data import save_team,retrieve_team_by_id
+from team_data import save_team
 from secrets_util import getEmailFromToken, lambda_handler
 import api_helper
-from roles_data import save_role
 
 from auth import set_custom_claims
-import team_season_data
 import notifications
 
 
@@ -82,7 +79,7 @@ async def submit_team(event, context):
         team_id = str(id_generator.generate_random_number(7))
         
         user = await retrieve_user_id_by_email(email)
-        team = Team(id=team_id,age_group=body["age_group"],name=body["name"],season=body["season"],admins=[{'email':email,'role':Role.admin.value}])
+        team = Team(id=team_id,age_group=body["age_group"],name=body["name"],season=body["season"],admins=[{'email':email,'role':Role.admin.value}],settings={'show_ratings':True})
         save_response = await save_team(team,team_id)
         group_team = GroupTeam(teams=[team_id],id=id)
         await save_group_team(group_team,id)
@@ -186,4 +183,4 @@ async def delete_team(event, context):
 
 #     response =  response_classes.TeamResponse(id=id,name=name,ageGroup=ageGroup,live=live,self=self,nextMatch=nextMatch,teamPlayers=players,teamFixtures=fixtures,addFixtures=addFixtures,addPlayers=addPlayers)
 #     print("Convert team %s"%(response))
-#     return response
+#     return responseitemAxis

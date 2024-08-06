@@ -477,7 +477,7 @@ async def update_match_status(event,context):
                 print(f"UPDATE STATUS TASK CREATION START {match_id}")
             
             
-             return api_helper.make_api_response_etag(200,{})   
+             return api_helper.make_api_response(200,{})   
         else:
             response = api_helper.make_api_response(403,None,"You do not have permission to edit this match")
             return response

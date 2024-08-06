@@ -1,25 +1,14 @@
 
-import asyncio
 from roles import Role
-from users_data import retrieve_user_id_by_email,save_user
-from roles_data import save_role
+
 import classes
-import sys
-import team_season_data
-from team_data import retrieve_users_by_team_id
-from player_data import retrieve_players_by_team_with_stats
+
 import logging
-import matches_data
-import player_data
-from cache_trigger import updateTeamCache, updateUserCache
-from match_planning_backend import list_matches_by_team_backend
+
 logger = logging.getLogger(__name__)
-import json
-import team_data
+
 from fcatimer import fcatimer
-from email_sender import send_email,send_email_with_template
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(funcName)s - %(message)s')
-from team_response_creator import convertTeamSeasonDataToTeamResponse,convertTeamSeasonDataToTeamSeaonOnlyResponse
 from etag_manager import isEtaggged,deleteEtag,setEtag,getLatestObject,updateDocument,getObject,whereEqual,getAllObjects,whereContains
 
 

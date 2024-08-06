@@ -46,10 +46,10 @@ async def create_players(name, team_id):
             raise
 
 @fcatimer
-async def create_players_and_guardians(forename, surname, team_id,email):
+async def create_players_and_guardians(forename, surname, team_id,emails):
     
         id = id_generator.generate_random_number(7)
-        request_player = classes.Player(info=classes.PlayerInfo(id=str(id),forename=forename,name=forename,surname=surname,team_id=team_id),guardians=[email])
+        request_player = classes.Player(info=classes.PlayerInfo(id=str(id),forename=forename,name=forename,surname=surname,team_id=team_id),guardians=emails)
         
 
         try:
@@ -63,17 +63,17 @@ async def create_players_and_guardians(forename, surname, team_id,email):
                 
                 team.squad.append(str(id))
                 fs_team.update(team.model_dump())
-            
-            fs_user = await getObject(email,'users_store')
-            if(fs_user):
-                fs_user_dict = fs_user.get().to_dict()
-                user = classes.User(**fs_user_dict)
-                user.players.append(id)
-                user.guardians.append(team_id)
-                user.teams.append(team_id)
-                fs_user.update(user.model_dump())
-            else:
-                 await updateDocument('users_store',email,classes.User(email=email,players=[id],guardians=[team_id],teams=[team_id]))
+            for email in emails:
+                fs_user = await getObject(email,'users_store')
+                if(fs_user):
+                    fs_user_dict = fs_user.get().to_dict()
+                    user = classes.User(**fs_user_dict)
+                    user.players.append(id)
+                    user.guardians.append(team_id)
+                    user.teams.append(team_id)
+                    fs_user.update(user.model_dump())
+                else:
+                    await updateDocument('users_store',email,classes.User(email=email,players=[id],guardians=[team_id],teams=[team_id]))
 
             return request_player.model_dump()
 

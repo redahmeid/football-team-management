@@ -189,6 +189,42 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  
+  notify_match_update:
+    handler: handler.notify_match_update
+    events:
+      - http:
+          path: /matches/{match_id}
+          method: patch
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+  
+  send_cancellation:
+    handler: handler.send_cancellation
+    events:
+      - http:
+          path: /matches/{match_id}/cancel
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
+
+
   send_invite_response:
     handler: handler.send_invite_response
     events:
@@ -255,6 +291,8 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+
+  
   user_homepage_bff_v2:
     handler: handler.getUserV2
     events:
@@ -278,6 +316,40 @@ functions:
       - http:
           path: /users
           method: get
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+  send_new_guardian_email:
+    handler: handler.send_new_guardian_email
+    events:
+      - http:
+          path: /players/{player_id}/guardians
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+  send_reminder:
+    handler: handler.send_reminder
+    events:
+      - http:
+          path: /matches/{match_id}/reminder
+          method: post
           cors:
             origins:
               - '*'
@@ -525,23 +597,7 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
-  edit_match:
-    handler: handler.edit_match
-    events:
-      - http:
-          path: /matches/{match_id}
-          method: patch
-          cors:
-            origins:
-              - '*'
-            headers:
-              - Content-Type
-              - x-device-id
-              - x-api-key
-              - x-football-app
-              - authorization
-              - ETag
-            allowCredentials: false
+  
   submit_subs:
     handler: handler.submit_subs
     events:
@@ -720,6 +776,13 @@ functions:
     handler: handler.cacher
   send_notification:
     handler: handler.sendNotification
+  schedule_invitations:
+    handler: handler.schedule_invitations
+  
+  find_and_schedule_invitations:
+    handler: handler.find_and_schedule_invitations
+    events:
+      - schedule: rate(5 minutes)
  
   
 

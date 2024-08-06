@@ -51,6 +51,15 @@ async def whereEqual(collection,field,value):
     docs = query.get() 
     return docs
 
+@fcatimer
+async def whereNested(collection,field,value):
+    db = firestore.client()
+    query = db.collection(f"{app_config.db_prefix}_{collection}").where(field, '==', value)
+
+        # Get documents matching the query
+    docs = query.get() 
+    return docs
+
 def check_if_collection_exists(collection_name):
     db = firestore.Client()
     try:

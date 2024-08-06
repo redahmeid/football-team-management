@@ -21,11 +21,38 @@ import notifications
 def contact_us(event,context):
     response = asyncio.run(email_sender.contact_us(event,context))
     return response
+
+def send_new_guardian_email(event,context):
+    response = asyncio.run(player_apis.sendNewGuardianAnEmail(event,context))
+    return response
+
+
+def schedule_invitations(event,context):
+    response = asyncio.run(users_apis.backgroundSendInvites(event,context))
+    return response
+
+def notify_match_update(event,context):
+    response = asyncio.run(users_apis.notify_match_update(event,context))
+    return response
+
+def send_cancellation(event,context):
+    response = asyncio.run(users_apis.send_cancellation_message(event,context))
+    return response
+
+def send_reminder(event,context):
+    response = asyncio.run(users_apis.sendReminder(event,context))
+    return response
+
+def find_and_schedule_invitations(event,context):
+    response = asyncio.run(users_apis.findAndSendInvites(event,context))
+    return response
+
+
 def send_invites(event,context):
     response = asyncio.run(users_apis.sendInvites(event,context))
     return response
 def send_invite_response(event,context):
-    response = asyncio.run(users_apis.sendResponse(event,context))
+    response = asyncio.run(users_apis.sendInviteResponse(event,context))
     return response
 def check_online(event,context):
     return api_helper.make_api_response(200,{})

@@ -9,13 +9,13 @@ async def contact_us(event,context):
     body =json.loads(event["body"])
     email = body["email"]
     message = body["message"]
-    await send_email("footballapp@openlight.io","",message,f"From {email}")
+    await send_email("noreply@teammate.football","",message,f"From {email}")
 
 
 async def send_email(to,to_name,content,subject):
 
     message = Mail(
-    from_email='The Football Coach App <footballapp@openlight.io>',
+    from_email='Coach TeamMate <noreply@teammate.football>',
     to_emails=to,
     subject=subject)
     try:
@@ -37,7 +37,7 @@ async def send_email(to,to_name,content,subject):
 async def send_email_with_template(to,template_id,template_data):
 
     message = Mail(
-    from_email='The Football Coach App <footballapp@openlight.io>',
+    from_email='TeamMate <noreply@teammate.football>',
     to_emails=to,)
     try:
         
