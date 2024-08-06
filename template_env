@@ -1,0 +1,10 @@
+dbhost = 'mysql-13e43451-club-management.aivencloud.com'
+dbuser = 'avnadmin'
+dbpassword = ''
+dbdatabase = 'footy_prod'  
+dbadmin_db = "defaultdb"
+email_token=''
+cache_handler='football-team-management-prodv1-cache_handler'
+send_notifications='football-team-management-prod-send_notification'
+schedule_invitations='football-team-management-prod-schedule_invitations'
+db_prefix='prod'
