@@ -784,7 +784,7 @@ async def sendGoalScoredNotification(team_id,match_id, goal_scorer,assister,type
     if(fs_team_users):
         for fs_team_user in fs_team_users:
             notification_id = id_generator.generate_random_number(10)
-            metadata={"match_id":match_id,"team_id":fs_match_dict["team_id"],"email":fs_team_user.to_dict()['email'],'notification_id':match_id}
+            metadata={"match_id":match_id,"team_id":fs_match_dict["team_id"],"email":fs_team_user.to_dict()['email'],'notification_id':notification_id}
             fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
             print(f"DEVICES {fs_devices}")
             for fs_device in fs_devices:
@@ -800,7 +800,7 @@ async def sendGoalScoredNotification(team_id,match_id, goal_scorer,assister,type
                 'subject':title,
                 'sent':datetime.datetime.now(timezone.utc)
             }
-            await updateDocument('user_notifications',str(match_id),notification)
+            await updateDocument('user_notifications',str(notification_id),notification)
 
 @fcatimer
 async def sendGoalConcededNotification(team_id,match_id):

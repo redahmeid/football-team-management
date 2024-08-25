@@ -106,6 +106,7 @@ class Team(BaseModel):
     wins:Optional[int]=0
     defeats:Optional[int]=0
     draws:Optional[int]=0
+    club_id:Optional[str]=""
 
 class TeamUser(BaseModel):
     email:str

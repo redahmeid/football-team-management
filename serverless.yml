@@ -206,6 +206,22 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  update_stats_match_end:
+    handler: handler.update_stats_match_end
+    events:
+      - http:
+          path: /matches/{match_id}/stats
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
   
   send_cancellation:
     handler: handler.send_cancellation
@@ -344,6 +360,24 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  notify_coaches:
+    handler: handler.notify_coaches
+    events:
+      - http:
+          path: /teams/{team_id}/notify_coaches
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+
   send_reminder:
     handler: handler.send_reminder
     events:
@@ -770,6 +804,61 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  
+  calculate_team_stats:
+    handler: handler.calculate_team_stats
+    events:
+      - http:
+          path: /teams/{team_id}/calculate_stats
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+  
+  logging:
+    handler: handler.logging
+    events:
+      - http:
+          path: /logging/{event}
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+
+  error:
+    handler: handler.error
+    events:
+      - http:
+          path: /error/{event}
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
+
   subs_due:
     handler: handler.subs_due
   cache_handler:
@@ -778,8 +867,20 @@ functions:
     handler: handler.sendNotification
   schedule_invitations:
     handler: handler.schedule_invitations
+
+  calculate_team_goals:
+    handler: handler.calculate_team_goals
+  calculate_team_conceded:
+    handler: handler.calculate_team_conceded
+  calculate_training_attended:
+    handler: handler.calculate_training_attended
   
   find_and_schedule_invitations:
+    handler: handler.find_and_schedule_invitations
+    events:
+      - schedule: rate(5 minutes)
+  
+  update_team_stats:
     handler: handler.find_and_schedule_invitations
     events:
       - schedule: rate(5 minutes)

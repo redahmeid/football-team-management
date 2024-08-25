@@ -38,6 +38,9 @@ class AppConfig:
         self.cache_handler = os.environ["cache_handler"]
         self.send_notifications = os.environ["send_notifications"]
         self.schedule_invitations = os.environ["schedule_invitations"]
+        self.calculate_team_goals = os.environ["calculate_team_goals"]
+        self.calculate_team_conceded = os.environ["calculate_team_conceded"]
+        self.calculate_training_attended = os.environ["calculate_training_attended"]
         self.db_prefix = os.environ["db_prefix"]
 
 

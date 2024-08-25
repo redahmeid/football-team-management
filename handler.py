@@ -17,6 +17,7 @@ import email_sender
 import accounts
 import caching_data
 import notifications
+import fca_logging
 
 def contact_us(event,context):
     response = asyncio.run(email_sender.contact_us(event,context))
@@ -24,6 +25,38 @@ def contact_us(event,context):
 
 def send_new_guardian_email(event,context):
     response = asyncio.run(player_apis.sendNewGuardianAnEmail(event,context))
+    return response
+
+def notify_coaches(event,context):
+    response = asyncio.run(team_apis.notifyNewCoaches(event,context))
+    return response
+
+def calculate_team_stats(event,context):
+    response = asyncio.run(team_apis.team_stats_calculator(event,context))
+    return response
+
+def calculate_team_goals(event,context):
+    response = asyncio.run(team_apis.player_team_goals_calculation(event,context))
+    return response
+
+def calculate_training_attended(event,context):
+    response = asyncio.run(team_apis.player_training_attended_calculation(event,context))
+    return response
+
+def logging(event,context):
+    response = asyncio.run(fca_logging.log(event,context))
+    return response
+
+def error(event,context):
+    response = asyncio.run(fca_logging.error(event,context))
+    return response
+
+def calculate_team_conceded(event,context):
+    response = asyncio.run(team_apis.player_team_conceded_calculation(event,context))
+    return response
+
+def update_stats_match_end(event,context):
+    response = asyncio.run(matches_apis.calculate_match_stats(event,context))
     return response
 
 

@@ -13,7 +13,7 @@ import api_helper
 import response_errors
 from users_data import save_user,retrieve_user_id_by_email,update_user
 from matches_data import retrieve_next_match_by_team
-from auth import getToken
+from auth import getToken, getEmailFromToken
 from secrets_util import lambda_handler, initialise_firebase
 from notifications import save_token,sendNotificationUpdatesLink,sendNotification
 import asyncio
@@ -95,10 +95,13 @@ async def backgroundSendInvites(event,context):
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
 
-        if(fs_match_dict.get('whenInvite',0)!=0 and not fs_match_dict.get('invited',False)) :   
+        if(fs_match_dict.get('whenInvite',0)!=0 and not fs_match_dict.get('invited',False) and not fs_match_dict.get('status','')!='cancelled') :   
             fs_match_dict = await invites(id)
             print(f'FS MATCH DICT FROM BACKGROUND SEND INVITES {fs_match_dict}')
             await updateDocument('matches_store',str(id),fs_match_dict)
+
+
+
 
 
 @fcatimer
@@ -280,7 +283,7 @@ async def notifyCancellation(match_id):
             message=f"Match against {fs_match_dict['opposition']} on {date_string} has been cancelled"
             subject = f"Match cancellation"
      
-        await notifyInvitees(fs_match_dict=fs_match_dict,message=message,subject=subject)
+        await notifyInvitees(fs_match_dict=fs_match_dict,message=message,subject=subject,template_data={})
 
 @fcatimer
 async def notifyReminder(match_id):
@@ -309,12 +312,12 @@ async def notifyReminder(match_id):
                         "date":date_string,
                         "team_name":team_name
                     }
-        await notifyInvitees(fs_match_dict=fs_match_dict,message=message,subject=subject,template_data=template_data,if_unanswered=True,)
+        await notifyInvitees(fs_match_dict=fs_match_dict,message=message,subject=subject,template_data=template_data,if_unanswered=True,send_email=True)
         
 
     
 @fcatimer
-async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswered=False):
+async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswered=False,send_push=True,send_email=False):
     invitees = fs_match_dict.get('invites',[])
    
 
@@ -332,12 +335,14 @@ async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswer
                     print(f"DEVICES {fs_devices}")
                 
                     metadata={"invited_id":fs_player['id'],"player_id":fs_player['player']["info"]["id"],"match_id":fs_match_dict['id'],"team_id":fs_match_dict["team_id"],"email":fs_guardian,'notification_id':notification_id}
-                    if(fs_devices):
-                        
-                        for fs_device in fs_devices:
-                            fs_device_dict = fs_device.to_dict()
+                    if(send_push):
+                        if(fs_devices):
                             
-                            await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject=subject,id=fs_match_dict['id'],metadata=metadata)
+                            for fs_device in fs_devices:
+                                fs_device_dict = fs_device.to_dict()
+                                
+                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject=subject,id=fs_match_dict['id'],metadata=metadata)
+                    
                     fs_player['status'] = 'notified'
                     
                     notification = {
@@ -350,7 +355,8 @@ async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswer
                     }
                     await updateDocument('user_notifications',str(notification_id),notification)
                     
-                    await send_email_with_template(fs_guardian,"d-681a68cd271649e38403dbdb70a79c7f",template_data)
+                    if(send_email):
+                        await send_email_with_template(fs_guardian,"d-681a68cd271649e38403dbdb70a79c7f",template_data)
 
                     
                     
@@ -371,7 +377,7 @@ async def notify_match_update(event,context):
         else:
             message = f"Match vs {fs_match_dict['opposition']} on {date_string} has been updated"
             subject = f"Match vs {fs_match_dict['opposition']} Updated"
-        await notifyInvitees(fs_match_dict,message,subject,False)
+        await notifyInvitees(fs_match_dict,message,subject,True,False)
 
 @fcatimer
 async def sendReminder(event,context):
@@ -409,6 +415,96 @@ async def send_cancellation_message(event,context):
         await notifyCancellation(match_id)
         
 
+
+@fcatimer
+async def updatePlans(event,context):
+    await lambda_handler(event,context)
+    player_id = event["pathParameters"]["player_id"]
+
+    match_id = event["pathParameters"]["match_id"]
+    fs_match = await getObject(match_id,'matches_store')
+    
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        emails = set()
+        team_id = fs_match_dict['team_id']
+        fs_team = await getObject(team_id,'teams_store')
+        if(fs_team):
+            fs_team_dict = fs_team.get().to_dict()
+            fs_admins = fs_team_dict['admins']
+            for fs_admin in fs_admins:
+                emails.add(fs_admin['email'])
+            fs_coaches = fs_team_dict['coaches']
+            for fs_coach in fs_coaches:
+                emails.add(fs_coach['email'])
+        fs_invites = fs_match_dict['invites'] 
+        send_notification = False
+        if(fs_invites):
+            for player_dict in fs_invites:
+                if player_dict['player']['info']['id'] == player_id:
+                    response = player_dict['response']
+                    if(response=='declined'):
+                        fs_planned_lineups = fs_match_dict['planned_lineups']
+                        lineupIndex = 0
+                        for lineup in fs_planned_lineups:
+                            removeIndex = 0
+                            fs_players = lineup['players']
+                            for player in fs_players:
+                                
+                                if(player['info']['id']==player_id):
+                                    del fs_players[removeIndex]
+                                    send_notification = True
+                                    message = f"{player['info']['forename']} has been removed from the match against {fs_match_dict['opposition']} as they can no longer attend. You may wish to replan."
+                                    subject = f"Planned lineup change"
+                                removeIndex = removeIndex+1
+                            lineup['players'] = fs_players
+                            fs_planned_lineups[lineupIndex]=lineup
+                            lineupIndex = lineupIndex+1
+                        fs_match_dict['planned_lineups'] = fs_planned_lineups
+                        await updateDocument('matches_store',match_id,fs_match_dict)
+                    if(response=='accepted'):
+                        fs_planned_lineups = fs_match_dict['planned_lineups']
+                        lineupIndex = 0
+                        for lineup in fs_planned_lineups:
+                            
+                            fs_players = lineup['players']
+                            found = False
+                            for player in fs_players:
+                                if(player['info']['id']==player_id):
+                                    found = True
+                                    print("PLAYER EXISTS")
+                            if(not found):
+                                stored_player = await getObject(player_id,'players_store')
+                                player_dict = stored_player.get().to_dict()
+                                fs_players.append(player_dict)
+                                message = f"{player_dict['info']['forename']} has been put on the subs bench for the match against {fs_match_dict['opposition']} as they can attend now. You may wish to replan."
+                                subject = f"Planned lineup change"
+                                send_notification = True
+                            lineup['players'] = fs_players
+                            fs_planned_lineups[lineupIndex]=lineup
+                            lineupIndex = lineupIndex+1
+                        fs_match_dict['planned_lineups'] = fs_planned_lineups
+                        await updateDocument('matches_store',match_id,fs_match_dict)
+            if(send_notification):
+                for email in emails:
+                        notification_id = id_generator.generate_random_number(10)
+                        fs_devices = await whereEqual('devices','email',email)
+                        metadata={"player_id":player_id,"match_id":match_id,"team_id":team_id,"email":email,'notification_id':notification_id}
+                        print(f"DEVICES {fs_devices}")
+                        if(fs_devices):
+                            for fs_device in fs_devices:
+                                fs_device_dict = fs_device.to_dict()
+                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="Match response",id=match_id,metadata=metadata)
+                        notification = {
+                            'message':message,
+                            'metadata':metadata,
+                            'email':email,
+                            'type':'match',
+                            'subject':subject,
+                            'sent':datetime.now(timezone.utc)
+                        }
+                        await updateDocument('user_notifications',str(notification_id),notification)
+
 @fcatimer
 async def sendInviteResponse(event,context):
     await lambda_handler(event,context)
@@ -416,12 +512,22 @@ async def sendInviteResponse(event,context):
     match_id = event["pathParameters"]["match_id"]
     
     fs_match = await getObject(match_id,'matches_store')
-     
-    emails = []
+    
+    sent_by = getEmailFromToken(event,context)
+
+    sent_by_user = await getObject(sent_by,'users_store')
+    if(sent_by_user):
+        sent_by_user_dict = sent_by_user.get().to_dict()
+        sent_by_name = sent_by_user_dict.get('name',sent_by)
+        if(sent_by_name==''):
+            sent_by_name = sent_by
+    fs_player_match_invite_history = await getObject(f"{match_id}+{player_id}",'player_match_invite_history')
+
+    emails = set()
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
         date = fs_match_dict['date']
-
+        
         print
         format_string = "%Y-%m-%d"  # Year-Month-Day format
 
@@ -439,53 +545,64 @@ async def sendInviteResponse(event,context):
             fs_team_dict = fs_team.get().to_dict()
             fs_admins = fs_team_dict['admins']
             for fs_admin in fs_admins:
-                emails.append(fs_admin['email'])
+                emails.add(fs_admin['email'])
             fs_coaches = fs_team_dict['coaches']
             for fs_coach in fs_coaches:
-                emails.append(fs_coach['email'])
+                emails.add(fs_coach['email'])
 
         if(fs_invites):
             for player_dict in fs_invites:
                 
                 if player_dict['player']['info']['id'] == player_id:
+                    
                     response = player_dict['response']
-                    message = ''
-                    if response=='accepted':
-                        if(fs_match_dict['type']=='training'):
-                            message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make training on {date_string}"
-                            subject = "Training response"
-                        else:
-                            message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make the game against {fs_match_dict['opposition']} on {date_string}"
-                            subject = f"Match response"
-                        
-                    elif response=='decline':
-                         if(fs_match_dict['type']=='training'):
-                            message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make training on {date_string}"
-                            subject = "Training response"
-                         else:
-                            message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make the game against {fs_match_dict['opposition']} on {date_string}"
-                            subject = f"Match response"
-                        
-                    for email in emails:
-                        notification_id = id_generator.generate_random_number(10)
-                        fs_devices = await whereEqual('devices','email',email)
-                        metadata={"player_id":player_id,"match_id":match_id,"team_id":team_id,"email":email,'notification_id':notification_id}
-                        print(f"DEVICES {fs_devices}")
-                        if(fs_devices):
-                            for fs_device in fs_devices:
-                                fs_device_dict = fs_device.to_dict()
-                                
-                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="Match response",id=match_id,metadata=metadata)
-                        notification = {
-                            'message':message,
-                            'metadata':metadata,
-                            'email':email,
-                            'type':'match',
-                            'subject':subject,
-                            'sent':datetime.now(timezone.utc)
-                        }
-                        await updateDocument('user_notifications',str(notification_id),notification)
-        
+                    fs_guardians = player_dict['player']['guardians']
+                    for guardian in fs_guardians:
+                        if(guardian!=sent_by):
+                            emails.add(guardian)
+                    last_response = ""
+                    if(fs_player_match_invite_history):
+                        fs_player_match_invite_history_dict = fs_player_match_invite_history.get().to_dict()
+                        last_response = fs_player_match_invite_history_dict.get("response","")
+                    if(response != last_response):
+                        await updateDocument("player_match_invite_history",f"{match_id}+{player_id}",{"response":response})
+                        message = ''
+                        if response=='accepted':
+                            if(fs_match_dict['type']=='training'):
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make training on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Training response"
+                            else:
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make the game against {fs_match_dict['opposition']} on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Match response"
+                            
+                        elif response=='declined':
+                            if(fs_match_dict['type']=='training'):
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make training on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Training response"
+                            else:
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make the game against {fs_match_dict['opposition']} on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Match response"
+                            
+                        for email in emails:
+                            notification_id = id_generator.generate_random_number(10)
+                            fs_devices = await whereEqual('devices','email',email)
+                            metadata={"player_id":player_id,"match_id":match_id,"team_id":team_id,"email":email,'notification_id':notification_id}
+                            print(f"DEVICES {fs_devices}")
+                            if(fs_devices):
+                                for fs_device in fs_devices:
+                                    fs_device_dict = fs_device.to_dict()
+                                    
+                                    await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="Match response",id=match_id,metadata=metadata)
+                            notification = {
+                                'message':message,
+                                'metadata':metadata,
+                                'email':email,
+                                'type':'match',
+                                'subject':subject,
+                                'sent':datetime.now(timezone.utc)
+                            }
+                            await updateDocument('user_notifications',str(notification_id),notification)
+        await updatePlans(event,context)
 
 async def saveDeviceToken(event):
     headers = event["headers"]
