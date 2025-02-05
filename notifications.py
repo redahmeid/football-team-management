@@ -323,7 +323,7 @@ async def backgroundSendMatchUpdateNotification(event,context):
         "type":type,
         "message":message,
         "subject":subject,
-        "notification_id":str(random_id)
+        "notification_id":str(metadata['notification_id'])
        
     }
 
@@ -401,6 +401,9 @@ async def getStakeholders(match_id):
 async def send_push_notification(token, title, body,data):
     secretsmanager = boto3.client('secretsmanager')
     print(data)
+    print(token)
+    print(title)
+    print(body)
     message = messaging.Message(
         
         notification=messaging.Notification(
@@ -412,10 +415,7 @@ async def send_push_notification(token, title, body,data):
         data = data
     )
 
-    print(f"MESSAGE {message}")
-    print(f"DATA {data}")
-    print(f"MESSAGE {message}")
-    print(f"BODY {body}")
+    
     try:
         response = messaging.send(message)
         print(f"Sent to {token}")

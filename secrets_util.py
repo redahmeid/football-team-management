@@ -103,14 +103,15 @@ async def lambda_handler(event, context):
         device_id = headers.get('x-device-id',None)
         version = headers.get('x-football-app',None)
         print(f"DEVICE TOKEN {device_token}")
-        try:
-            email = getToken(event)["email"]
-        except AuthError as e:
-            email =""
-        
-        await cache_trigger.saveDeviceToken(email,device_token,device_id,version)
-        # save_token(email=email,token=device_token,device=device_id,version=version)
-        print("Token saved")
+        if(device_token):
+            try:
+                email = getToken(event)["email"]
+            except AuthError as e:
+                email =""
+            
+            await cache_trigger.saveDeviceToken(email,device_token,device_id,version)
+            # save_token(email=email,token=device_token,device=device_id,version=version)
+            print("Token saved")
     except ValueError as e:
         print("FIREBASE initalize error %s"%e)
     

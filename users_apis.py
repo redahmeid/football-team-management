@@ -2,7 +2,7 @@ import json
 
 
 from fcatimer import fcatimer
-from etag_manager import getObject,updateDocument, whereEqual,whereContains, whereNested
+from etag_manager import getObject,updateDocument, whereEqual,whereContains, whereNested,whereEqualwhere
 from config import app_config
 import id_generator
 from datetime import datetime,timezone,timedelta
@@ -37,7 +37,7 @@ async def new_user(event, context):
         else:
             template_id="d-f25c6f27e6d14af58f8a3457ecfebee2"
             await send_email_with_template(email,template_id,template_data)
-            await updateDocument('users_store',email,{'email':email,'name':body['name']})
+        await updateDocument('users_store',email,{'email':email,'name':body['name']})
         
         response = api_helper.make_api_response(200,{"id":id})
     except ValidationError as e:
@@ -74,16 +74,25 @@ async def sendNotificationUpdatesLink(match_id,message,subject,type,data):
 @fcatimer
 async def findAndSendInvites(event,context):
     await initialise_firebase()
-    fs_matches = await whereEqual('matches_store','invited',False)
+    reminder = 7
+   
+    
+    where_stats = firestore.FieldFilter('date', '<' , datetime.now(timezone.utc)+ timedelta(days=reminder))
+    where_today = firestore.FieldFilter('date', '>' , datetime.now(timezone.utc))
+    where_not_invited = firestore.FieldFilter('invited', '==' , False)
+    fs_matches = await whereEqualwhere('matches_store',wheres=[where_not_invited,where_stats,where_today])
+    print(len(fs_matches))
     for fs_match in fs_matches:
         secretsmanager = boto3.client('secretsmanager')
-        event = fs_match.to_dict()
-        lambda_client = boto3.client('lambda')
-        lambda_client.invoke(
-        FunctionName=app_config.schedule_invitations,  # Name of the target Lambda
-        InvocationType='Event',
-        Payload=json.dumps(event)  # Asynchronous invocation
-        ) 
+        fs_match_dict = fs_match.to_dict()
+        if(fs_match_dict.get('whenInvite',-1)>-1):
+            event = {"id":fs_match_dict['id']}
+            lambda_client = boto3.client('lambda')
+            lambda_client.invoke(
+            FunctionName=app_config.schedule_invitations,  # Name of the target Lambda
+            InvocationType='Event',
+            Payload=json.dumps(event)  # Asynchronous invocation
+            ) 
         
 # Each match invite
 @fcatimer
@@ -95,7 +104,7 @@ async def backgroundSendInvites(event,context):
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
 
-        if(fs_match_dict.get('whenInvite',0)!=0 and not fs_match_dict.get('invited',False) and not fs_match_dict.get('status','')!='cancelled') :   
+        if(fs_match_dict.get('whenInvite',0)!=0 and not fs_match_dict.get('invited',False) and fs_match_dict.get('status','')!='cancelled') :   
             fs_match_dict = await invites(id)
             print(f'FS MATCH DICT FROM BACKGROUND SEND INVITES {fs_match_dict}')
             await updateDocument('matches_store',str(id),fs_match_dict)
@@ -108,7 +117,8 @@ async def backgroundSendInvites(event,context):
 async def invite_all_players(fs_players,date_string,opposition,match_id):
     invitees = []
     fs_match = await getObject(match_id,'matches_store')
-    
+    tokens={}
+    type = 'invite'
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
         
@@ -135,13 +145,21 @@ async def invite_all_players(fs_players,date_string,opposition,match_id):
                             
                             for fs_device in fs_devices:
                                 fs_device_dict = fs_device.to_dict()
-                                
-                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="New invitation",id=match_id,metadata=metadata)
+                                silent = False
+                                if(fs_device_dict['version']):
+                                    silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                isNotifiable = fs_device_dict.get('notifications',True)
+
+                                if(isNotifiable):
+                                    token=fs_device_dict["token"]
+                                    if(tokens.get(token,None) is None):
+                                        tokens[token] =True
+                                        await sendNotification(type=type,token=fs_device_dict["token"],message=message,silent=silent,subject="New invitation",id=match_id,metadata=metadata)
                         notification = {
                             'message':message,
                             'metadata':metadata,
                             'email':fs_guardian,
-                            'type':'match',
+                            'type':type,
                             'subject':subject,
                             'sent':datetime.now(timezone.utc)
                         }
@@ -162,6 +180,8 @@ async def invite_all_players(fs_players,date_string,opposition,match_id):
 @fcatimer
 async def invite_invitee_players(fs_invites,date_string,opposition,match_id,fs_match_dict):
     invitees = []
+    tokens={}
+    type = 'invite'
     if(fs_invites):
         for fs_player in fs_invites:
             fs_invited = fs_player['status']
@@ -189,15 +209,23 @@ async def invite_invitee_players(fs_invites,date_string,opposition,match_id,fs_m
                             
                             for fs_device in fs_devices:
                                 fs_device_dict = fs_device.to_dict()
-                                
-                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="New invitation",id=notification_id,metadata=metadata)
+                                silent = False
+                                if(fs_device_dict['version']):
+                                    silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                isNotifiable = fs_device_dict.get('notifications',True)
+
+                                if(isNotifiable):
+                                        token=fs_device_dict["token"]
+                                        if(tokens.get(token,None) is None):
+                                            tokens[token] =True
+                                            await sendNotification(type=type,token=fs_device_dict["token"],message=message,silent=silent,subject="New invitation",id=notification_id,metadata=metadata)
                         fs_player['status'] = 'notified'
                         
                         notification = {
                             'message':message,
                             'metadata':metadata,
                             'email':fs_guardian,
-                            'type':'match',
+                            'type':type,
                             'subject':f"{fs_match_dict['opposition']} invite",
                             'sent':datetime.now(timezone.utc)
                         }
@@ -233,9 +261,13 @@ async def invites(match_id):
         
         try:
             offset = timedelta(hours=0)
-            formatted_date = parse(date)
-            new_date = formatted_date.replace(tzinfo=timezone.utc)
-        
+            try:
+                formatted_date = parse(date)
+                new_date = formatted_date.replace(tzinfo=timezone.utc)
+            except:
+                formatted_date = date
+                new_date = date
+            
 
             # Convert to offset-aware datetime
             if(int(when)>0):
@@ -296,9 +328,14 @@ async def notifyReminder(match_id):
         team_name = f"{fs_team_dict['name']} {fs_team_dict['age_group']}"
         print(f"MATCH {fs_match_dict}")
         date = fs_match_dict['date']
-        formatted_date = parse(date)
-        date_string = formatted_date.strftime("%B %d, %Y")
         
+        try:
+            formatted_date = parse(date)
+            
+        except:
+            formatted_date = date
+        
+        date_string = formatted_date.strftime("%B %d, %Y")
         if(fs_match_dict['type']=='training'):
             message=f"Please respond to the training invite for {date_string}"
             subject = "Training response reminder"
@@ -319,7 +356,7 @@ async def notifyReminder(match_id):
 @fcatimer
 async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswered=False,send_push=True,send_email=False):
     invitees = fs_match_dict.get('invites',[])
-   
+    tokens = {}
 
     if(invitees):
         for fs_player in invitees:
@@ -340,8 +377,16 @@ async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswer
                             
                             for fs_device in fs_devices:
                                 fs_device_dict = fs_device.to_dict()
-                                
-                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject=subject,id=fs_match_dict['id'],metadata=metadata)
+                                silent = False
+                                if(fs_device_dict['version']):
+                                    silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                isNotifiable = fs_device_dict.get('notifications',True)
+
+                                if(isNotifiable):
+                                    token=fs_device_dict["token"]
+                                    if(tokens.get(token,None) is None):
+                                        tokens[token] =True
+                                        await sendNotification(type="match",token=token,message=message,silent=silent,subject=subject,id=fs_match_dict['id'],metadata=metadata)
                     
                     fs_player['status'] = 'notified'
                     
@@ -369,7 +414,10 @@ async def notify_match_update(event,context):
     fs_match = await getObject(match_id,"matches_store")
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
-        formatted_date = parse(fs_match_dict['date'])
+        try:
+            formatted_date = parse(fs_match_dict['date'])
+        except:
+            formatted_date = fs_match_dict['date']
         date_string = formatted_date.strftime("%B %d, %Y")
         if(fs_match_dict['type']=='training'):
             message = f"Training on {date_string} has been updated"
@@ -423,7 +471,7 @@ async def updatePlans(event,context):
 
     match_id = event["pathParameters"]["match_id"]
     fs_match = await getObject(match_id,'matches_store')
-    
+    tokens={}
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
         emails = set()
@@ -494,7 +542,16 @@ async def updatePlans(event,context):
                         if(fs_devices):
                             for fs_device in fs_devices:
                                 fs_device_dict = fs_device.to_dict()
-                                await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="Match response",id=match_id,metadata=metadata)
+                                silent = False
+                                if(fs_device_dict['version']):
+                                    silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                isNotifiable = fs_device_dict.get('notifications',True)
+
+                                if(isNotifiable):
+                                    token=fs_device_dict["token"]
+                                    if(tokens.get(token,None) is None):
+                                        tokens[token] =True
+                                        await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=silent,subject="Match response",id=match_id,metadata=metadata)
                         notification = {
                             'message':message,
                             'metadata':metadata,
@@ -505,6 +562,79 @@ async def updatePlans(event,context):
                         }
                         await updateDocument('user_notifications',str(notification_id),notification)
 
+
+@fcatimer
+async def sendToTeamAdmins(team_id,message,subject,metadata,type):
+    emails = set()
+    fs_team = await getObject(team_id,'teams_store')
+    if(fs_team):
+        fs_team_dict = fs_team.get().to_dict()
+        fs_admins = fs_team_dict['admins']
+        for fs_admin in fs_admins:
+            emails.add(fs_admin['email'])
+        
+        
+        fs_coaches = fs_team_dict['coaches']
+        
+        for fs_coach in fs_coaches:
+            emails.add(fs_coach['email'])
+        await sendNotifications(emails,message,subject,metadata,type)
+
+from packaging import version
+
+def is_version_greater(current_version: str, base_version: str) -> bool:
+    """
+    Compare two version strings of the format android.X.Y.Z or ios.X.Y.Z.
+    Returns True if current_version is greater than base_version.
+    """
+    # Extract the numeric part after the prefix
+    current_numeric = current_version.split('.', 1)[-1]  # Split only at the first dot
+    base_numeric = base_version.split('.', 1)[-1]
+    
+    # Use packaging.version for comparison
+    return version.parse(current_numeric) > version.parse(base_numeric)
+@fcatimer
+async def sendNotifications(emails, message, subject,metadata,type,versions=[],send_os=""):
+    for email in emails:
+        notification_id = id_generator.generate_random_number(10)
+        metadata['notification_id'] = notification_id
+        fs_devices = await whereEqual('devices','email',email)
+        tokens={}
+        notification_sent = False
+        if(fs_devices):
+            for fs_device in fs_devices:
+                fs_device_dict = fs_device.to_dict()
+                print(f"DEVICES {fs_device_dict}")
+                go = True
+                go = fs_device_dict.get('version') is not None and send_os in fs_device_dict['version']
+
+                
+                if(versions):
+                    for version in versions:
+                        if(fs_device_dict['version']==version):
+                            go = False
+                
+                if(go):
+                    silent = False
+                    if(fs_device_dict.get('notifications',True)):
+                        silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.3') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                        notification_sent = True
+                        token=fs_device_dict["token"]
+                        if(tokens.get(token,None) is None):
+                            tokens[token] =True
+                            await sendNotification(type=type,token=fs_device_dict["token"],message=message,silent=silent,subject=subject,id=notification_id,metadata=metadata)
+      
+            notification = {
+                'message':message,
+                'metadata':metadata,
+                'email':email,
+                'type':type,
+                'subject':subject,
+                'sent':datetime.now(timezone.utc)
+            }
+            await updateDocument('user_notifications',str(notification_id),notification)
+            
+
 @fcatimer
 async def sendInviteResponse(event,context):
     await lambda_handler(event,context)
@@ -512,7 +642,8 @@ async def sendInviteResponse(event,context):
     match_id = event["pathParameters"]["match_id"]
     
     fs_match = await getObject(match_id,'matches_store')
-    
+    tokens={}
+ 
     sent_by = getEmailFromToken(event,context)
 
     sent_by_user = await getObject(sent_by,'users_store')
@@ -533,11 +664,13 @@ async def sendInviteResponse(event,context):
 
         try:
             formatted_date = parse(date)
-            date_string = formatted_date.strftime("%B %d, %Y")
-            print(date_string)
+            
             print(formatted_date)  # Output: July 02, 2024 (formatted differently)
-        except ValueError:
+        except:
+            formatted_date = date
             print("Invalid date format!")
+        date_string = formatted_date.strftime("%B %d, %Y")
+        print(date_string)
         fs_invites = fs_match_dict['invites'] 
         team_id = fs_match_dict['team_id']
         fs_team = await getObject(team_id,'teams_store')
@@ -546,8 +679,15 @@ async def sendInviteResponse(event,context):
             fs_admins = fs_team_dict['admins']
             for fs_admin in fs_admins:
                 emails.add(fs_admin['email'])
+            
+            
             fs_coaches = fs_team_dict['coaches']
             for fs_coach in fs_coaches:
+                user_coach = await getObject(fs_coach['email'],'users_store')
+                if(user_coach):
+                    user_coach_dict = user_coach.get().to_dict()
+                    notifications_config = user_coach_dict.get('notifications',{})
+                    send_response = notifications_config.get('invite_response',False)
                 emails.add(fs_coach['email'])
 
         if(fs_invites):
@@ -591,8 +731,16 @@ async def sendInviteResponse(event,context):
                             if(fs_devices):
                                 for fs_device in fs_devices:
                                     fs_device_dict = fs_device.to_dict()
-                                    
-                                    await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=False,subject="Match response",id=match_id,metadata=metadata)
+                                    silent = False
+                                    if(fs_device_dict['version']):
+                                        silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                    isNotifiable = fs_device_dict.get('notifications',True)
+
+                                    if(isNotifiable):
+                                        token=fs_device_dict["token"]
+                                        if(tokens.get(token,None) is None):
+                                            tokens[token] =True
+                                            await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=silent,subject="Match response",id=match_id,metadata=metadata)
                             notification = {
                                 'message':message,
                                 'metadata':metadata,

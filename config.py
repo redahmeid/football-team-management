@@ -40,7 +40,9 @@ class AppConfig:
         self.schedule_invitations = os.environ["schedule_invitations"]
         self.calculate_team_goals = os.environ["calculate_team_goals"]
         self.calculate_team_conceded = os.environ["calculate_team_conceded"]
+        self.calculate_team_stats = os.environ["calculate_team_stats"]
         self.calculate_training_attended = os.environ["calculate_training_attended"]
+        self.remind_to_start = os.environ["remind_to_start"]
         self.db_prefix = os.environ["db_prefix"]
 
 

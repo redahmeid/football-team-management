@@ -28,6 +28,7 @@ import response_errors
 import notifications
 from fcatimer import fcatimer
 import matches_backend
+from secrets_util import initialise_firebase
 import json
 from etag_manager import getLatestObject,deleteEtag,setEtag,updateDocument, getObject,whereEqualwhere,whereEqual,whereContains
 
@@ -757,91 +758,94 @@ async def setGoalsFor(team_id,match_id, goal_scorer,assister,type,assist_type):
 @fcatimer
 async def sendGoalScoredNotification(team_id,match_id, goal_scorer,assister,type,assist_type):
 
-    fs_team = await getObject(team_id,'teams_store')
-    team_name = ""
+    print("deprecated")
+    # fs_team = await getObject(team_id,'teams_store')
+    # team_name = ""
     
-    if(fs_team):
-        fs_team_dict = fs_team.get().to_dict()
-        team_name = fs_team_dict['name']
+    # if(fs_team):
+    #     fs_team_dict = fs_team.get().to_dict()
+    #     team_name = fs_team_dict['name']
 
-    fs_match = await getObject(match_id,'matches_store')
-    opposition = ""
-    goals_for = 0
-    goals_against = 0
-    if(fs_match):
-        fs_match_dict = fs_match.get().to_dict()
-        opposition = fs_match_dict['opposition']
-        goals_for = fs_match_dict.get('goals',0)
-        goals_against = fs_match_dict.get('conceded',0)
-    assisted_by = ""
-    if(assister is not None):
-        assisted_by = f", assisted by {assister['forename']} with a {assist_type.lower()}"
-    title = f"Gooooaaaal {team_name} ({goals_for}) - {goals_against} {opposition}"
-    message = f"{type.lower()} goal scored by {goal_scorer['forename']}{assisted_by}"
+    # fs_match = await getObject(match_id,'matches_store')
+    # opposition = ""
+    # goals_for = 0
+    # goals_against = 0
+    # if(fs_match):
+    #     fs_match_dict = fs_match.get().to_dict()
+    #     opposition = fs_match_dict['opposition']
+    #     goals_for = fs_match_dict.get('goals',0)
+    #     goals_against = fs_match_dict.get('conceded',0)
+    # assisted_by = ""
+    # if(assister is not None):
+    #     assisted_by = f", assisted by {assister['forename']} with a {assist_type.lower()}"
+    # title = f"Gooooaaaal {team_name} ({goals_for}) - {goals_against} {opposition}"
+    # message = f"{type.lower()} goal scored by {goal_scorer['forename']}{assisted_by}"
     
-    fs_team_users = await whereContains('users_store','teams',team_id)
+    # fs_team_users = await whereContains('users_store','teams',team_id)
     
-    if(fs_team_users):
-        for fs_team_user in fs_team_users:
-            notification_id = id_generator.generate_random_number(10)
-            metadata={"match_id":match_id,"team_id":fs_match_dict["team_id"],"email":fs_team_user.to_dict()['email'],'notification_id':notification_id}
-            fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
-            print(f"DEVICES {fs_devices}")
-            for fs_device in fs_devices:
-                fs_device_dict = fs_device.to_dict()
-                token = fs_device_dict['token']
-                print(f"TOKEN {token}")
-                await notifications.sendNotification(match_id,message,title,'match',False,token,metadata)
-            notification = {
-                'message':message,
-                'metadata':metadata,
-                'email':fs_team_user.to_dict()['email'],
-                'type':'match',
-                'subject':title,
-                'sent':datetime.datetime.now(timezone.utc)
-            }
-            await updateDocument('user_notifications',str(notification_id),notification)
+    # if(fs_team_users):
+    #     for fs_team_user in fs_team_users:
+    #         notification_id = id_generator.generate_random_number(10)
+    #         metadata={"match_id":match_id,"team_id":fs_match_dict["team_id"],"email":fs_team_user.to_dict()['email'],'notification_id':notification_id}
+    #         notification = {
+    #             'message':message,
+    #             'metadata':metadata,
+    #             'email':fs_team_user.to_dict()['email'],
+    #             'type':'match',
+    #             'subject':title,
+    #             'sent':datetime.datetime.now(timezone.utc)
+    #         }
+            
+    #         fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
+    #         print(f"DEVICES {fs_devices}")
+    #         for fs_device in fs_devices:
+    #             fs_device_dict = fs_device.to_dict()
+    #             token = fs_device_dict['token']
+    #             print(f"TOKEN {token}")
+    #             await notifications.sendNotification(match_id,message,title,'match',False,token,metadata)
+            
+    #         await updateDocument('user_notifications',str(notification_id),notification)
 
 @fcatimer
 async def sendGoalConcededNotification(team_id,match_id):
+    print('deprecated')
+    # fs_team = await getObject(team_id,'teams_store')
+    # team_name = ""
+    
+    # if(fs_team):
+    #     fs_team_dict = fs_team.get().to_dict()
+    #     team_name = fs_team_dict['name']
 
-    fs_team = await getObject(team_id,'teams_store')
-    team_name = ""
+    # fs_match = await getObject(match_id,'matches_store')
+    # opposition = ""
+    # goals_for = 0
+    # goals_against = 0
+    # if(fs_match):
+    #     fs_match_dict = fs_match.get().to_dict()
+    #     opposition = fs_match_dict['opposition']
+    #     goals_for = fs_match_dict.get('goals',0)
+    #     goals_against = fs_match_dict.get('conceded',0)
     
-    if(fs_team):
-        fs_team_dict = fs_team.get().to_dict()
-        team_name = fs_team_dict['name']
-
-    fs_match = await getObject(match_id,'matches_store')
-    opposition = ""
-    goals_for = 0
-    goals_against = 0
-    if(fs_match):
-        fs_match_dict = fs_match.get().to_dict()
-        opposition = fs_match_dict['opposition']
-        goals_for = fs_match_dict.get('goals',0)
-        goals_against = fs_match_dict.get('conceded',0)
+    # title = f"Goal conceded - {team_name} {goals_for} - ({goals_against}) {opposition}"
+    # message = f"Scored by {opposition}"
+    # data = {
+    #         "link":f"/matches/{match_id}",
+    #         "match_id":match_id,
+    #         "team_id":team_id,
+    #         "action":"goal_conceded",
+    #         "silent":False
+    #     }
+    # fs_team_users = await whereContains('users_store','teams',team_id)
     
-    title = f"Goal conceded - {team_name} {goals_for} - ({goals_against}) {opposition}"
-    message = f"Scored by {opposition}"
-    data = {
-            "link":f"/matches/{match_id}",
-            "match_id":match_id,
-            "team_id":team_id,
-            "action":"goal_conceded",
-            "silent":False
-        }
-    fs_team_users = await whereContains('users_store','teams',team_id)
-    
-    if(fs_team_users):
-        for fs_team_user in fs_team_users:
-            fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
-            print(f"DEVICES {fs_devices}")
-            for fs_device in fs_devices:
-                fs_device_dict = fs_device.to_dict()
-                token = fs_device_dict['token']
-                print(f"TOKEN {token}")
-                await notifications.sendNotification(match_id,message,title,'match_update',False,token,data)
+    # if(fs_team_users):
+    #     for fs_team_user in fs_team_users:
+    #         fs_devices = await whereEqual('devices','email',fs_team_user.to_dict()['email'])
+    #         print(f"DEVICES {fs_devices}")
+    #         for fs_device in fs_devices:
+    #             fs_device_dict = fs_device.to_dict()
+    #             token = fs_device_dict['token']
+    #             print(f"TOKEN {token}")
+    #             await notifications.sendNotification(match_id,message,title,'match_update',False,token,data)
 
 @fcatimer
 async def calculateTimePlayed(match:classes.MatchInfo):
@@ -1160,6 +1164,7 @@ def createMatchLinks(url, links:Dict[str,response_classes.Link]):
     links["self"] = self
     print(links)
     return links
+
 
 
 

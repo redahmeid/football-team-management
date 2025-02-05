@@ -55,29 +55,25 @@ async def create_players(event, context):
     print(version)
     i = 0
 
-    if(is_version_greater(version,"2.0.6")):
-        for player in players:
-            name = player["forename"]
-            surname = player["surname"]
-            emails = player['guardians']
-            result = await player_backend.create_players_and_guardians(name,surname,team_id,emails)
-            created_players.append(result)
-    else:
-        for player in players:
-            name = player
-            result = await player_backend.create_players(name,team_id)
-            created_players.append(result)
-    print(f"RESULT {result}")
-    for email in emails:
-        await sendGuardianEmail(result['info']["id"],email)
+    
+    for player in players:
+        name = player["forename"]
+        surname = player["surname"]
+        emails = player['guardians']
+        result = await player_backend.create_players_and_guardians(name,surname,team_id,emails)
+        created_players.append(result)
+  
+        print(f"RESULT {result}")
+        send_email = await getObject('send_email','feature_flags')
+        enabled = True
+        if(send_email):
+            send_email_dict = send_email.get().to_dict()
+            enabled = send_email_dict['enabled']
+        if(enabled):
+            for email in emails:
+                await sendGuardianEmail(result['info']["id"],email)
         
-        data = {
-            "link":f"/teams/{team_id}",
-            "team_id":team_id,
-            "action":"new_players",
-            "silent":"True"
-        }
-        await notifications.sendNotificationUpdatesLink(getEmailFromToken(event,context),"New players","New players",'team',data)
+       
     response = api_helper.make_api_response(200,created_players)
     return response
 
@@ -85,6 +81,7 @@ async def create_players(event, context):
 @fcatimer
 async def sendGuardianEmail(player_id,email):
     fs_player = await getObject(player_id,'players_store')
+    tokens={}
     if(fs_player):
         fs_player_dict = fs_player.get().to_dict()
         fs_team = await getObject(fs_player_dict['info']['team_id'],'teams_store')
@@ -110,8 +107,17 @@ async def sendGuardianEmail(player_id,email):
                     
                     for fs_device in fs_devices:
                         fs_device_dict = fs_device.to_dict()
-                        
-                        await sendNotification(type="invitation",token=fs_device_dict["token"],message=message,silent=False,subject="You've been added as a guardian",id=fs_player_dict["info"]["id"],metadata=metadata)
+                        silent = False
+                        if(fs_device_dict['version']):
+                            silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                        isNotifiable = fs_device_dict.get('notifications',True)
+
+                        if(isNotifiable):
+                            token=fs_device_dict["token"]
+                            
+                            if(not tokens[token]):
+                                tokens[token] =True
+                                await sendNotification(type="invitation",token=fs_device_dict["token"],message=message,silent=silent,subject="You've been added as a guardian",id=fs_player_dict["info"]["id"],metadata=metadata)
                 notification = {
                                 'message':message,
                                 'metadata':metadata,

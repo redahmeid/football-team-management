@@ -59,6 +59,42 @@ def update_stats_match_end(event,context):
     response = asyncio.run(matches_apis.calculate_match_stats(event,context))
     return response
 
+def remind_to_start(event,context):
+    response = asyncio.run(matches_apis.remindToSTart(event,context))
+    return response
+
+def matches_due_to_start(event,context):
+    response = asyncio.run(matches_apis.matchesDueToStart(event,context))
+    return response
+
+def calculate_teams_stats(event,context):
+    response = asyncio.run(team_apis.calculate_teams_stats(event,context))
+    return response
+
+def calculate_team_stats(event,context):
+    response = asyncio.run(team_apis.calculate_team_stats(event,context))
+    return response
+
+def notify_all_admins(event,context):
+    response = asyncio.run(matches_apis.notifyAllAdmins(event,context))
+    return response
+
+def notify_all(event,context):
+    response = asyncio.run(matches_apis.notifyAllWithNews(event,context))
+    return response
+
+def set_user_activity(event,context):
+    response = asyncio.run(team_apis.set_user_activity(event,context))
+    return response
+
+def notify_inviduals(event,context):
+    response = asyncio.run(matches_apis.notifyIndividuals(event,context))
+    return response
+
+def daily_update_matches(event,context):
+    response = asyncio.run(matches_apis.daily_update_matches(event,context))
+    return response
+
 
 def schedule_invitations(event,context):
     response = asyncio.run(users_apis.backgroundSendInvites(event,context))
@@ -76,10 +112,13 @@ def send_reminder(event,context):
     response = asyncio.run(users_apis.sendReminder(event,context))
     return response
 
+def calculate_match_stats(event,context):
+    response = asyncio.run(match_detail_screen.calculate_match_stats(event,context))
+    return response
+
 def find_and_schedule_invitations(event,context):
     response = asyncio.run(users_apis.findAndSendInvites(event,context))
     return response
-
 
 def send_invites(event,context):
     response = asyncio.run(users_apis.sendInvites(event,context))
@@ -190,6 +229,7 @@ def edit_match(event,context):
     response = asyncio.run(matches_apis.edit_match(event,context))
     return response
 def sendNotification(event,context):
+    
     asyncio.run(notifications.backgroundSendMatchUpdateNotification(event,context))   
 
 def update_match_status(event,context):

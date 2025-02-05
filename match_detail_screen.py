@@ -33,7 +33,7 @@ from caching_data import Paths
 import team_backend
 import enum
 from config import app_config
-from etag_manager import setEtag,isEtaggged,deleteEtag
+from etag_manager import setEtag,isEtaggged,deleteEtag, updateDocument, whereEqual,getObject,whereEqualwhere
 from fcatimer import fcatimer
 
 logger = logging.getLogger(__name__)
@@ -496,6 +496,31 @@ async def update_match_status(event,context):
         traceback.print_exception(*sys.exc_info()) 
         response = api_helper.make_api_response(500,None,e)
         return response
+
+from secrets_util import initialise_firebase
+from firebase_admin import credentials, firestore
+@fcatimer
+async def calculate_match_stats(event,context):
+    await initialise_firebase()
+    # id = event['id']
+    # where_team = {
+    #     'compare':'team_id',
+    #     'fieldValue':id
+    # }
+    # where_team,
+    where_stats = firestore.FieldPath.exists("stats_calculated")
+    where_status = firestore.FieldFilter('status', '==', 'ended')
+
+    fs_matches = await whereEqualwhere('matches_store',wheres=[where_status,where_stats])
+    if(fs_matches):
+        print(fs_matches)
+        i = 0
+        for  fs_match in fs_matches:
+            fs_match_dict = fs_match.to_dict()
+            print(f'Match number {i}')
+            i = i+1
+
+
 
 
 def list_of_player_ids(players:list):

@@ -51,6 +51,27 @@ async def whereEqual(collection,field,value):
     docs = query.get() 
     return docs
 
+
+@fcatimer
+async def whereNotIn(collection,field,value):
+    db = firestore.client()
+    query = db.collection(f"{app_config.db_prefix}_{collection}").where(filter=firestore.FieldFilter(field, 'not in', value))
+
+        # Get documents matching the query
+    docs = query.get() 
+    return docs
+
+
+@fcatimer
+async def whereIn(collection,field,value):
+    db = firestore.client()
+    query = db.collection(f"{app_config.db_prefix}_{collection}").where(filter=firestore.FieldFilter(field, 'in', value))
+
+        # Get documents matching the query
+    docs = query.get() 
+    return docs
+
+
 @fcatimer
 async def whereNotEqual(collection,field,value):
     db = firestore.client()
@@ -80,25 +101,80 @@ def check_if_collection_exists(collection_name):
     except Exception as e:
         print(f'Error checking collection existence: {e}')
         return False
-    
-@fcatimer
-async def whereEqualwhere(collection,wheres):
+
+async def whereIDIn(collection, wheres):
     db = firestore.client()
-    await updateDocument(collection=collection,id='draft',object={'do_not_touch':True})
     query = db.collection(f"{app_config.db_prefix}_{collection}")
     all_docs = []  # Empty list to store all matching documents
 
     for where_clause in wheres:
-        query = db.collection(f"{app_config.db_prefix}_{collection}")
-        query = query.where(firestore.FieldPath(['field']), where_clause['compare'], where_clause['fieldValue'])
+        field = where_clause['field']
+        operator = where_clause['compare']
+        value = where_clause['fieldValue']
 
+        # Handle query by document ID
+        if field == '__name__':
+            # Construct the full document path
+            if isinstance(value, list):
+                full_doc_paths = [f"{app_config.db_prefix}_{collection}/{doc_id}" for doc_id in value]
+            else:
+                full_doc_paths = [f"{app_config.db_prefix}_{collection}/{value}"]
+            print(full_doc_paths)
+                # If value is a single document ID, wrap it in a list
+            query = query.where('__name__', 'in', full_doc_paths)
+        else:
+            # Regular field query
+            query = query.where(field, operator, value)
+
+    # Execute the query
+    docs = query.stream()
+    all_docs.extend(docs)
+    
+    return all_docs
+
+
+@fcatimer
+async def whereEqualwhere(collection,wheres):
+    db = firestore.client()
+    
+    query = db.collection(f"{app_config.db_prefix}_{collection}")
+    all_docs = []  # Empty list to store all matching documents
+
+    
+    query = db.collection(f"{app_config.db_prefix}_{collection}")
+        # query = query.where(firestore.FieldPath(['field']), where_clause['compare'], where_clause['fieldValue'])
+    for where_clause in wheres:
+        query = query.where(filter=where_clause)
+    
         # Get documents matching the current query
-        docs = await query.get()
-        all_docs.extend(docs.docs)
+    print(query)
+    docs = query.get()
+    all_docs.extend(docs)
 
     
     return all_docs
+
+@fcatimer
+async def whereEqualwhereOr(collection,wheres,orWheres):
+    db = firestore.client()
     
+    query = db.collection(f"{app_config.db_prefix}_{collection}")
+    all_docs = []  # Empty list to store all matching documents
+
+    
+    query = db.collection(f"{app_config.db_prefix}_{collection}")
+        # query = query.where(firestore.FieldPath(['field']), where_clause['compare'], where_clause['fieldValue'])
+    for where_clause in wheres:
+        query = query.where(filter=where_clause)
+    for where_clause in orWheres:
+        query = query.orWhere(filter=where_clause)
+        # Get documents matching the current query
+    print(query)
+    docs = query.get()
+    all_docs.extend(docs)
+
+    
+    return all_docs
 
 @fcatimer
 async def whereContains(collection,field,value):

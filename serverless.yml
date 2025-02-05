@@ -805,23 +805,6 @@ functions:
               - ETag
             allowCredentials: false
   
-  calculate_team_stats:
-    handler: handler.calculate_team_stats
-    events:
-      - http:
-          path: /teams/{team_id}/calculate_stats
-          method: post
-          cors:
-            origins:
-              - '*'
-            headers:
-              - Content-Type
-              - x-device-id
-              - x-api-key
-              - x-football-app
-              - authorization
-              - ETag
-            allowCredentials: false
   
   logging:
     handler: handler.logging
@@ -875,15 +858,48 @@ functions:
   calculate_training_attended:
     handler: handler.calculate_training_attended
   
+  calculate_teams_stats:
+    handler: handler.calculate_teams_stats
+  calculate_team_stats:
+    handler: handler.calculate_team_stats
+    timeout: 60
+  daily_update_matches:
+    handler: handler.daily_update_matches
+  notify_all_admins:
+    handler: handler.notify_all_admins
+    timeout: 300
+  notify_all:
+    handler: handler.notify_all
+    timeout: 300
+  set_user_activity:
+    handler: handler.set_user_activity
+    timeout: 60
+  notify_inviduals:
+    handler: handler.notify_inviduals
   find_and_schedule_invitations:
     handler: handler.find_and_schedule_invitations
+    timeout: 30
     events:
       - schedule: rate(5 minutes)
   
-  update_team_stats:
-    handler: handler.find_and_schedule_invitations
-    events:
-      - schedule: rate(5 minutes)
+  # matches_due_to_start:
+  #   handler: handler.matches_due_to_start
+  #   events:
+  #     - schedule: rate(1 minute)
+  
+  # remind_to_start:
+  #   handler: handler.remind_to_start
+    
+
+  # calculate_match_stats:
+  #   handler: handler.calculate_match_stats
+  #   events:
+  #     - schedule: rate(5 minutes)
+  
+  # update_team_stats:
+  #   handler: handler.find_and_schedule_invitations
+  #   events:
+  #     - schedule: rate(5 minutes)
  
   
 
