@@ -52,6 +52,8 @@ async def set_claims(email,uid):
     additionalClaims = {}
     playerClaims = {}
     user = await getObject(email,'users_store')
+    if(not user):
+        user = await getObject(str(str(email).lower.__hash__),'users_store')
     if(user):
         user_dict = user.get().to_dict()
         admins = user_dict.get('admin',[])

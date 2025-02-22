@@ -27,6 +27,10 @@ def send_new_guardian_email(event,context):
     response = asyncio.run(player_apis.sendNewGuardianAnEmail(event,context))
     return response
 
+def send_new_player_email(event,context):
+    response = asyncio.run(player_apis.sendNewPlayerEmail(event,context))
+    return response
+
 def notify_coaches(event,context):
     response = asyncio.run(team_apis.notifyNewCoaches(event,context))
     return response

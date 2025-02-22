@@ -190,15 +190,35 @@ async def whereContains(collection,field,value):
 async def updateDocument(collection,id,object):
     db = firestore.client()
     doc_ref = db.collection(f"{app_config.db_prefix}_{collection}").document(id)  # Replace with your collection and document ID
+    print(f'UPDATE DOCUMENT - object - {id} {object}')
+    if(object):
+        if isinstance(object, dict):
+            dictObj = object
+        else:
+            dictObj = object.dict()
+        
 
-    if(is_dictable(object)):
+        versions = dictObj.get('versions',[])
+        print(f'UPDATE DOCUMENT - versions - {versions}')
+        if(len(versions)>0):
+            last_version = versions[len(versions)-1]
+        else:
+            last_version = None
+        print(f'UPDATE DOCUMENT - last_version - {last_version}')
+        if(last_version):
+            new_version_number = last_version['version']+1
+        else:
+            new_version_number = 1
+        print(f'UPDATE DOCUMENT - new_version_number - {new_version_number}')
+        version = {'version':new_version_number,'by':'server_side'}
+        versions.append(version)
+        dictObj['versions'] = versions
+        print(f'UPDATE DOCUMENT - dictObj - {dictObj}')
+    
 
-# Update the document with matchInfo data
-     doc_ref.set(object.dict(),merge=True)  # Update using dictionary from object
-    else:
-     doc_ref.set(object,merge=True)  
+        doc_ref.set(dictObj,merge=True)  
 
-    print(f'Document updated successfully! {collection} {id}')
+        print(f'Document updated successfully! {collection} {id}')
 
 def is_dictable(obj):
     """

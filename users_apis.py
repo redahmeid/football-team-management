@@ -30,24 +30,30 @@ async def new_user(event, context):
         await saveDeviceToken(event)
         fs_user = await getObject(email,'users_store')
         template_data = {'name':body['name']}
+        
+        
         if(fs_user):
             fs_user.update({'name':body['name']})
             template_id="d-f25c6f27e6d14af58f8a3457ecfebee2"
             await send_email_with_template(email,template_id,template_data)
         else:
+            # fs_user = await getObject(str(str(email).lower.__hash__),'users_store')
+            # if(not fs_user):
+
             template_id="d-f25c6f27e6d14af58f8a3457ecfebee2"
             await send_email_with_template(email,template_id,template_data)
         await updateDocument('users_store',email,{'email':email,'name':body['name']})
         
         response = api_helper.make_api_response(200,{"id":id})
-    except ValidationError as e:
-        errors = response_errors.validationErrorsList(e)
-        response = api_helper.make_api_response(400,None,errors)
+    
     except ValueError as e:
         response = api_helper.make_api_response(400,None,e)
 
     print(response)
     return response
+
+
+
 def sort_by_date(item):
     return item["date"]
 
@@ -121,13 +127,15 @@ async def invite_all_players(fs_players,date_string,opposition,match_id):
     type = 'invite'
     if(fs_match):
         fs_match_dict = fs_match.get().to_dict()
-        
+        print(f"invite_all_players-FS PLAYERS {fs_players}")
         if(fs_players):
+
             for fs_player in fs_players:
                 id = id_generator.generate_random_number(10)
                 fs_player_dict = fs_player.to_dict()
                 archived = fs_player_dict.get('archived',False)
-                if(archived == False):
+                print(f"invite_all_players-ARCHIVED {archived}")
+                if(archived == False or archived == None):
                     fs_guardians = fs_player_dict['guardians']
                     for fs_guardian in fs_guardians:
                         notification_id = str(id_generator.generate_random_number(10))
@@ -294,11 +302,11 @@ async def invites(match_id):
                     await invite_all_players(fs_players=fs_invites,date_string=date_string,opposition=opposition,match_id=match_id)
                 elif(fs_invite_group=='guardians'):
                     fs_invites = await whereContains('users_store','guardians',fs_match_dict['team_id'])
-                else:
-                    fs_invites = fs_match_dict['invites']
-                    fs_match_dict = await invite_invitee_players(fs_invites=fs_invites,date_string=date_string,opposition=opposition,match_id=match_id,fs_match_dict=fs_match_dict)
-                    print(f'FS MATCH DICT FROM INVITES {fs_match_dict}')
-                    return fs_match_dict
+            else:
+                fs_invites = fs_match_dict['invites']
+                fs_match_dict = await invite_invitee_players(fs_invites=fs_invites,date_string=date_string,opposition=opposition,match_id=match_id,fs_match_dict=fs_match_dict)
+                print(f'FS MATCH DICT FROM INVITES {fs_match_dict}')
+                return fs_match_dict
 
 
 @fcatimer
@@ -617,7 +625,7 @@ async def sendNotifications(emails, message, subject,metadata,type,versions=[],s
                 if(go):
                     silent = False
                     if(fs_device_dict.get('notifications',True)):
-                        silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.3') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                        silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
                         notification_sent = True
                         token=fs_device_dict["token"]
                         if(tokens.get(token,None) is None):
@@ -754,8 +762,14 @@ async def sendInviteResponse(event,context):
 
 async def saveDeviceToken(event):
     headers = event["headers"]
-    device_token = event["headers"]['x-device-token']
-    device_id = event["headers"]['x-device-id']
+    try:
+        device_token = event["headers"]['x-device-token']
+    except:
+        device_token = getToken(event)["uid"]
+    try:
+        device_id = event["headers"]['x-device-id']
+    except:
+        device_id = str(id_generator.generate_random_number(12))
     email = getToken(event)["email"]
     version = headers.get('x-football-app',None)
     await save_token(email=email,token=device_token,device=device_id,version=version)

@@ -360,6 +360,23 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  send_new_player_email:
+    handler: handler.send_new_player_email
+    events:
+      - http:
+          path: /players/{player_id}/players
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - x-football-app
+              - authorization
+              - ETag
+            allowCredentials: false
   notify_coaches:
     handler: handler.notify_coaches
     events:

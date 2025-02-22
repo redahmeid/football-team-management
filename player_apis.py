@@ -128,6 +128,58 @@ async def sendGuardianEmail(player_id,email):
                             }
                 await updateDocument('user_notifications',str(notification_id),notification)
 
+
+
+@fcatimer
+async def sendPlayerEmail(player_id,email):
+    fs_player = await getObject(player_id,'players_store')
+    tokens={}
+    if(fs_player):
+        fs_player_dict = fs_player.get().to_dict()
+        fs_team = await getObject(fs_player_dict['info']['team_id'],'teams_store')
+        if(fs_team):
+            fs_team_dict = fs_team.get().to_dict()
+            
+
+            template_data = {'player':fs_player_dict['info']['forename'],'team':fs_team_dict['name']}
+            fs_user = await getObject(email,'users_store')
+            if(fs_user):
+                fs_user_dict = fs_user.get().to_dict()
+                
+                if(fs_user_dict.get('last_seen',None)):
+                    await send_email_with_template(email,'d-d84865ab98a44c9aa6770e86364df6e5',template_data)
+                else:
+                    await send_email_with_template(email,'d-0904ad249669492fb6999ff0102742f1',template_data)
+                message = f"You have been given access to your details on TeamMate"
+                notification_id = id_generator.generate_random_number(10)
+               
+                fs_devices = await whereEqual('devices','email',email)
+                metadata={"player_id":fs_player_dict["info"]["id"],'notification_id':notification_id}
+                if(fs_devices):
+                    
+                    for fs_device in fs_devices:
+                        fs_device_dict = fs_device.to_dict()
+                        silent = False
+                        if(fs_device_dict['version']):
+                            silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                        isNotifiable = fs_device_dict.get('notifications',True)
+
+                        if(isNotifiable):
+                            token=fs_device_dict["token"]
+                            
+                            if(not tokens[token]):
+                                tokens[token] =True
+                                await sendNotification(type="invitation",token=fs_device_dict["token"],message=message,silent=silent,subject="You've been added as a guardian",id=fs_player_dict["info"]["id"],metadata=metadata)
+                notification = {
+                                'message':message,
+                                'metadata':metadata,
+                                'email':email,
+                                'type':'guardian_add',
+                                'subject':f"You've been added to {fs_player_dict['info']['forename']}",
+                                'sent':datetime.now(timezone.utc)
+                            }
+                await updateDocument('user_notifications',str(notification_id),notification)
+
 @fcatimer
 async def sendNewGuardianAnEmail(event,context):
     await lambda_handler(event,context)
@@ -136,6 +188,15 @@ async def sendNewGuardianAnEmail(event,context):
     
     email = body["email"]
     await sendGuardianEmail(player_id,email)
+
+@fcatimer
+async def sendNewPlayerEmail(event,context):
+    await lambda_handler(event,context)
+    player_id = event["pathParameters"]["player_id"]
+    body =json.loads(event["body"])
+    
+    email = body["email"]
+    await sendPlayerEmail(player_id,email)
 
 @fcatimer
 async def addGuardiansToPlayer(event,context):

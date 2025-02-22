@@ -254,12 +254,12 @@ async def notifyIndividuals(event,context):
         print(notified_dict)
         emails = notified_dict['emails']
         await users_apis.sendNotifications(emails,f"Download the latest version of TeamMate.\
-\nNew features include:\
-\n\n- More stats on the homepage\
-\n- Notifications now open to the right place - will go straight to the match, or open the app store or opens a link (look out for useful tips)\
-\n- OneDrive video links now appear as a stock image - so is now shareable\
-\n- Some minor bug fixes\
-\n\nEnjoy and good luck for the weekend!",'Download the latest version of TeamMate',{},'new_version')
+\n\nTeam Mate Update: Smarter, sleeker & more powerful! \
+\nWe’ve been working hard to make Team Mate even better for football coaches, players, and parents! Here’s what’s new:\
+\n\n- Fresh new look & feel: A redesigned of the App that’s more intuitive and engaging for a seamless experience.\
+\n- AI-Powered training plans: Coaches simply enter their training session needs, and our AI generates structured UEFA-based training plans to level up their sessions!\
+\n- Match history feature: Get valuable insights by viewing past results of your upcoming opponents to help your team prepare smarter.\
+\n\nThese upgrades mean easier coaching, better insights, and smoother communication for everyone involved. Update now and take your team to the next level!",'Download the latest version of TeamMate',{},'new_version',versions=['android.3.0.36','ios.3.0.36'])
         
 
             
@@ -276,13 +276,12 @@ async def notifyAllWithNews(event,context):
             fs_team_dict  =  fs_team
             
             await users_apis.sendNotifications([fs_team_dict['email']],f"Download the latest version of TeamMate.\
-\nNew features include:\
-\n\n- Matchday player minutes summary\
-\n- When a player is removed from the match day squad, they no longer show up\
-\n- Better notifications system....no longer miss important notifications\
-\n- If sharing a video using a Google Drive link a stock image now appears\
-\n- Head to heads against an opponent\
-\n\nEnjoy and good luck for the weekend!",'Download the latest version of TeamMate.',{},'new_version',versions=['android.3.0.31','ios.3.0.31'])
+\n\nTeam Mate Update: Smarter, sleeker & more powerful! \
+\nWe’ve been working hard to make Team Mate even better for football coaches, players, and parents! Here’s what’s new:\
+\n\n- Fresh new look & feel: A redesigned of the App that’s more intuitive and engaging for a seamless experience.\
+\n- AI-Powered training plans: Coaches simply enter their training session needs, and our AI generates structured UEFA-based training plans to level up their sessions!\
+\n- Match history feature: Get valuable insights by viewing past results of your upcoming opponents to help your team prepare smarter.\
+\n\nThese upgrades mean easier coaching, better insights, and smoother communication for everyone involved. Update now and take your team to the next level!",'Download the latest version of TeamMate.',{},'new_version',versions=['android.3.0.36','ios.3.0.36'])
                    
 
 
