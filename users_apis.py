@@ -291,7 +291,7 @@ async def invites(match_id):
             print("Invalid date format!")
         
         if(carry_on):
-            fs_invite_group = fs_match_dict.get('invite_group','none')
+            fs_invite_group = fs_match_dict.get('invite_group',None)
             print(f'FS INVITE GROUP {fs_invite_group}')
             players = []
             if(fs_invite_group):
