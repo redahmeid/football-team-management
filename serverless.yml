@@ -257,6 +257,22 @@ functions:
               - authorization
               - ETag
             allowCredentials: false
+  send_new_invite_response:
+    handler: handler.send_new_invite_response
+    events:
+      - http:
+          path: /matches/{match_id}/invites/{player_id}/new
+          method: post
+          cors:
+            origins:
+              - '*'
+            headers:
+              - Content-Type
+              - x-device-id
+              - x-api-key
+              - authorization
+              - ETag
+            allowCredentials: false
   # update_invites:
   #   handler: handler.update_invites
   #   events:

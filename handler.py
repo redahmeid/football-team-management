@@ -130,6 +130,9 @@ def send_invites(event,context):
 def send_invite_response(event,context):
     response = asyncio.run(users_apis.sendInviteResponse(event,context))
     return response
+def send_new_invite_response(event,context):
+    response = asyncio.run(users_apis.sendNewInviteResponse(event,context))
+    return response
 def check_online(event,context):
     return api_helper.make_api_response(200,{})
 def create_team(event, context):

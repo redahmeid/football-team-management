@@ -281,7 +281,7 @@ async def notifyAllWithNews(event,context):
 \n\n- Fresh new look & feel: A redesigned of the App that’s more intuitive and engaging for a seamless experience.\
 \n- AI-Powered training plans: Coaches simply enter their training session needs, and our AI generates structured UEFA-based training plans to level up their sessions!\
 \n- Match history feature: Get valuable insights by viewing past results of your upcoming opponents to help your team prepare smarter.\
-\n\nThese upgrades mean easier coaching, better insights, and smoother communication for everyone involved. Update now and take your team to the next level!",'Download the latest version of TeamMate.',{},'new_version',versions=['android.3.0.36','ios.3.0.36'])
+\n\nThese upgrades mean easier coaching, better insights, and smoother communication for everyone involved. Update now and take your team to the next level!",'Download the latest version of TeamMate.',{},'new_version',versions=['android.3.0.39','ios.3.0.39'])
                    
 
 

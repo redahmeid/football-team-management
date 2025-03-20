@@ -303,7 +303,12 @@ async def invites(match_id):
                 elif(fs_invite_group=='guardians'):
                     fs_invites = await whereContains('users_store','guardians',fs_match_dict['team_id'])
             else:
-                fs_invites = fs_match_dict['invites']
+                fs_invitees = await getObject(fs_match_dict.get('id',''),"invites_store")
+                if(fs_invitees):
+                    fs_invitees_dict = fs_invitees.get().to_dict()
+                    fs_invites = fs_invitees_dict.get('invites',[])
+                else:
+                    fs_invites = fs_match_dict.get('invites',[])
                 fs_match_dict = await invite_invitee_players(fs_invites=fs_invites,date_string=date_string,opposition=opposition,match_id=match_id,fs_match_dict=fs_match_dict)
                 print(f'FS MATCH DICT FROM INVITES {fs_match_dict}')
                 return fs_match_dict
@@ -363,7 +368,12 @@ async def notifyReminder(match_id):
     
 @fcatimer
 async def notifyInvitees(fs_match_dict,message,subject,template_data,if_unanswered=False,send_push=True,send_email=False):
-    invitees = fs_match_dict.get('invites',[])
+    fs_invitees = await getObject(fs_match_dict.get('id',''),"invites_store")
+    if(fs_invitees):
+        fs_invitees_dict = fs_invitees.get().to_dict()
+        invitees = fs_invitees_dict.get('invites',[])
+    else:
+        invitees = fs_match_dict.get('invites',[])
     tokens = {}
 
     if(invitees):
@@ -642,6 +652,126 @@ async def sendNotifications(emails, message, subject,metadata,type,versions=[],s
             }
             await updateDocument('user_notifications',str(notification_id),notification)
             
+
+
+@fcatimer
+async def sendNewInviteResponse(event,context):
+    await lambda_handler(event,context)
+    player_id = event["pathParameters"]["player_id"]
+    match_id = event["pathParameters"]["match_id"]
+    
+    fs_match = await getObject(match_id,'matches_store')
+    tokens={}
+ 
+    sent_by = getEmailFromToken(event,context)
+
+    sent_by_user = await getObject(sent_by,'users_store')
+    if(sent_by_user):
+        sent_by_user_dict = sent_by_user.get().to_dict()
+        sent_by_name = sent_by_user_dict.get('name',sent_by)
+        if(sent_by_name==''):
+            sent_by_name = sent_by
+    fs_player_match_invite_history = await getObject(f"{match_id}+{player_id}",'player_match_invite_history')
+
+    emails = set()
+    if(fs_match):
+        fs_match_dict = fs_match.get().to_dict()
+        date = fs_match_dict['date']
+        
+        print
+        format_string = "%Y-%m-%d"  # Year-Month-Day format
+
+        try:
+            formatted_date = parse(date)
+            
+            print(formatted_date)  # Output: July 02, 2024 (formatted differently)
+        except:
+            formatted_date = date
+            print("Invalid date format!")
+        date_string = formatted_date.strftime("%B %d, %Y")
+        print(date_string)
+        fs_invites_coll =  await getObject(match_id,'invites_store')
+        fs_invites = fs_invites_coll.get().to_dict()['invites']
+        team_id = fs_match_dict['team_id']
+        fs_team = await getObject(team_id,'teams_store')
+        if(fs_team):
+            fs_team_dict = fs_team.get().to_dict()
+            fs_admins = fs_team_dict['admins']
+            for fs_admin in fs_admins:
+                emails.add(fs_admin['email'])
+            
+            
+            fs_coaches = fs_team_dict['coaches']
+            for fs_coach in fs_coaches:
+                user_coach = await getObject(fs_coach['email'],'users_store')
+                if(user_coach):
+                    user_coach_dict = user_coach.get().to_dict()
+                    notifications_config = user_coach_dict.get('notifications',{})
+                    send_response = notifications_config.get('invite_response',False)
+                emails.add(fs_coach['email'])
+
+        if(fs_invites):
+            for player_dict in fs_invites:
+                
+                if player_dict['player']['info']['id'] == player_id:
+                    
+                    response = player_dict['response']
+                    fs_guardians = player_dict['player']['guardians']
+                    for guardian in fs_guardians:
+                        if(guardian!=sent_by):
+                            emails.add(guardian)
+                    last_response = ""
+                    if(fs_player_match_invite_history):
+                        fs_player_match_invite_history_dict = fs_player_match_invite_history.get().to_dict()
+                        last_response = fs_player_match_invite_history_dict.get("response","")
+                    if(response != last_response):
+                        await updateDocument("player_match_invite_history",f"{match_id}+{player_id}",{"response":response})
+                        message = ''
+                        if response=='accepted':
+                            if(fs_match_dict['type']=='training'):
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make training on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Training response"
+                            else:
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can make the game against {fs_match_dict['opposition']} on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Match response"
+                            
+                        elif response=='declined':
+                            if(fs_match_dict['type']=='training'):
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make training on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Training response"
+                            else:
+                                message = f"{player_dict['player']['info']['forename']} {player_dict['player']['info']['surname']} can't make the game against {fs_match_dict['opposition']} on {date_string} - from {sent_by_name}"
+                                subject = f"{player_dict['player']['info']['forename']} Match response"
+                            
+                        for email in emails:
+                            notification_id = id_generator.generate_random_number(10)
+                            fs_devices = await whereEqual('devices','email',email)
+                            metadata={"player_id":player_id,"match_id":match_id,"team_id":team_id,"email":email,'notification_id':notification_id}
+                            print(f"DEVICES {fs_devices}")
+                            if(fs_devices):
+                                for fs_device in fs_devices:
+                                    fs_device_dict = fs_device.to_dict()
+                                    silent = False
+                                    if(fs_device_dict['version']):
+                                        silent = str((is_version_greater(fs_device_dict['version'],'android.3.0.34') or is_version_greater(fs_device_dict['version'],'ios.3.0.34')))
+                                    isNotifiable = fs_device_dict.get('notifications',True)
+
+                                    if(isNotifiable):
+                                        token=fs_device_dict["token"]
+                                        if(tokens.get(token,None) is None):
+                                            tokens[token] =True
+                                            await sendNotification(type="match",token=fs_device_dict["token"],message=message,silent=silent,subject="Match response",id=match_id,metadata=metadata)
+                            notification = {
+                                'message':message,
+                                'metadata':metadata,
+                                'email':email,
+                                'type':'match',
+                                'subject':subject,
+                                'sent':datetime.now(timezone.utc)
+                            }
+                            await updateDocument('user_notifications',str(notification_id),notification)
+        await updatePlans(event,context)
+
 
 @fcatimer
 async def sendInviteResponse(event,context):
